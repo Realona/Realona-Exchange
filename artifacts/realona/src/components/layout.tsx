@@ -1,8 +1,8 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { LogOut, User as UserIcon, Wallet, Settings } from "lucide-react";
-import { useGetWalletBalance, useGetMeQueryKey } from "@workspace/api-client-react";
+import { LogOut, Wallet, Settings } from "lucide-react";
+import { useGetWalletBalance } from "@workspace/api-client-react";
 import { formatNaira } from "@/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -13,6 +13,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   const { data: walletData } = useGetWalletBalance({
     query: {
+      queryKey: ["getWalletBalance"],
       enabled: !!token,
     }
   });

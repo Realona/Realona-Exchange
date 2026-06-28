@@ -4,6 +4,22 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import NotFound from "@/pages/not-found";
+import Home from "@/pages/home";
+import Login from "@/pages/login";
+import Register from "@/pages/register";
+import Dashboard from "@/pages/dashboard";
+import Wallet from "@/pages/wallet";
+import ListingDetail from "@/pages/listing-detail";
+import NewListing from "@/pages/new-listing";
+import MyListings from "@/pages/my-listings";
+import Trades from "@/pages/trades";
+import TradeDetail from "@/pages/trade-detail";
+import AdminDashboard from "@/pages/admin/index";
+import AdminUsers from "@/pages/admin/users";
+import AdminTrades from "@/pages/admin/trades";
+import AdminWithdrawals from "@/pages/admin/withdrawals";
+import AdminReports from "@/pages/admin/reports";
+import AdminSettings from "@/pages/admin/settings";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -14,30 +30,45 @@ const queryClient = new QueryClient({
   },
 });
 
-function Home() {
-  return <div className="p-8 text-center text-xl text-primary">Home page</div>;
-}
-
-function Login() {
-  return <div className="p-8 text-center text-xl text-primary">Login page</div>;
-}
-
-function Register() {
-  return <div className="p-8 text-center text-xl text-primary">Register page</div>;
-}
-
-function Dashboard() {
-  return <div className="p-8 text-center text-xl text-primary">Dashboard page</div>;
-}
-
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
   const { user, isLoading } = useAuth();
   const [, setLocation] = useLocation();
 
-  if (isLoading) return <div>Loading...</div>;
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   if (!user) {
     setLocation("/login");
+    return null;
+  }
+
+  return <Component />;
+}
+
+function AdminRoute({ component: Component }: { component: React.ComponentType }) {
+  const { user, isLoading } = useAuth();
+  const [, setLocation] = useLocation();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    setLocation("/login");
+    return null;
+  }
+
+  if (!user.isAdmin && !user.isSuperAdmin) {
+    setLocation("/dashboard");
     return null;
   }
 
@@ -52,6 +83,40 @@ function Router() {
       <Route path="/register" component={Register} />
       <Route path="/dashboard">
         <ProtectedRoute component={Dashboard} />
+      </Route>
+      <Route path="/wallet">
+        <ProtectedRoute component={Wallet} />
+      </Route>
+      <Route path="/listings/new">
+        <ProtectedRoute component={NewListing} />
+      </Route>
+      <Route path="/listings/my">
+        <ProtectedRoute component={MyListings} />
+      </Route>
+      <Route path="/listings/:id" component={ListingDetail} />
+      <Route path="/trades">
+        <ProtectedRoute component={Trades} />
+      </Route>
+      <Route path="/trades/:id">
+        <ProtectedRoute component={TradeDetail} />
+      </Route>
+      <Route path="/admin">
+        <AdminRoute component={AdminDashboard} />
+      </Route>
+      <Route path="/admin/users">
+        <AdminRoute component={AdminUsers} />
+      </Route>
+      <Route path="/admin/trades">
+        <AdminRoute component={AdminTrades} />
+      </Route>
+      <Route path="/admin/withdrawals">
+        <AdminRoute component={AdminWithdrawals} />
+      </Route>
+      <Route path="/admin/reports">
+        <AdminRoute component={AdminReports} />
+      </Route>
+      <Route path="/admin/settings">
+        <AdminRoute component={AdminSettings} />
       </Route>
       <Route component={NotFound} />
     </Switch>

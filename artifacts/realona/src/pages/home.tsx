@@ -14,11 +14,9 @@ export default function Home() {
   const [search, setSearch] = useState("");
   const { user } = useAuth();
   
-  const { data: listings, isLoading } = useGetListings({
-    query: {
-      queryKey: ["listings", search],
-    }
-  });
+  const { data: listings, isLoading } = useGetListings(
+    { search: search || undefined }
+  );
 
   return (
     <Layout>
