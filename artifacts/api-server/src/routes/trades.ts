@@ -3,6 +3,10 @@ import { db, tradesTable, listingsTable, usersTable, tradeMessagesTable, platfor
 import { eq, and, sql, or } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
 import {
+  emailTradeCreated, emailPaymentConfirmed, emailSellerTransferred,
+  emailTradeCompleted, emailDisputeOpened,
+} from "../lib/email";
+import {
   CreateTradeBody,
   GetTradeParams,
   ConfirmTradePaymentParams,
@@ -136,6 +140,18 @@ router.post("/trades", requireAuth, async (req, res): Promise<void> => {
   await addSystemMsg(trade.id, `Trade #${trade.id} created. Buyer must confirm payment to proceed.`, req.userId!);
 
   const row = await getTradeWithDetails(trade.id);
+
+  // Email seller about new trade
+  const [seller] = await db.select({ email: usersTable.email }).from(usersTable).where(eq(usersTable.id, listing.sellerId));
+  const [buyer] = await db.select({ username: usersTable.username }).from(usersTable).where(eq(usersTable.id, req.userId!));
+  if (seller && buyer) {
+    emailTradeCreated({
+      sellerEmail: seller.email, sellerUsername: row.sellerUsername ?? "",
+      buyerUsername: buyer.username, gameName: listing.gameName,
+      amount, tradeId: trade.id,
+    }).catch(() => {});
+  }
+
   res.status(201).json(formatTrade(row.trade, { buyerUsername: row.buyerUsername, sellerUsername: row.sellerUsername, gameName: row.gameName, pictureUrl: row.pictureUrl }));
 });
 
@@ -197,6 +213,17 @@ router.post("/trades/:id/confirm-payment", requireAuth, async (req, res): Promis
   await addSystemMsg(params.data.id, "Payment confirmed by buyer. Seller should now transfer the game account.", req.userId!);
 
   const row = await getTradeWithDetails(params.data.id);
+
+  // Email seller to transfer account
+  const [sellerUser] = await db.select({ email: usersTable.email }).from(usersTable).where(eq(usersTable.id, trade.sellerId));
+  if (sellerUser) {
+    emailPaymentConfirmed({
+      sellerEmail: sellerUser.email, sellerUsername: row.sellerUsername ?? "",
+      buyerUsername: row.buyerUsername ?? "", gameName: row.gameName ?? "",
+      amount: Number(trade.amount), tradeId: trade.id,
+    }).catch(() => {});
+  }
+
   res.json(formatTrade(row.trade, { buyerUsername: row.buyerUsername, sellerUsername: row.sellerUsername, gameName: row.gameName, pictureUrl: row.pictureUrl }));
 });
 
@@ -225,6 +252,17 @@ router.post("/trades/:id/seller-transferred", requireAuth, async (req, res): Pro
   await addSystemMsg(params.data.id, "Seller has transferred the account. Buyer should confirm receipt.", req.userId!);
 
   const row = await getTradeWithDetails(params.data.id);
+
+  // Email buyer to confirm receipt
+  const [buyerUser] = await db.select({ email: usersTable.email }).from(usersTable).where(eq(usersTable.id, trade.buyerId));
+  if (buyerUser) {
+    emailSellerTransferred({
+      buyerEmail: buyerUser.email, buyerUsername: row.buyerUsername ?? "",
+      sellerUsername: row.sellerUsername ?? "", gameName: row.gameName ?? "",
+      tradeId: trade.id,
+    }).catch(() => {});
+  }
+
   res.json(formatTrade(row.trade, { buyerUsername: row.buyerUsername, sellerUsername: row.sellerUsername, gameName: row.gameName, pictureUrl: row.pictureUrl }));
 });
 
@@ -262,6 +300,18 @@ router.post("/trades/:id/confirm-receipt", requireAuth, async (req, res): Promis
   await addSystemMsg(params.data.id, `Trade completed! Seller received ₦${sellerAmount.toLocaleString()}. Platform fee: ₦${Number(trade.fee).toLocaleString()}.`, req.userId!);
 
   const row = await getTradeWithDetails(params.data.id);
+
+  // Email both parties
+  const [sellerUser] = await db.select({ email: usersTable.email }).from(usersTable).where(eq(usersTable.id, trade.sellerId));
+  const [buyerUser] = await db.select({ email: usersTable.email }).from(usersTable).where(eq(usersTable.id, trade.buyerId));
+  if (sellerUser && buyerUser) {
+    emailTradeCompleted({
+      sellerEmail: sellerUser.email, sellerUsername: row.sellerUsername ?? "",
+      buyerEmail: buyerUser.email, buyerUsername: row.buyerUsername ?? "",
+      gameName: row.gameName ?? "", sellerAmount, tradeId: trade.id,
+    }).catch(() => {});
+  }
+
   res.json(formatTrade(row.trade, { buyerUsername: row.buyerUsername, sellerUsername: row.sellerUsername, gameName: row.gameName, pictureUrl: row.pictureUrl }));
 });
 
@@ -303,6 +353,24 @@ router.post("/trades/:id/dispute", requireAuth, async (req, res): Promise<void> 
   await addSystemMsg(params.data.id, `Dispute opened: ${parsed.data.reason}. Admin will review this trade.`, req.userId!);
 
   const row = await getTradeWithDetails(params.data.id);
+
+  // Email admin + both parties
+  const [sellerUser] = await db.select({ email: usersTable.email }).from(usersTable).where(eq(usersTable.id, trade.sellerId));
+  const [buyerUser] = await db.select({ email: usersTable.email }).from(usersTable).where(eq(usersTable.id, trade.buyerId));
+  const adminEmail = process.env.EMAIL_FROM ?? "realonabusinessexchange@gmail.com";
+  const isOpenerBuyer = req.userId === trade.buyerId;
+  if (sellerUser && buyerUser) {
+    emailDisputeOpened({
+      adminEmail,
+      buyerUsername: row.buyerUsername ?? "", sellerUsername: row.sellerUsername ?? "",
+      gameName: row.gameName ?? "", reason: parsed.data.reason, tradeId: trade.id,
+      openerEmail: isOpenerBuyer ? buyerUser.email : sellerUser.email,
+      openerUsername: isOpenerBuyer ? (row.buyerUsername ?? "") : (row.sellerUsername ?? ""),
+      otherEmail: isOpenerBuyer ? sellerUser.email : buyerUser.email,
+      otherUsername: isOpenerBuyer ? (row.sellerUsername ?? "") : (row.buyerUsername ?? ""),
+    }).catch(() => {});
+  }
+
   res.json(formatTrade(row.trade, { buyerUsername: row.buyerUsername, sellerUsername: row.sellerUsername, gameName: row.gameName, pictureUrl: row.pictureUrl }));
 });
 

@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import { db, withdrawalsTable, usersTable, tradesTable } from "@workspace/db";
 import { eq, sql, and, or } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
+import { emailWithdrawalRequested } from "../lib/email";
 import { RequestWithdrawalBody } from "@workspace/api-zod";
 
 const router: IRouter = Router();

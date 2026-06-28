@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import { db, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { hashPassword, comparePassword, signToken, requireAuth } from "../lib/auth";
+import { emailWelcome } from "../lib/email";
 import { RegisterBody, LoginBody } from "@workspace/api-zod";
 
 const router: IRouter = Router();
@@ -52,6 +53,7 @@ router.post("/auth/register", async (req, res): Promise<void> => {
     .returning();
 
   const token = signToken({ userId: user.id });
+  emailWelcome({ email: user.email, username: user.username }).catch(() => {});
   res.status(201).json({ user: formatUser(user), token });
 });
 

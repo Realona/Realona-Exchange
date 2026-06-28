@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import { db, usersTable, tradesTable, depositsTable, withdrawalsTable, reportsTable, listingsTable, tradeMessagesTable, platformConfigTable } from "@workspace/db";
 import { eq, sql, and, ilike, or } from "drizzle-orm";
 import { requireAdmin, requireSuperAdmin } from "../lib/auth";
+import { emailWithdrawalApproved, emailWithdrawalRejected } from "../lib/email";
 import {
   SuspendUserParams, SuspendUserBody,
   AdjustUserBalanceParams, AdjustUserBalanceBody,
