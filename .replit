@@ -1,4 +1,4 @@
-modules = ["nodejs-24"]
+modules = ["nodejs-24", "postgresql-16"]
 
 [deployment]
 router = "application"
@@ -18,3 +18,12 @@ expertMode = true
 [postMerge]
 path = "scripts/post-merge.sh"
 timeoutMs = 20000
+
+[nix]
+channel = "stable-25_05"
+
+[userenv]
+
+[userenv.shared]
+FLUTTERWAVE_PUBLIC_KEY = "26b95996-0653-48ad-846a-07b542d30594"
+FLUTTERWAVE_WEBHOOK_SECRET = "RealonaWebhook2026SecureKey123456789"
