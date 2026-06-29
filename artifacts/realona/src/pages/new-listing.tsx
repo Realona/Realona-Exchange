@@ -14,7 +14,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ShieldCheck } from "lucide-react";
 
 const schema = z.object({
-  gameName: z.string().min(2, "Game name required"),
+  gameName: z.string().default("eFootball"),
   price: z.coerce.number().positive("Price must be positive"),
   description: z.string().min(20, "Description must be at least 20 characters"),
   pictureUrl: z.string().url("Must be a valid URL").optional().or(z.literal("")),
@@ -33,7 +33,7 @@ export default function NewListing() {
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
-      gameName: "",
+      gameName: "eFootball",
       price: 0,
       description: "",
       pictureUrl: "",
@@ -71,8 +71,8 @@ export default function NewListing() {
   return (
     <Layout>
       <div className="container mx-auto px-4 py-8 max-w-2xl">
-        <h1 className="text-3xl font-bold mb-2">Sell a Game Account</h1>
-        <p className="text-muted-foreground mb-8">List your account and get paid securely through escrow.</p>
+        <h1 className="text-3xl font-bold mb-2">Sell Your eFootball Account</h1>
+        <p className="text-muted-foreground mb-8">List your eFootball account and get paid securely through escrow.</p>
 
         <div className="flex items-start gap-3 bg-green-500/10 border border-green-500/20 rounded-lg p-4 mb-6">
           <ShieldCheck className="w-5 h-5 text-green-500 mt-0.5 shrink-0" />
@@ -86,22 +86,13 @@ export default function NewListing() {
             <Card className="border-border bg-card">
               <CardHeader>
                 <CardTitle className="text-base">Account Details</CardTitle>
-                <CardDescription>Provide details about the game account you're selling.</CardDescription>
+                <CardDescription>Provide details about the eFootball account you're selling.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="gameName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Game Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g. PUBG Mobile, Free Fire, COD Mobile" {...field} className="bg-background" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="flex items-center gap-3 bg-primary/10 border border-primary/20 rounded-lg px-4 py-3">
+                  <span className="text-sm font-medium text-primary">Game:</span>
+                  <span className="font-bold text-foreground">eFootball</span>
+                </div>
                 <FormField
                   control={form.control}
                   name="price"
@@ -124,7 +115,7 @@ export default function NewListing() {
                       <FormLabel>Description</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="Describe your account in detail — level, skins, characters, achievements, etc."
+                          placeholder="Describe your eFootball account — GP level, squad rating, top players, division rank, coins, etc."
                           className="bg-background min-h-[120px]"
                           {...field}
                         />
@@ -186,7 +177,7 @@ export default function NewListing() {
             </Card>
 
             <Button type="submit" className="w-full h-12 text-base" disabled={createListing.isPending}>
-              {createListing.isPending ? "Creating listing..." : "Create Listing"}
+              {createListing.isPending ? "Creating listing..." : "List My eFootball Account"}
             </Button>
           </form>
         </Form>

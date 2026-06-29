@@ -27,19 +27,19 @@ export default function Home() {
           <div className="max-w-3xl">
             <Badge className="mb-4 bg-primary/10 text-primary border-primary/20">Secure Escrow Platform</Badge>
             <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight mb-6">
-              Trade Game Accounts <br/> <span className="text-primary">Without Risk.</span>
+              Trade eFootball Accounts <br/> <span className="text-primary">Without Risk.</span>
             </h1>
             <p className="text-lg text-muted-foreground mb-8 max-w-2xl leading-relaxed">
-              Realona is Nigeria's most trusted marketplace for buying and selling premium game accounts. Our strict escrow system guarantees that sellers get paid and buyers get what they paid for.
+              Realona is Nigeria's most trusted marketplace for buying and selling premium eFootball accounts. Our strict escrow system guarantees that sellers get paid and buyers get what they paid for.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Button size="lg" asChild className="text-base h-12 px-8">
-                <Link href={user ? "/listings/new" : "/login"}>Sell Account</Link>
+                <Link href={user ? "/listings/new" : "/login"}>Sell eFootball Account</Link>
               </Button>
               <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <Input 
-                  placeholder="Search for games (e.g. Valorant, Genshin)..." 
+                  placeholder="Search eFootball accounts..." 
                   className="h-12 pl-10 bg-background border-border text-base"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
@@ -60,7 +60,7 @@ export default function Home() {
               </div>
               <div>
                 <h3 className="font-semibold mb-1">100% Secure Escrow</h3>
-                <p className="text-sm text-muted-foreground">Funds are held safely until the buyer confirms full access to the account.</p>
+                <p className="text-sm text-muted-foreground">Funds are held safely until the buyer confirms full access to the eFootball account.</p>
               </div>
             </div>
             <div className="flex items-start gap-4">
@@ -90,8 +90,8 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-end mb-8">
             <div>
-              <h2 className="text-3xl font-bold mb-2">Active Listings</h2>
-              <p className="text-muted-foreground">Browse premium accounts available right now.</p>
+              <h2 className="text-3xl font-bold mb-2">eFootball Accounts For Sale</h2>
+              <p className="text-muted-foreground">Browse premium eFootball accounts listed by verified sellers.</p>
             </div>
           </div>
 
@@ -147,10 +147,10 @@ export default function Home() {
             </div>
           ) : (
             <div className="text-center py-20 border border-dashed border-border rounded-lg bg-card/50">
-              <h3 className="text-xl font-semibold mb-2">No listings found</h3>
-              <p className="text-muted-foreground mb-6">Be the first to list an account!</p>
+              <h3 className="text-xl font-semibold mb-2">No listings yet</h3>
+              <p className="text-muted-foreground mb-6">Be the first to list your eFootball account!</p>
               <Button asChild>
-                <Link href="/listings/new">Sell an Account</Link>
+                <Link href="/listings/new">Sell My eFootball Account</Link>
               </Button>
             </div>
           )}
