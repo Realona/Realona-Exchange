@@ -164,6 +164,11 @@ export const GetListingsResponse = zod.array(GetListingsResponseItem)
 /**
  * @summary Create a new listing
  */
+export const createListingBodySquadRatingMin = 2000;
+export const createListingBodySquadRatingMax = 5000;
+
+
+
 export const CreateListingBody = zod.object({
   "gameName": zod.string(),
   "price": zod.number(),
@@ -172,7 +177,7 @@ export const CreateListingBody = zod.object({
   "accountEmail": zod.string().optional(),
   "accountPassword": zod.string().optional(),
   "divisionRank": zod.string().optional(),
-  "squadRating": zod.number().optional()
+  "squadRating": zod.number().min(createListingBodySquadRatingMin).max(createListingBodySquadRatingMax).optional()
 })
 
 export const CreateListingResponse = zod.object({
@@ -936,5 +941,35 @@ export const FlutterwaveWebhookResponse = zod.object({
   "success": zod.boolean(),
   "message": zod.string().nullish()
 })
+
+
+/**
+ * @summary Request a presigned URL for file upload
+ */
+
+
+
+
+
+export const RequestUploadUrlBody = zod.object({
+  "name": zod.string().min(1),
+  "size": zod.number().min(1),
+  "contentType": zod.string().min(1)
+})
+
+export const RequestUploadUrlResponse = zod.object({
+  "uploadURL": zod.string().url(),
+  "objectPath": zod.string()
+})
+
+
+/**
+ * @summary Serve an uploaded object
+ */
+export const GetStorageObjectParams = zod.object({
+  "objectPath": zod.coerce.string()
+})
+
+export const GetStorageObjectResponse = zod.unknown()
 
 

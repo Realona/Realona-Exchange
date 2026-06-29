@@ -10,6 +10,7 @@ import withdrawalsRouter from "./withdrawals";
 import reportsRouter from "./reports";
 import adminRouter from "./admin";
 import webhooksRouter from "./webhooks";
+import storageRouter from "./storage";
 
 const router: IRouter = Router();
 
@@ -24,5 +25,6 @@ router.use(withdrawalsRouter);
 router.use(reportsRouter);
 router.use(adminRouter);
 router.use(webhooksRouter);
+router.use(storageRouter);
 
 export default router;

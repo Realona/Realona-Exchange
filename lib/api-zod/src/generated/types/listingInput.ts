@@ -14,5 +14,9 @@ export interface ListingInput {
   accountEmail?: string;
   accountPassword?: string;
   divisionRank?: string;
+  /**
+     * @minimum 2000
+     * @maximum 5000
+     */
   squadRating?: number;
 }

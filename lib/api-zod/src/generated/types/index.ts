@@ -40,6 +40,8 @@ export * from './trade';
 export * from './tradeInput';
 export * from './tradeMessage';
 export * from './tradeStatus';
+export * from './uploadUrlRequest';
+export * from './uploadUrlResponse';
 export * from './user';
 export * from './userPublic';
 export * from './virtualAccount';
