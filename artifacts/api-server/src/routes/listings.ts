@@ -17,6 +17,8 @@ function formatListing(listing: typeof listingsTable.$inferSelect, sellerUsernam
     pictureUrl: listing.pictureUrl ?? null,
     accountEmail: listing.accountEmail ?? null,
     accountPassword: listing.accountPassword ?? null,
+    divisionRank: listing.divisionRank ?? null,
+    squadRating: listing.squadRating ?? null,
     status: listing.status,
     createdAt: listing.createdAt,
   };
@@ -40,6 +42,9 @@ router.get("/listings", async (req, res): Promise<void> => {
   if (q.game) conditions.push(ilike(listingsTable.gameName, `%${q.game}%`));
   if (q.minPrice !== undefined) conditions.push(gte(sql`${listingsTable.price}::numeric`, sql`${q.minPrice}`));
   if (q.maxPrice !== undefined) conditions.push(lte(sql`${listingsTable.price}::numeric`, sql`${q.maxPrice}`));
+  if (q.divisionRank) conditions.push(eq(listingsTable.divisionRank, q.divisionRank));
+  if (q.minSquadRating !== undefined) conditions.push(gte(listingsTable.squadRating, q.minSquadRating));
+  if (q.maxSquadRating !== undefined) conditions.push(lte(listingsTable.squadRating, q.maxSquadRating));
 
   const rows = await query.where(and(...conditions)).orderBy(sql`${listingsTable.createdAt} DESC`);
 
@@ -63,6 +68,8 @@ router.post("/listings", requireAuth, async (req, res): Promise<void> => {
       pictureUrl: parsed.data.pictureUrl ?? null,
       accountEmail: parsed.data.accountEmail ?? null,
       accountPassword: parsed.data.accountPassword ?? null,
+      divisionRank: parsed.data.divisionRank ?? null,
+      squadRating: parsed.data.squadRating ?? null,
     })
     .returning();
 

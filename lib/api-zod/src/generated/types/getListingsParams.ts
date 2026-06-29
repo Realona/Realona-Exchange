@@ -11,4 +11,7 @@ search?: string;
 game?: string;
 minPrice?: number;
 maxPrice?: number;
+divisionRank?: string;
+minSquadRating?: number;
+maxSquadRating?: number;
 };

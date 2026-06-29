@@ -12,6 +12,8 @@ export const listingsTable = pgTable("listings", {
   pictureUrl: text("picture_url"),
   accountEmail: text("account_email"),
   accountPassword: text("account_password"),
+  divisionRank: text("division_rank"),       // e.g. "Division 1"
+  squadRating: integer("squad_rating"),      // 1–99
   status: text("status").notNull().default("active"), // active, sold, deleted
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),

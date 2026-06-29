@@ -7,11 +7,25 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCreateListing } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { ShieldCheck } from "lucide-react";
+
+export const EFOOTBALL_DIVISIONS = [
+  "Division 1",
+  "Division 2",
+  "Division 3",
+  "Division 4",
+  "Division 5",
+  "Division 6",
+  "Division 7",
+  "Division 8",
+  "Division 9",
+  "Division 10",
+];
 
 const schema = z.object({
   gameName: z.string().default("eFootball"),
@@ -20,6 +34,8 @@ const schema = z.object({
   pictureUrl: z.string().url("Must be a valid URL").optional().or(z.literal("")),
   accountEmail: z.string().email("Must be a valid email").optional().or(z.literal("")),
   accountPassword: z.string().optional().or(z.literal("")),
+  divisionRank: z.string().optional().or(z.literal("")),
+  squadRating: z.coerce.number().int().min(1).max(99).optional().or(z.literal("")),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -39,6 +55,8 @@ export default function NewListing() {
       pictureUrl: "",
       accountEmail: "",
       accountPassword: "",
+      divisionRank: "",
+      squadRating: "",
     },
   });
 
@@ -47,18 +65,20 @@ export default function NewListing() {
       {
         data: {
           gameName: data.gameName,
-          price: data.price,
+          price: data.price as number,
           description: data.description,
           pictureUrl: data.pictureUrl || undefined,
           accountEmail: data.accountEmail || undefined,
           accountPassword: data.accountPassword || undefined,
+          divisionRank: data.divisionRank || undefined,
+          squadRating: data.squadRating ? Number(data.squadRating) : undefined,
         },
       },
       {
         onSuccess: (listing) => {
-          toast({ title: "Listing created!", description: "Your account is now live on the marketplace." });
+          toast({ title: "Listing created!", description: "Your eFootball account is now live on the marketplace." });
           queryClient.invalidateQueries({ queryKey: ["getListings"] });
-          queryClient.invalidateQueries({ queryKey: ["getListingsMy"] });
+          queryClient.invalidateQueries({ queryKey: ["getMyListings"] });
           setLocation(`/listings/${listing.id}`);
         },
         onError: (err: any) => {
@@ -83,16 +103,71 @@ export default function NewListing() {
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+
+            {/* Account Details */}
             <Card className="border-border bg-card">
               <CardHeader>
                 <CardTitle className="text-base">Account Details</CardTitle>
                 <CardDescription>Provide details about the eFootball account you're selling.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+
+                {/* Game locked */}
                 <div className="flex items-center gap-3 bg-primary/10 border border-primary/20 rounded-lg px-4 py-3">
                   <span className="text-sm font-medium text-primary">Game:</span>
                   <span className="font-bold text-foreground">eFootball</span>
                 </div>
+
+                {/* Division & Squad Rating side by side */}
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="divisionRank"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Division Rank</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value as string}>
+                          <FormControl>
+                            <SelectTrigger className="bg-background">
+                              <SelectValue placeholder="Select division" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {EFOOTBALL_DIVISIONS.map(d => (
+                              <SelectItem key={d} value={d}>{d}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormDescription className="text-xs">Division 1 = highest</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="squadRating"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Squad Rating</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min="1"
+                            max="99"
+                            placeholder="e.g. 85"
+                            className="bg-background"
+                            {...field}
+                            value={field.value as string}
+                          />
+                        </FormControl>
+                        <FormDescription className="text-xs">Overall squad strength (1–99)</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
                 <FormField
                   control={form.control}
                   name="price"
@@ -107,6 +182,7 @@ export default function NewListing() {
                     </FormItem>
                   )}
                 />
+
                 <FormField
                   control={form.control}
                   name="description"
@@ -115,7 +191,7 @@ export default function NewListing() {
                       <FormLabel>Description</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="Describe your eFootball account — GP level, squad rating, top players, division rank, coins, etc."
+                          placeholder="Describe your eFootball account — GP coins, top players, squad rating, division history, special achievements, etc."
                           className="bg-background min-h-[120px]"
                           {...field}
                         />
@@ -124,16 +200,17 @@ export default function NewListing() {
                     </FormItem>
                   )}
                 />
+
                 <FormField
                   control={form.control}
                   name="pictureUrl"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Screenshot URL (optional)</FormLabel>
+                      <FormLabel>Screenshot URL <span className="text-muted-foreground font-normal">(optional)</span></FormLabel>
                       <FormControl>
                         <Input type="url" placeholder="https://..." {...field} className="bg-background" />
                       </FormControl>
-                      <FormDescription>Link to a screenshot showing your account. Use Imgur, Cloudinary, etc.</FormDescription>
+                      <FormDescription>Link to a screenshot of your squad or account stats. Use Imgur or similar.</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -141,6 +218,7 @@ export default function NewListing() {
               </CardContent>
             </Card>
 
+            {/* Account Credentials */}
             <Card className="border-border bg-card">
               <CardHeader>
                 <CardTitle className="text-base">Account Credentials</CardTitle>
@@ -154,7 +232,7 @@ export default function NewListing() {
                     <FormItem>
                       <FormLabel>Account Email</FormLabel>
                       <FormControl>
-                        <Input type="email" placeholder="gameemail@example.com" {...field} className="bg-background" />
+                        <Input type="email" placeholder="efootball@example.com" {...field} className="bg-background" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

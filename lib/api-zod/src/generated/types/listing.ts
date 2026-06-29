@@ -21,6 +21,10 @@ export interface Listing {
   accountEmail?: string | null;
   /** @nullable */
   accountPassword?: string | null;
+  /** @nullable */
+  divisionRank?: string | null;
+  /** @nullable */
+  squadRating?: number | null;
   status: ListingStatus;
   createdAt: Date;
 }

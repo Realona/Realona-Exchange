@@ -137,7 +137,10 @@ export const GetListingsQueryParams = zod.object({
   "search": zod.coerce.string().optional(),
   "game": zod.coerce.string().optional(),
   "minPrice": zod.coerce.number().optional(),
-  "maxPrice": zod.coerce.number().optional()
+  "maxPrice": zod.coerce.number().optional(),
+  "divisionRank": zod.coerce.string().optional(),
+  "minSquadRating": zod.coerce.number().optional(),
+  "maxSquadRating": zod.coerce.number().optional()
 })
 
 export const GetListingsResponseItem = zod.object({
@@ -150,6 +153,8 @@ export const GetListingsResponseItem = zod.object({
   "pictureUrl": zod.string().nullish(),
   "accountEmail": zod.string().nullish(),
   "accountPassword": zod.string().nullish(),
+  "divisionRank": zod.string().nullish(),
+  "squadRating": zod.number().nullish(),
   "status": zod.enum(['active', 'sold', 'deleted']),
   "createdAt": zod.coerce.date()
 })
@@ -165,7 +170,9 @@ export const CreateListingBody = zod.object({
   "description": zod.string(),
   "pictureUrl": zod.string().optional(),
   "accountEmail": zod.string().optional(),
-  "accountPassword": zod.string().optional()
+  "accountPassword": zod.string().optional(),
+  "divisionRank": zod.string().optional(),
+  "squadRating": zod.number().optional()
 })
 
 export const CreateListingResponse = zod.object({
@@ -178,6 +185,8 @@ export const CreateListingResponse = zod.object({
   "pictureUrl": zod.string().nullish(),
   "accountEmail": zod.string().nullish(),
   "accountPassword": zod.string().nullish(),
+  "divisionRank": zod.string().nullish(),
+  "squadRating": zod.number().nullish(),
   "status": zod.enum(['active', 'sold', 'deleted']),
   "createdAt": zod.coerce.date()
 })
@@ -196,6 +205,8 @@ export const GetMyListingsResponseItem = zod.object({
   "pictureUrl": zod.string().nullish(),
   "accountEmail": zod.string().nullish(),
   "accountPassword": zod.string().nullish(),
+  "divisionRank": zod.string().nullish(),
+  "squadRating": zod.number().nullish(),
   "status": zod.enum(['active', 'sold', 'deleted']),
   "createdAt": zod.coerce.date()
 })
@@ -219,6 +230,8 @@ export const GetListingResponse = zod.object({
   "pictureUrl": zod.string().nullish(),
   "accountEmail": zod.string().nullish(),
   "accountPassword": zod.string().nullish(),
+  "divisionRank": zod.string().nullish(),
+  "squadRating": zod.number().nullish(),
   "status": zod.enum(['active', 'sold', 'deleted']),
   "createdAt": zod.coerce.date()
 })
@@ -249,6 +262,8 @@ export const UpdateListingResponse = zod.object({
   "pictureUrl": zod.string().nullish(),
   "accountEmail": zod.string().nullish(),
   "accountPassword": zod.string().nullish(),
+  "divisionRank": zod.string().nullish(),
+  "squadRating": zod.number().nullish(),
   "status": zod.enum(['active', 'sold', 'deleted']),
   "createdAt": zod.coerce.date()
 })

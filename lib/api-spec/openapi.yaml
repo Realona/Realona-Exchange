@@ -185,6 +185,18 @@ paths:
           in: query
           schema:
             type: number
+        - name: divisionRank
+          in: query
+          schema:
+            type: string
+        - name: minSquadRating
+          in: query
+          schema:
+            type: integer
+        - name: maxSquadRating
+          in: query
+          schema:
+            type: integer
       responses:
         "200":
           description: OK
@@ -1001,6 +1013,10 @@ components:
           type: ["string", "null"]
         accountPassword:
           type: ["string", "null"]
+        divisionRank:
+          type: ["string", "null"]
+        squadRating:
+          type: ["integer", "null"]
         status:
           type: string
           enum: [active, sold, deleted]
@@ -1024,6 +1040,10 @@ components:
           type: string
         accountPassword:
           type: string
+        divisionRank:
+          type: string
+        squadRating:
+          type: integer
 
     ListingUpdate:
       type: object

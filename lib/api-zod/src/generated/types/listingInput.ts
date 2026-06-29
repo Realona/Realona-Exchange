@@ -13,4 +13,6 @@ export interface ListingInput {
   pictureUrl?: string;
   accountEmail?: string;
   accountPassword?: string;
+  divisionRank?: string;
+  squadRating?: number;
 }

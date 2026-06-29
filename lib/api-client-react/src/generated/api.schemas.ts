@@ -95,6 +95,10 @@ export interface Listing {
   accountEmail?: string | null;
   /** @nullable */
   accountPassword?: string | null;
+  /** @nullable */
+  divisionRank?: string | null;
+  /** @nullable */
+  squadRating?: number | null;
   status: ListingStatus;
   createdAt: string;
 }
@@ -106,6 +110,8 @@ export interface ListingInput {
   pictureUrl?: string;
   accountEmail?: string;
   accountPassword?: string;
+  divisionRank?: string;
+  squadRating?: number;
 }
 
 export interface ListingUpdate {
@@ -325,6 +331,9 @@ search?: string;
 game?: string;
 minPrice?: number;
 maxPrice?: number;
+divisionRank?: string;
+minSquadRating?: number;
+maxSquadRating?: number;
 };
 
 export type GetAdminUsersParams = {
