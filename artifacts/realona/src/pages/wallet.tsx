@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useGetWalletBalance, useGetVirtualAccount, useGetDeposits, useGetWithdrawals, useRequestWithdrawal } from "@workspace/api-client-react";
 import { formatNaira } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { Copy, Wallet, ArrowDownCircle, ArrowUpCircle, Building2, CheckCircle } from "lucide-react";
+import { Copy, Wallet, ArrowDownCircle, ArrowUpCircle, Building2, CheckCircle, AlertCircle, Info } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
 export default function WalletPage() {
@@ -99,6 +99,24 @@ export default function WalletPage() {
                 <CardDescription>Transfer money to this account number to fund your Realona wallet. Deposits reflect within 5 minutes.</CardDescription>
               </CardHeader>
               <CardContent>
+                {/* Fee notices */}
+                <div className="space-y-3 mb-5">
+                  <div className="flex gap-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3">
+                    <AlertCircle className="w-4 h-4 text-yellow-500 shrink-0 mt-0.5" />
+                    <p className="text-sm text-yellow-600 dark:text-yellow-400">
+                      <strong>₦50 service charge</strong> is deducted from every deposit. Minimum deposit is <strong>₦1,000</strong>.
+                      Always deposit <strong>₦50 more</strong> than the amount you need in your wallet.
+                    </p>
+                  </div>
+                  <div className="flex gap-3 bg-blue-500/10 border border-blue-500/30 rounded-lg p-3">
+                    <Info className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
+                    <p className="text-sm text-blue-600 dark:text-blue-400">
+                      Example: To have <strong>₦5,000</strong> available, deposit <strong>₦5,050</strong>.
+                      To buy a <strong>₦15,000</strong> account, deposit <strong>₦15,050</strong>.
+                    </p>
+                  </div>
+                </div>
+
                 {vaLoading ? (
                   <div className="h-32 animate-pulse bg-muted rounded-lg" />
                 ) : va ? (

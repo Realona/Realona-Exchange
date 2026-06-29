@@ -20,6 +20,7 @@ import AdminTrades from "@/pages/admin/trades";
 import AdminWithdrawals from "@/pages/admin/withdrawals";
 import AdminReports from "@/pages/admin/reports";
 import AdminSettings from "@/pages/admin/settings";
+import HowItWorks from "@/pages/how-it-works";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -79,6 +80,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/how-it-works" component={HowItWorks} />
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
       <Route path="/dashboard">

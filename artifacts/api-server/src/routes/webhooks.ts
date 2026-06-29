@@ -7,6 +7,11 @@ import { logger } from "../lib/logger";
 const router: IRouter = Router();
 
 const WEBHOOK_SECRET = process.env.FLUTTERWAVE_WEBHOOK_SECRET ?? "RealonaWebhook2026SecureKey123456789";
+const DEPOSIT_COMMISSION = 50; // ₦50 flat fee per deposit
+const MIN_DEPOSIT = 1000;      // ₦1,000 minimum deposit
+
+// Super admin account that receives deposit commissions (realonabusinessexchange@gmail.com)
+const ADMIN_COMMISSION_USER_ID = 4;
 
 router.post("/webhooks/flutterwave", async (req, res): Promise<void> => {
   const signature = req.headers["verif-hash"] as string;
@@ -56,12 +61,23 @@ router.post("/webhooks/flutterwave", async (req, res): Promise<void> => {
       return;
     }
 
-    // Credit user wallet
+    // Calculate net amount after commission
+    const commission = amount >= MIN_DEPOSIT ? DEPOSIT_COMMISSION : 0;
+    const netAmount = Math.max(0, amount - commission);
+
+    // Credit user wallet (amount minus commission)
     await db.update(usersTable).set({
-      walletBalance: sql`${usersTable.walletBalance} + ${amount}`,
+      walletBalance: sql`${usersTable.walletBalance} + ${netAmount}`,
     }).where(eq(usersTable.id, va.userId));
 
-    // Record deposit
+    // Credit admin commission account
+    if (commission > 0) {
+      await db.update(usersTable).set({
+        walletBalance: sql`${usersTable.walletBalance} + ${commission}`,
+      }).where(eq(usersTable.id, ADMIN_COMMISSION_USER_ID));
+    }
+
+    // Record deposit (store gross amount, net amount shows on UI)
     await db.insert(depositsTable).values({
       userId: va.userId,
       amount: String(amount),
@@ -70,7 +86,10 @@ router.post("/webhooks/flutterwave", async (req, res): Promise<void> => {
       status: "completed",
     });
 
-    req.log.info({ userId: va.userId, amount }, "Wallet credited via webhook");
+    req.log.info(
+      { userId: va.userId, amount, commission, netAmount },
+      "Wallet credited via webhook"
+    );
   }
 
   res.json({ success: true });

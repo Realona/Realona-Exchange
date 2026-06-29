@@ -12,7 +12,8 @@ import { useCreateListing } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
-import { ShieldCheck } from "lucide-react";
+import { ShieldCheck, ImageIcon } from "lucide-react";
+import { useState } from "react";
 
 export const EFOOTBALL_DIVISIONS = [
   "Division 1",
@@ -45,6 +46,7 @@ export default function NewListing() {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const createListing = useCreateListing();
+  const [picturePreview, setPicturePreview] = useState("");
 
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -206,11 +208,37 @@ export default function NewListing() {
                   name="pictureUrl"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Screenshot URL <span className="text-muted-foreground font-normal">(optional)</span></FormLabel>
+                      <FormLabel>Account Picture <span className="text-muted-foreground font-normal">(optional)</span></FormLabel>
                       <FormControl>
-                        <Input type="url" placeholder="https://..." {...field} className="bg-background" />
+                        <Input
+                          type="url"
+                          placeholder="Paste image URL (e.g. from Imgur, Cloudinary)"
+                          className="bg-background"
+                          {...field}
+                          onChange={e => {
+                            field.onChange(e);
+                            setPicturePreview(e.target.value);
+                          }}
+                        />
                       </FormControl>
-                      <FormDescription>Link to a screenshot of your squad or account stats. Use Imgur or similar.</FormDescription>
+                      <FormDescription>
+                        Upload your screenshot to <a href="https://imgur.com/upload" target="_blank" rel="noreferrer" className="text-primary underline underline-offset-2">Imgur</a> for free, then paste the link here.
+                      </FormDescription>
+                      {picturePreview ? (
+                        <div className="mt-2 rounded-lg overflow-hidden border border-border bg-muted aspect-video relative">
+                          <img
+                            src={picturePreview}
+                            alt="Account preview"
+                            className="w-full h-full object-cover"
+                            onError={() => setPicturePreview("")}
+                          />
+                        </div>
+                      ) : (
+                        <div className="mt-2 rounded-lg border border-dashed border-border bg-muted/40 aspect-video flex flex-col items-center justify-center gap-2 text-muted-foreground">
+                          <ImageIcon className="w-8 h-8 opacity-40" />
+                          <p className="text-xs">Picture preview will appear here</p>
+                        </div>
+                      )}
                       <FormMessage />
                     </FormItem>
                   )}

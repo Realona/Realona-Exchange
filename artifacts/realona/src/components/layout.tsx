@@ -82,6 +82,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
       <footer className="border-t border-border bg-card py-8 mt-12">
         <div className="container mx-auto px-4 text-center text-muted-foreground text-sm flex flex-col gap-2">
+          <div className="flex items-center justify-center gap-6 mb-2">
+            <a href="/how-it-works" className="hover:text-primary transition-colors text-xs">How It Works</a>
+            <span className="text-xs opacity-40">·</span>
+            <a href="/how-it-works" className="hover:text-primary transition-colors text-xs">Fees & Charges</a>
+          </div>
           <p>© {new Date().getFullYear()} Realona Exchange. Secure Escrow Trading.</p>
           <p className="text-xs">Nigeria's premier eFootball account marketplace.</p>
         </div>
