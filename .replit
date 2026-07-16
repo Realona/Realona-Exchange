@@ -28,3 +28,6 @@ channel = "stable-25_05"
 FLUTTERWAVE_PUBLIC_KEY = "26b95996-0653-48ad-846a-07b542d30594"
 FLUTTERWAVE_WEBHOOK_SECRET = "RealonaWebhook2026SecureKey123456789"
 EMAIL_FROM = "realonabusinessexchange@gmail.com"
+
+[objectStorage]
+defaultBucketID = "replit-objstore-d7986494-a8ef-4b25-97da-c5693bc4d02f"
