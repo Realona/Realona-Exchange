@@ -12,8 +12,9 @@ import { useCreateListing } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
-import { ShieldCheck, ImageIcon } from "lucide-react";
-import { useState } from "react";
+import { ShieldCheck, ImageIcon, Upload, CheckCircle, Loader2, X } from "lucide-react";
+import { useRef, useState } from "react";
+import { useUpload } from "@workspace/object-storage-web";
 
 export const EFOOTBALL_DIVISIONS = [
   "Division 1",
@@ -32,11 +33,11 @@ const schema = z.object({
   gameName: z.string().default("eFootball"),
   price: z.coerce.number().positive("Price must be positive"),
   description: z.string().min(20, "Description must be at least 20 characters"),
-  pictureUrl: z.string().url("Must be a valid URL").optional().or(z.literal("")),
+  pictureUrl: z.string().optional().or(z.literal("")),
   accountEmail: z.string().email("Must be a valid email").optional().or(z.literal("")),
   accountPassword: z.string().optional().or(z.literal("")),
   divisionRank: z.string().optional().or(z.literal("")),
-  squadRating: z.coerce.number().int().min(1).max(99).optional().or(z.literal("")),
+  squadRating: z.coerce.number().int().min(2000).max(5000).optional().or(z.literal("")),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -46,7 +47,23 @@ export default function NewListing() {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const createListing = useCreateListing();
-  const [picturePreview, setPicturePreview] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadedUrl, setUploadedUrl] = useState("");
+  const [uploadedFileName, setUploadedFileName] = useState("");
+
+  const { uploadFile, isUploading, error: uploadError } = useUpload({
+    basePath: "/api/storage",
+    onSuccess: (response) => {
+      // Build the URL to serve the uploaded file
+      const serveUrl = `/api/storage/objects${response.objectPath.replace(/^\/objects/, "")}`;
+      setUploadedUrl(serveUrl);
+      form.setValue("pictureUrl", serveUrl);
+      toast({ title: "Screenshot uploaded!", description: "Your screenshot is ready." });
+    },
+    onError: (err) => {
+      toast({ title: "Upload failed", description: err.message, variant: "destructive" });
+    },
+  });
 
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -61,6 +78,26 @@ export default function NewListing() {
       squadRating: "",
     },
   });
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    // Accept only image files
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Invalid file", description: "Please select an image file.", variant: "destructive" });
+      return;
+    }
+    setUploadedFileName(file.name);
+    await uploadFile(file);
+    // Reset input so same file can be re-selected if needed
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const clearUpload = () => {
+    setUploadedUrl("");
+    setUploadedFileName("");
+    form.setValue("pictureUrl", "");
+  };
 
   const onSubmit = (data: FormData) => {
     createListing.mutate(
@@ -99,7 +136,7 @@ export default function NewListing() {
         <div className="flex items-start gap-3 bg-green-500/10 border border-green-500/20 rounded-lg p-4 mb-6">
           <ShieldCheck className="w-5 h-5 text-green-500 mt-0.5 shrink-0" />
           <p className="text-sm text-green-600 dark:text-green-400">
-            Account credentials you provide are <strong>only revealed to the buyer after payment is confirmed in escrow</strong>. You are protected.
+            Your Konami ID and password are <strong>100% safe on our platform</strong>. They are encrypted and hidden from everyone until a buyer pays. Only after we confirm the buyer's payment do we share your credentials — and you remain in control until the buyer confirms access. We have 24/7 admin support.
           </p>
         </div>
 
@@ -155,15 +192,15 @@ export default function NewListing() {
                         <FormControl>
                           <Input
                             type="number"
-                            min="1"
-                            max="99"
-                            placeholder="e.g. 85"
+                            min="2000"
+                            max="5000"
+                            placeholder="e.g. 3500"
                             className="bg-background"
                             {...field}
                             value={field.value as string}
                           />
                         </FormControl>
-                        <FormDescription className="text-xs">Overall squad strength (1–99)</FormDescription>
+                        <FormDescription className="text-xs">Overall squad strength (2000–5000)</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -179,7 +216,7 @@ export default function NewListing() {
                       <FormControl>
                         <Input type="number" min="100" step="1" placeholder="e.g. 15000" {...field} className="bg-background" />
                       </FormControl>
-                      <FormDescription>You'll receive the price minus our 2.5% platform fee.</FormDescription>
+                      <FormDescription>You'll receive the price minus our 4% platform fee.</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -203,41 +240,78 @@ export default function NewListing() {
                   )}
                 />
 
+                {/* Screenshot Upload */}
                 <FormField
                   control={form.control}
                   name="pictureUrl"
-                  render={({ field }) => (
+                  render={() => (
                     <FormItem>
-                      <FormLabel>Account Picture <span className="text-muted-foreground font-normal">(optional)</span></FormLabel>
-                      <FormControl>
-                        <Input
-                          type="url"
-                          placeholder="Paste image URL (e.g. from Imgur, Cloudinary)"
-                          className="bg-background"
-                          {...field}
-                          onChange={e => {
-                            field.onChange(e);
-                            setPicturePreview(e.target.value);
-                          }}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Upload your screenshot to <a href="https://imgur.com/upload" target="_blank" rel="noreferrer" className="text-primary underline underline-offset-2">Imgur</a> for free, then paste the link here.
-                      </FormDescription>
-                      {picturePreview ? (
-                        <div className="mt-2 rounded-lg overflow-hidden border border-border bg-muted aspect-video relative">
-                          <img
-                            src={picturePreview}
-                            alt="Account preview"
-                            className="w-full h-full object-cover"
-                            onError={() => setPicturePreview("")}
-                          />
+                      <FormLabel>Account Screenshot <span className="text-muted-foreground font-normal">(optional)</span></FormLabel>
+
+                      {/* Hidden file input */}
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleFileChange}
+                      />
+
+                      {uploadedUrl ? (
+                        /* Uploaded state */
+                        <div className="space-y-2">
+                          <div className="relative rounded-lg overflow-hidden border border-border bg-muted aspect-video">
+                            <img
+                              src={uploadedUrl}
+                              alt="Account screenshot"
+                              className="w-full h-full object-cover"
+                              onError={() => {
+                                // If image fails to load, show placeholder
+                              }}
+                            />
+                            <button
+                              type="button"
+                              onClick={clearUpload}
+                              className="absolute top-2 right-2 bg-black/60 hover:bg-black/80 text-white rounded-full p-1 transition-colors"
+                              aria-label="Remove screenshot"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
+                            <CheckCircle className="w-4 h-4" />
+                            <span>{uploadedFileName || "Screenshot uploaded"}</span>
+                          </div>
                         </div>
                       ) : (
-                        <div className="mt-2 rounded-lg border border-dashed border-border bg-muted/40 aspect-video flex flex-col items-center justify-center gap-2 text-muted-foreground">
-                          <ImageIcon className="w-8 h-8 opacity-40" />
-                          <p className="text-xs">Picture preview will appear here</p>
-                        </div>
+                        /* Upload prompt */
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={isUploading}
+                          className="w-full rounded-lg border-2 border-dashed border-border bg-muted/40 hover:bg-muted/70 hover:border-primary/50 aspect-video flex flex-col items-center justify-center gap-3 text-muted-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {isUploading ? (
+                            <>
+                              <Loader2 className="w-8 h-8 opacity-60 animate-spin" />
+                              <p className="text-sm font-medium">Uploading screenshot...</p>
+                            </>
+                          ) : (
+                            <>
+                              <div className="p-3 rounded-full bg-primary/10">
+                                <Upload className="w-6 h-6 text-primary" />
+                              </div>
+                              <div className="text-center">
+                                <p className="text-sm font-medium text-foreground">Click to upload screenshot</p>
+                                <p className="text-xs mt-0.5">PNG, JPG, WEBP up to 10MB</p>
+                              </div>
+                            </>
+                          )}
+                        </button>
+                      )}
+
+                      {uploadError && (
+                        <p className="text-sm text-destructive">{uploadError.message}</p>
                       )}
                       <FormMessage />
                     </FormItem>
@@ -250,7 +324,7 @@ export default function NewListing() {
             <Card className="border-border bg-card">
               <CardHeader>
                 <CardTitle className="text-base">Account Credentials</CardTitle>
-                <CardDescription>Optional but recommended. These are held securely and only shown to the buyer after escrow payment.</CardDescription>
+                <CardDescription>Optional but recommended. These are held securely and only shown to the buyer after escrow payment is confirmed.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <FormField
@@ -258,10 +332,11 @@ export default function NewListing() {
                   name="accountEmail"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Account Email</FormLabel>
+                      <FormLabel>Konami ID (Email / Username)</FormLabel>
                       <FormControl>
-                        <Input type="email" placeholder="efootball@example.com" {...field} className="bg-background" />
+                        <Input type="email" placeholder="konami@example.com" {...field} className="bg-background" />
                       </FormControl>
+                      <FormDescription className="text-xs">The email or username used to log in to eFootball</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -271,9 +346,9 @@ export default function NewListing() {
                   name="accountPassword"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Account Password</FormLabel>
+                      <FormLabel>Konami Password</FormLabel>
                       <FormControl>
-                        <Input type="text" placeholder="Current password" {...field} className="bg-background" />
+                        <Input type="text" placeholder="Current account password" {...field} className="bg-background" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -282,7 +357,7 @@ export default function NewListing() {
               </CardContent>
             </Card>
 
-            <Button type="submit" className="w-full h-12 text-base" disabled={createListing.isPending}>
+            <Button type="submit" className="w-full h-12 text-base" disabled={createListing.isPending || isUploading}>
               {createListing.isPending ? "Creating listing..." : "List My eFootball Account"}
             </Button>
           </form>

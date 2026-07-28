@@ -1,0 +1,695 @@
+Realona Exchange – Complete Platform Description (Final Version with Moniepoint Integration)
+
+---
+ Don't forget the negotiation part in the trade process, where buyer can negotiate about the price with the seller
+
+💳 PAYMENT SYSTEM – MONIEPOINT MANUAL ESCROW WITH PENDING DEPOSITS
+
+Overview
+
+Realona Exchange uses a manual escrow system powered by Moniepoint Business Banking. The system tracks user deposit requests and allows admin to confirm payments manually, then automatically credits the user's wallet.
+
+Moniepoint Account Details
+
+Detail Information
+Bank Moniepoint MFB
+Account Number 9160385331
+Account Name Olukoya Kolade (Realona Exchange)
+
+---
+
+Deposit Process (User View)
+
+Step Action
+1 User goes to Dashboard → Clicks "Deposit" button
+2 System displays Moniepoint account details: 9160385331, Olukoya Kolade
+3 User enters the amount they want to deposit
+4 User clicks "Submit Deposit Request"
+5 System creates a "Pending Deposit" record
+6 System shows: "Deposit request submitted. Please transfer to the account above."
+7 User transfers money to Moniepoint account 9160385331
+8 User waits for admin confirmation
+9 Admin confirms → System credits wallet automatically ✅
+10 User receives notification: "Deposit confirmed!"
+
+---
+
+Deposit Process (Admin View)
+
+Step Action
+1 Admin logs in → Goes to Admin Panel
+2 Admin sees "Pending Deposits" section
+3 Pending deposits show: User, Amount, Date, Status
+4 Admin opens Moniepoint app → Checks account 9160385331
+5 Admin confirms the payment has been received
+6 Admin clicks "Confirm Deposit" button
+7 System automatically credits user's wallet
+8 System updates deposit status to "Completed"
+9 User receives notification: "Your wallet has been credited!"
+
+---
+
+Withdrawal Process
+
+Step Action
+1 User goes to Dashboard → Clicks "Withdraw"
+2 User enters: Bank Name, Account Number, Account Name, Amount
+3 User clicks "Submit Withdrawal Request"
+4 Admin receives notification of pending withdrawal
+5 Admin opens Moniepoint app → Transfers amount from 9160385331 to user's bank
+6 Admin clicks "Confirm Withdrawal"
+7 System deducts from user's wallet
+8 User receives notification: "Withdrawal successful!"
+
+---
+
+1. CANCEL TRADE FEATURE
+
+Backend Logic
+
+· A trade can only be cancelled if its status is "pending" (payment not yet made)
+· When cancelled:
+  · Trade status changes to "cancelled"
+  · Account listing becomes available again for other buyers
+  · System message appears in chat: "Trade cancelled"
+  · No money moves because payment was never confirmed
+
+Frontend Interface
+
+· "Cancel Trade" button on Trade Details page
+· Button only appears when trade status is "pending"
+· Clicking triggers pop-up: "Are you sure you want to cancel this trade?"
+· On confirmation: trade cancels → user returns to marketplace
+
+Who Can Cancel
+
+· Both buyer and seller can cancel (as long as payment hasn't been confirmed)
+· Once payment is made → cancellation is disabled (protects both parties)
+
+After Cancellation
+
+· Buyer loses no money (payment wasn't made)
+· Seller's account returns to "Available" status
+· Both users receive system notification in chat
+· Trade appears in history as "cancelled"
+
+---
+
+2. CHAT ADMIN BUTTON
+
+Purpose
+
+· Allow any user to contact admin for questions or complaints about how trades work
+
+Features
+
+· "Chat Admin" button visible to all users at all times (not just during trades)
+· Available on:
+  · Dashboard
+  · Marketplace
+  · Trade Details page
+  · Any page on the platform
+· Clicking opens a direct chat with admin
+· Admin receives notification when user messages
+
+Admin Chat During Trades
+
+· Admin can join any active trade chat if users report an issue
+· Admin appears with "Admin" badge in chat so users know it's the platform admin
+· Admin can mediate disputes in real-time
+· Admin can view all chat history between buyer and seller
+
+Function
+
+· Users can ask questions about:
+  · How the escrow process works
+  · Deposit/withdrawal issues
+  · Account listing problems
+  · General platform questions
+· Admin can respond directly in the chat
+
+---
+
+3. OTP/ACCESS CODE SYSTEM – FULL ESCROW FLOW
+
+A. When Seller Lists an Account
+
+Important: eFootball accounts use Konami ID, so the form should reflect this.
+
+Field Purpose
+Konami ID The email/username used to log in to eFootball
+Konami Password The password for the Konami account
+Access Code / OTP The code needed to access the account
+Recovery Email Email linked to the account for password reset
+
+Form Fields:
+
+· Add new field on "Sell Account" form:
+  · "Konami ID" (email/username, hidden from public)
+  · "Konami Password" (password field, hidden from public)
+  · "Access Code / OTP" (password field, hidden from public)
+· Code is stored securely in the database
+· Never shown to buyers until payment is confirmed
+· Seller enters all details the buyer will need to access the account
+
+B. After Buyer Pays (Payment Confirmed)
+
+· System message appears in chat:
+  "Payment confirmed. Seller can now share the access code with the buyer."
+· Seller manually sends Konami ID, Password, and OTP/code to buyer via chat
+· Information is only visible to:
+  · Buyer
+  · Seller
+  · Admin (for dispute resolution)
+
+C. Buyer Receives Code and Logs In (First OTP)
+
+1. Buyer receives Konami ID and Password from seller
+2. Buyer logs into the eFootball account via Konami
+3. System asks for OTP code (sent to seller's email or provided by seller)
+4. Buyer requests OTP from seller
+5. Seller sends first OTP via chat
+6. Buyer enters OTP and gains full access
+
+D. Buyer Changes Email – REQUIRES SECOND OTP
+
+· After buyer successfully logs in with first OTP:
+  · Instructions appear:
+    "Please change the email address to your own immediately to prevent the seller from logging in again."
+· Buyer proceeds to change the email address
+· CRITICAL STEP: When buyer attempts to change the email:
+  · The system requests a new OTP code
+  · Buyer must request the new OTP from the seller
+  · Seller sends the second OTP via chat
+  · Buyer enters the second OTP to confirm the email change
+· Once the second OTP is verified:
+  · The email address is successfully changed to the buyer's email
+  · The seller can no longer access the account
+
+E. Buyer Confirms Access – Final Step
+
+· After email is successfully changed and buyer has full control:
+  · Buyer clicks new button: "I Have Accessed the Account"
+
+F. Funds Released to Seller
+
+· After buyer confirms access:
+  · Trade status changes to "completed"
+  · Funds released to seller (minus platform fee)
+· Seller receives their money
+· Trade is marked complete
+
+G. Dispute Handling (If Code Doesn't Work)
+
+· Buyer can report the seller
+· Admin can:
+  · View the code in chat
+  · Test the code themselves
+  · Decide who to refund or pay
+· Admin can reverse the transaction if needed
+
+---
+
+4. COMPLETE TRADE FLOW WITH TWO OTPs
+
+Step Who Action
+1 Seller Lists account with Konami ID, Password, and Access Code/OTP (hidden)
+2 Buyer Finds account → clicks "Buy Now"
+3 System Creates trade with status: "pending"
+4 Buyer Clicks "Deposit" → Submits deposit request
+5 Buyer Transfers money to Moniepoint: 9160385331, Olukoya Kolade
+6 Admin Confirms payment → System credits buyer's wallet
+7 System Confirms payment → status: "payment_confirmed"
+8 System Chat: "Payment confirmed. Seller can share OTP."
+9 Seller Sends Konami ID, Password, and FIRST OTP to buyer via chat
+10 Buyer Logs in → enters FIRST OTP → accesses account
+11 System Instructs buyer: "Change email to your own"
+12 Buyer Attempts to change email → requests SECOND OTP from seller
+13 Seller Sends SECOND OTP to buyer via chat
+14 Buyer Enters SECOND OTP → email changed successfully ✅
+15 Buyer Clicks "I Have Accessed the Account"
+16 System Status: "completed" → Funds released to seller (admin sends from Moniepoint)
+
+---
+
+5. USER REGISTRATION – EMAIL OTP VERIFICATION
+
+Registration Flow
+
+1. User enters:
+   · Email address
+   · Username
+   · Password
+   · Full name
+2. System sends OTP code to user's email
+3. User enters OTP to verify their email
+4. Account is created only after OTP is verified
+
+Why This Matters
+
+· Prevents fake/bot registrations
+· Ensures users have valid email addresses
+· Increases platform security
+· Builds trust among users
+
+---
+
+6. DEMO ACCOUNTS FOR TESTING
+
+Purpose
+
+· Allow admin to test the platform without creating new accounts
+· Demo accounts should be accessible without registration
+
+Demo Credentials
+
+Role Email Password
+Buyer Demo buyerdemo@gmail.com Kolade1642@#
+Seller Demo sellerdemo@gmail.com Kolade1642@#
+realonabusinessexchange@gmail.com should be the only super admin, and he should also be able to remove other admins, and the new demo account should be the only demo accounts 
+
+How It Works
+
+· Admin can log in to demo accounts directly
+· No registration required
+· All features are accessible
+· Admin can test:
+  · Listing accounts (as seller)
+  · Buying accounts (as buyer)
+  · Trade flow
+  · Chat features
+  · OTP verification
+  · Cancellation
+  · Dispute reporting
+Allow the main admin 
+---
+
+7. VERIFIED BADGE
+
+Purpose
+
+· Build trust between buyers and sellers
+· Recognize reliable and experienced users
+
+How It Works
+
+· Users earn a "Verified" badge after meeting the requirements
+· Badge appears next to their username on:
+  · Marketplace listings
+  · Trade details page
+  · Chat conversations
+  · User profiles
+· Buyers can filter marketplace to show only verified sellers
+
+Requirements for Verification
+
+· First 5 users who sell at least 2 accounts get the badge automatically
+· After that, all other users must sell at least 5 accounts to earn the badge
+· No disputes against user
+· Account active for at least 30 days
+· Admin can manually revoke badge if user is reported for scam
+
+---
+
+8. ACCOUNT LISTING RULES
+
+Listing Duration
+
+· Account listing remains available until sold
+· Once sold, status changes to "Sold"
+· Sold accounts are still visible but marked as sold and moved to sold archives 
+· Buyers cannot purchase sold accounts
+
+Duplicate Listing Prevention
+
+· Admin is notified when a user tries to list the same account again
+· System checks for:
+  · Similar account pictures
+  · Similar Konami ID
+  · Similar ratings/description
+· Admin can approve or block duplicate listing attempts
+---
+9. TRADE HISTORY & RATINGS SYSTEM
+Purpose
+· Allow users to rate their trading experience
+ Build reputation system for the platform
+How It Works
+After Each Trade:
+· Buyer rates seller (1-5 stars) on:
+  · Account quality
+  · Communication speed
+  · Honesty
+· Seller rates buyer (1-5 stars) on:
+  · Payment speed
+  · Communication
+  · Trustworthiness
+
+Rating Display:
+
+· Average rating appears on:
+  · User profiles
+  · Marketplace listings (next to seller name)
+  · Chat conversations
+· Users can see total trades and average rating
+
+📝 Updated Trade History Description:
+
+Private Trade History (User Only):
+
+· Users can view their complete trade history
+· Includes:
+  · Trade ID
+  · Account name
+  · Amount
+  · Buyer/Seller name (only the user's own role)
+  · Status (completed/cancelled/disputed)
+  · Date
+  · Rating given and received
+
+Public Profile Stats (Visible to Everyone):
+
+· Total trades completed
+· Average rating
+· Role breakdown (buyer/seller)
+· Verified badge status (if applicable)
+
+Public Trade Feed 
+
+· Recent trades displayed on every users homepage, showing recently purchased accounts 
+· No usernames or sensitive details shown
+· Shows activity and builds trust
+---
+10. PUSH NOTIFICATIONS
+
+Purpose
+· Keep users updated on trade progress
+· Increase engagement and response time
+
+What Users Get Notified About
+
+Event Notification
+Payment confirmed "Your payment for [account name] has been confirmed."
+Seller shares OTP "Seller has shared the access code for [account name]."
+Trade completed "Trade #[ID] has been completed!"
+Trade cancelled "Trade #[ID] has been cancelled."
+New message "New message from [user] regarding [account name]."
+Withdrawal successful "Your withdrawal of ₦[amount] has been sent to your bank."
+Wishlist item sold "The account '[account name]' on your wishlist has been sold."
+
+Delivery Methods
+
+· Browser notifications (desktop and mobile)
+· Email notifications
+· In-app notification bell icon
+
+---
+
+11. MAKE AN OFFER FEATURE
+
+Purpose
+
+· Allow buyers to negotiate price before paying
+· Create more flexible trading experience
+
+How It Works
+
+Buyer Side:
+
+1. Buyer clicks "Make Offer" on account listing
+2. Enter proposed price (must be lower than listed price)
+3. Add optional message to seller (e.g., "I can pay immediately")
+4. Offer is sent to seller
+
+Seller Side:
+
+1. Seller receives notification of new offer
+2. Seller can:
+   · Accept offer → Trade initiates at offered price
+   · Reject offer → Offer is declined, user can make new offer
+   · Counter offer → Seller proposes another price
+
+Offer Rules:
+
+· Offer is not binding until seller accepts
+· Buyer cannot pay until offer is accepted
+· Multiple offers can be made (one at a time)
+· Offer expires after 24 hours
+
+---
+
+12. AI-POWERED SUSPICIOUS ACTIVITY DETECTION (Admin Only)
+
+Purpose
+· Automatically detect and flag suspicious behavior
+· Protect platform from scammers
+· Only visible to admin (users do not see this)
+
+What It Detects (Admin Dashboard Only)
+
+Activity Flag Reason
+Multiple accounts with same phone number Possible fraud
+Accounts listed at unusually low prices Potential scam
+Sudden increase in trade volume Suspicious activity
+New user listing high-value accounts Risk of scam
+Buyer requesting OTP but not confirming Potential fraud
+User logging in from multiple IPs in short time Account sharing/compromise
+Duplicate account listings Trying to sell same account twice
+*Able to track every registered users phone ip address 
+Actions Taken (Admin Only)
+
+· Admin receives alert in admin dashboard
+· Account is temporarily suspended for review
+· Admin reviews and decides to:
+  · Remove suspension if false positive
+  · Permanently ban if confirmed
+
+Important
+
+· Users never see these alerts
+· Admin is the only one who can view suspicious activity flags
+· User accounts are not penalized until admin confirms
+
+---
+
+13. DEVICE & IP TRACKING (Admin Feature)
+
+Purpose
+
+· Track user activity for security
+· Identify suspicious login patterns
+
+Admin View (Dashboard Only)
+
+Data Tracked What Admin Sees
+Device type Phone, tablet, desktop
+Device model iPhone 12, Samsung Galaxy, etc.
+Operating System Android 12, iOS 15, Windows 11 etc.
+IP address 102.89.xxx.xxx, the device IP address
+Location City, State, Country
+Login time Date and time of each login
+Multiple logins Same user logged in from different devices/IPs
+
+Admin Actions
+
+· View login history for any user
+· Block specific IP addresses
+· Flag suspicious devices
+· Force logout of all sessions
+
+---
+
+14. PUBLIC LEADERBOARD
+
+Purpose
+
+· Gamify the platform
+· Recognize top traders
+· Encourage activity
+
+Leaderboard Categories
+
+· Top 10 Sellers (most completed trades)
+· Top 10 Buyers (most trades completed)
+· Most Trusted (highest average rating)
+· Newcomer of the Month (best new user)
+
+Display
+
+· Visible on a dedicated "Leaderboard" page
+· Updated daily
+· Users can see their rank
+· Badges for top 3 positions
+
+---
+
+15. ANNOUNCEMENT SYSTEM
+
+Purpose
+
+· Admin can communicate with all users
+· Share updates and important information
+
+How It Works
+
+· Admin creates announcement:
+  · Title (e.g., "New Feature: Make an Offer!")
+  · Description (detailed information)
+  · Priority (normal, important, urgent)
+· Announcement appears:
+  · As pop-up on dashboard
+  · In notification bell
+  · On homepage banner
+· Users can dismiss announcements
+
+Types of Announcements
+
+· New features
+· Important updates
+· Maintenance alerts
+· Security notices
+
+---
+
+16. AUTOMATED DISPUTE CHECKLIST
+
+Purpose
+
+· Streamline dispute reporting
+· Collect complete information for admin review
+
+How It Works
+
+When User Reports a Dispute:
+
+1. User selects dispute reason from dropdown:
+   · OTP not working
+   · Seller didn't share code
+   · Account doesn't match description
+   · Seller logged in after sale
+   · Buyer didn't pay
+   · Other
+2. User uploads evidence:
+   · Chat screenshots
+   · Account screenshots
+   · Payment receipts
+   · Email screenshots
+3. User describes the issue:
+   · Unlimited words allowed
+   · Can tell full story
+4. User selects outcome they want:
+   · Full refund
+   · Partial refund
+   · Admin review only
+5. System automatically checks:
+   · Trade history
+   · User ratings
+   · Previous disputes
+   · Chat logs
+6. Report is sent to admin with:
+   · All evidence
+   · Full description
+   · System analysis
+   · Admin takes action
+
+---
+
+17. MULTI-LANGUAGE SUPPORT
+
+Purpose
+
+· Reach a wider Nigerian audience
+· Users can choose their preferred language
+
+Supported Languages
+
+Language Region
+English Default
+Yoruba South-West Nigeria
+Hausa Northern Nigeria
+Igbo South-East Nigeria
+Pidgin Nationwide
+
+How It Works
+
+· User selects language during registration
+· Can change anytime in settings
+· All platform text translates to selected language
+· Admin can add new languages every possible language
+---
+
+18. SELLER ANALYTICS
+
+Purpose
+
+· Give sellers insights into their account performance
+· Help them optimize their sales strategy
+
+Metrics Available
+
+Metric What It Shows
+Total Views How many people viewed their accounts
+Total Sales How many accounts they've sold
+Average Sale Price Average amount per sale
+Best Selling Account Most popular account type
+Conversion Rate % of views that led to sales
+Monthly Earnings Total earned this month
+Growth Rate % increase in sales vs last month
+
+Visuals
+
+· Charts and graphs
+· Line graphs showing trends
+· Bar charts comparing accounts
+
+---
+
+19. BULK LISTING
+
+Purpose
+
+· Save time for professional sellers
+· List multiple accounts at once
+
+How It Works
+
+· Seller uploads account picture or screenshot with account details:
+  · Price
+  · Description
+  · Picture
+  · Konami ID
+  · Konami Password
+  · Access code/OTP
+
+Note: OTP will be shared in chat after the buyer has paid and requests the OTP code from the seller to gain access into the account.
+
+· System processes all accounts:
+  · Validates each entry
+  · Creates listings in bulk
+  · Reports any errors
+· Seller can review and confirm before publishing
+
+---
+
+20. LISTING INSIGHTS
+
+Purpose
+
+· Help sellers optimize their listings
+· Increase sales through data-driven decisions
+
+What Sellers See
+
+Insight How It Helps
+Most viewed accounts See what attracts buyers
+Best price range Understand market demand
+Best listing time Know when to list
+Keywords that attract views Optimize descriptions
+
+Recommendations
+
+· "Post more accounts to reach more audiences"
+· "Add more pictures to increase views by 40%"
+· "Accounts with descriptions of 100+ words sell faster"
+· "Weekend listings get 30% more views"
+
+---
