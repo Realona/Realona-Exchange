@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useGetWalletBalance, useGetVirtualAccount, useGetDeposits, useGetWithdrawals, useRequestWithdrawal } from "@workspace/api-client-react";
+import { useGetWalletBalance, useGetDeposits, useGetWithdrawals, useRequestWithdrawal } from "@workspace/api-client-react";
 import { formatNaira } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { Copy, Wallet, ArrowDownCircle, ArrowUpCircle, Building2, CheckCircle, AlertCircle, Info } from "lucide-react";
@@ -17,8 +17,13 @@ export default function WalletPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  const ESCROW = {
+    bank: "Moniepoint",
+    accountNumber: "9160385331",
+    accountName: "Olukoya Kolade",
+  };
+
   const { data: walletData } = useGetWalletBalance();
-  const { data: va, isLoading: vaLoading } = useGetVirtualAccount();
   const { data: deposits } = useGetDeposits();
   const { data: withdrawals } = useGetWithdrawals();
   const withdrawMutation = useRequestWithdrawal();
@@ -95,8 +100,8 @@ export default function WalletPage() {
           <TabsContent value="deposit">
             <Card className="border-border bg-card">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2"><Building2 className="w-5 h-5 text-primary" />Your Virtual Account</CardTitle>
-                <CardDescription>Transfer money to this account number to fund your Realona wallet. Deposits reflect within 5 minutes.</CardDescription>
+                <CardTitle className="flex items-center gap-2"><Building2 className="w-5 h-5 text-primary" />Deposit Funds</CardTitle>
+                <CardDescription>Transfer to the Realona escrow account below to fund your wallet. Deposits are confirmed by admin within 5 minutes.</CardDescription>
               </CardHeader>
               <CardContent>
                 {/* Fee notices */}
@@ -117,38 +122,50 @@ export default function WalletPage() {
                   </div>
                 </div>
 
-                {vaLoading ? (
-                  <div className="h-32 animate-pulse bg-muted rounded-lg" />
-                ) : va ? (
-                  <div className="space-y-4">
-                    <div className="bg-background border border-border rounded-lg p-6 space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Bank Name</p>
-                          <p className="text-lg font-semibold">{va.bankName}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Account Number</p>
-                          <p className="text-3xl font-bold tracking-widest text-primary">{va.accountNumber}</p>
-                        </div>
-                        <Button variant="outline" size="sm" onClick={() => handleCopy(va.accountNumber)}>
-                          <Copy className="w-4 h-4 mr-2" />
-                          Copy
-                        </Button>
-                      </div>
+                <div className="space-y-4">
+                  {/* Static escrow account card */}
+                  <div className="bg-background border-2 border-primary/30 rounded-xl p-6 space-y-5">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-wider font-medium">
+                      <Building2 className="w-3.5 h-3.5" />
+                      Realona Escrow Account
+                    </div>
+
+                    <div>
+                      <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Bank</p>
+                      <p className="text-xl font-bold">{ESCROW.bank}</p>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-3">
                       <div>
-                        <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Account Name</p>
-                        <p className="font-medium">Realona / {user?.username}</p>
+                        <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Account Number</p>
+                        <p className="text-4xl font-black tracking-widest text-primary font-mono">{ESCROW.accountNumber}</p>
                       </div>
+                      <Button variant="outline" size="sm" onClick={() => handleCopy(ESCROW.accountNumber)} className="shrink-0">
+                        <Copy className="w-4 h-4 mr-2" />
+                        Copy
+                      </Button>
                     </div>
-                    <div className="flex items-start gap-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
-                      <CheckCircle className="w-4 h-4 text-yellow-500 mt-0.5 shrink-0" />
-                      <p className="text-sm text-yellow-600 dark:text-yellow-400">
-                        This is your dedicated account. <strong>Always use this account</strong> for all deposits — no other account will work.
-                      </p>
+
+                    <div>
+                      <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Account Name</p>
+                      <p className="text-lg font-semibold">{ESCROW.accountName}</p>
                     </div>
+                  </div>
+
+                  {/* Instructions */}
+                  <div className="flex items-start gap-3 bg-green-500/10 border border-green-500/20 rounded-lg p-4">
+                    <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
+                    <p className="text-sm text-green-600 dark:text-green-400">
+                      Transfer the exact amount to the account above, then <strong>send your payment proof</strong> (screenshot + your username) to our admin on WhatsApp or via chat. Your wallet will be credited within <strong>5 minutes</strong>.
+                    </p>
+                  </div>
+
+                  <div className="flex items-start gap-3 bg-red-500/10 border border-red-500/20 rounded-lg p-4">
+                    <AlertCircle className="w-4 h-4 text-red-500 mt-0.5 shrink-0" />
+                    <p className="text-sm text-red-600 dark:text-red-400">
+                      <strong>Only transfer to this account.</strong> Realona will never ask you to pay to any other account. Do not send money to strangers claiming to be admins.
+                    </p>
+                  </div>
 
                     {/* Recent deposits */}
                     {deposits && deposits.length > 0 && (
@@ -168,9 +185,6 @@ export default function WalletPage() {
                       </div>
                     )}
                   </div>
-                ) : (
-                  <p className="text-muted-foreground text-sm">Unable to load virtual account. Please refresh.</p>
-                )}
               </CardContent>
             </Card>
           </TabsContent>

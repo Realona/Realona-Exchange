@@ -63,7 +63,7 @@ export default function HowItWorks() {
             <h2 className="text-xl font-bold">For Buyers — Step by Step</h2>
           </div>
           <div className="space-y-5">
-            <Step num={1} title="Deposit Funds" desc="Fund your Realona wallet by transferring to your dedicated virtual account number. A ₦50 service charge applies to every deposit. Minimum deposit is ₦1,000." />
+            <Step num={1} title="Deposit Funds" desc="Fund your Realona wallet by transferring to our Moniepoint escrow account (9160385331 — Olukoya Kolade). Send your payment proof to admin and your wallet is credited within 5 minutes. A ₦50 service charge applies. Minimum deposit is ₦1,000." />
             <Step num={2} title="Browse & Choose a Listing" desc="Browse eFootball accounts filtered by Division Rank and Squad Rating. View full account details before committing." />
             <Step num={3} title="Initiate a Trade" desc="Click 'Buy This Account' on a listing. This creates a secure trade between you and the seller." />
             <Step num={4} title="Confirm Payment" desc="Click 'Confirm Payment' to lock funds from your wallet into escrow. The seller is then notified to transfer the account." />
