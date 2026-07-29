@@ -184,6 +184,13 @@ export default function VerifyOtp() {
               )}
             </div>
 
+            <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2.5 text-xs text-amber-800">
+              <span className="text-base leading-none mt-0.5">📬</span>
+              <span>
+                Can't find the code? Check your <strong>Spam</strong> or <strong>Junk</strong> folder — it sometimes ends up there. Mark it as "Not Spam" so future codes arrive in your inbox.
+              </span>
+            </div>
+
             <div className="text-center text-sm text-muted-foreground">
               Wrong email?{" "}
               <button
