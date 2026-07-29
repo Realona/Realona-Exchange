@@ -12,9 +12,10 @@ import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useUpload } from "@workspace/object-storage-web";
 import {
-  ArrowLeft, Upload, X, CheckCircle, Loader2, Layers,
-  ImagePlus, Zap, AlertCircle, PackageCheck,
+  ArrowLeft, X, CheckCircle, Loader2, Layers,
+  ImagePlus, Zap, AlertCircle, PackageCheck, Gamepad2, Users,
 } from "lucide-react";
+import { EFOOTBALL_DIVISIONS } from "./new-listing";
 
 const SOCIAL_PLATFORMS = ["Instagram", "Twitter/X", "TikTok", "YouTube", "Facebook"];
 
@@ -28,14 +29,22 @@ interface BulkItem {
   category: "efootball" | "social_media";
   price: string;
   description: string;
+  // eFootball
+  divisionRank: string;
+  squadRating: string;
+  topPlayers: string; // comma-separated "Bellingham (92), Mbappe (91)"
   konamiId: string;
   konamiPassword: string;
   accessCode: string;
-  accountEmail: string;
-  accountPassword: string;
+  // Social media
   platform: string;
   accountHandle: string;
   followerCount: string;
+  following: string;
+  accountAge: string;
+  engagementRate: string;
+  accountEmail: string;
+  accountPassword: string;
   recoveryEmail: string;
 }
 
@@ -50,14 +59,20 @@ function makeBulkItem(file: File, defaults: Partial<BulkItem> = {}): BulkItem {
     category: "efootball",
     price: "",
     description: "",
+    divisionRank: "",
+    squadRating: "",
+    topPlayers: "",
     konamiId: "",
     konamiPassword: "",
     accessCode: "",
-    accountEmail: "",
-    accountPassword: "",
     platform: "",
     accountHandle: "",
     followerCount: "",
+    following: "",
+    accountAge: "",
+    engagementRate: "",
+    accountEmail: "",
+    accountPassword: "",
     recoveryEmail: "",
     ...defaults,
   };
@@ -158,78 +173,170 @@ function BulkItemCard({
           )}
         </div>
 
-        {/* Category */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Category</label>
-            <Select
-              value={item.category}
-              onValueChange={(v) => onUpdate(item.id, "category", v)}
-            >
-              <SelectTrigger className="bg-background h-9 text-sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="efootball">eFootball</SelectItem>
-                <SelectItem value="social_media">Social Media</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        {/* ── eFootball fields ─────────────────────────────────────── */}
+        {isEfootball && (
+          <>
+            {/* Division + Squad Rating */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Division Rank</label>
+                <Select value={item.divisionRank} onValueChange={(v) => onUpdate(item.id, "divisionRank", v)}>
+                  <SelectTrigger className="bg-background h-9 text-sm">
+                    <SelectValue placeholder="Select division" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {EFOOTBALL_DIVISIONS.map((d) => (
+                      <SelectItem key={d} value={d}>{d}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">Division 1 = highest</p>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Squad Rating</label>
+                <Input
+                  type="number"
+                  min="1000"
+                  max="9999"
+                  placeholder="e.g. 3500"
+                  value={item.squadRating}
+                  onChange={(e) => onUpdate(item.id, "squadRating", e.target.value)}
+                  className="bg-background h-9 text-sm"
+                />
+                <p className="text-xs text-muted-foreground">Overall squad strength</p>
+              </div>
+            </div>
 
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-              Price (₦) <span className="text-destructive">*</span>
-            </label>
-            <Input
-              type="number"
-              min={minPrice}
-              placeholder={`Min ₦${minPrice.toLocaleString()}`}
-              value={item.price}
-              onChange={(e) => onUpdate(item.id, "price", e.target.value)}
-              className="bg-background h-9 text-sm"
-            />
-            {item.price && Number(item.price) < minPrice && (
-              <p className="text-xs text-destructive">Min ₦{minPrice.toLocaleString()}</p>
-            )}
-          </div>
+            {/* Best Players */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Best Players <span className="text-muted-foreground font-normal">(optional)</span>
+              </label>
+              <Input
+                placeholder='e.g. Bellingham (92), Mbappe (91), Haaland (90)'
+                value={item.topPlayers}
+                onChange={(e) => onUpdate(item.id, "topPlayers", e.target.value)}
+                className="bg-background h-9 text-sm"
+              />
+              <p className="text-xs text-muted-foreground">Comma-separated player names with optional ratings</p>
+            </div>
+          </>
+        )}
+
+        {/* ── Social media fields ──────────────────────────────────── */}
+        {!isEfootball && (
+          <>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  Platform <span className="text-destructive">*</span>
+                </label>
+                <Select value={item.platform} onValueChange={(v) => onUpdate(item.id, "platform", v)}>
+                  <SelectTrigger className="bg-background h-9 text-sm">
+                    <SelectValue placeholder="Select platform" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SOCIAL_PLATFORMS.map((p) => (
+                      <SelectItem key={p} value={p}>{p}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Account Handle</label>
+                <Input
+                  placeholder="@username"
+                  value={item.accountHandle}
+                  onChange={(e) => onUpdate(item.id, "accountHandle", e.target.value)}
+                  className="bg-background h-9 text-sm"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Followers</label>
+                <Input
+                  type="number"
+                  min="0"
+                  placeholder="e.g. 50000"
+                  value={item.followerCount}
+                  onChange={(e) => onUpdate(item.id, "followerCount", e.target.value)}
+                  className="bg-background h-9 text-sm"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Following</label>
+                <Input
+                  type="number"
+                  min="0"
+                  placeholder="e.g. 500"
+                  value={item.following}
+                  onChange={(e) => onUpdate(item.id, "following", e.target.value)}
+                  className="bg-background h-9 text-sm"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Account Age</label>
+                <Input
+                  placeholder="e.g. 3 years"
+                  value={item.accountAge}
+                  onChange={(e) => onUpdate(item.id, "accountAge", e.target.value)}
+                  className="bg-background h-9 text-sm"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Engagement Rate</label>
+                <Input
+                  placeholder="e.g. 3.5%"
+                  value={item.engagementRate}
+                  onChange={(e) => onUpdate(item.id, "engagementRate", e.target.value)}
+                  className="bg-background h-9 text-sm"
+                />
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* ── Price ────────────────────────────────────────────────── */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            Price (₦) <span className="text-destructive">*</span>
+          </label>
+          <Input
+            type="number"
+            min={minPrice}
+            placeholder={`Min ₦${minPrice.toLocaleString()}`}
+            value={item.price}
+            onChange={(e) => onUpdate(item.id, "price", e.target.value)}
+            className="bg-background h-9 text-sm"
+          />
+          {item.price && Number(item.price) < minPrice && (
+            <p className="text-xs text-destructive">Min ₦{minPrice.toLocaleString()}</p>
+          )}
+          <p className="text-xs text-muted-foreground">You'll receive the price minus the 4% platform fee.</p>
         </div>
 
-        {/* Description */}
+        {/* ── Description ──────────────────────────────────────────── */}
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
             Description <span className="text-destructive">*</span>
           </label>
           <Textarea
             placeholder={isEfootball
-              ? "e.g. 85 OVR, 3100 squad rating, Bellingham, Haaland, great division…"
-              : "e.g. 50k followers, high engagement, gaming niche, 2 years old…"}
+              ? "Describe your eFootball account — GP coins, top players, division history, special achievements, etc."
+              : "Describe your account — niche, audience type, content history, monetization status, why you're selling, etc."}
             value={item.description}
             onChange={(e) => onUpdate(item.id, "description", e.target.value)}
-            rows={2}
+            rows={3}
             className="bg-background text-sm resize-none"
           />
         </div>
 
-        {/* Social media platform picker */}
-        {!isEfootball && (
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-              Platform <span className="text-destructive">*</span>
-            </label>
-            <Select value={item.platform} onValueChange={(v) => onUpdate(item.id, "platform", v)}>
-              <SelectTrigger className="bg-background h-9 text-sm">
-                <SelectValue placeholder="Select platform" />
-              </SelectTrigger>
-              <SelectContent>
-                {SOCIAL_PLATFORMS.map((p) => (
-                  <SelectItem key={p} value={p}>{p}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-
-        {/* Credentials */}
+        {/* ── Credentials ──────────────────────────────────────────── */}
         <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-3">
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
             🔐 Account Credentials
@@ -253,28 +360,18 @@ function BulkItemCard({
                 <label className="text-xs text-muted-foreground">Konami Password</label>
                 <Input
                   type="password"
-                  placeholder="Password"
+                  placeholder="Current password"
                   value={item.konamiPassword}
                   onChange={(e) => onUpdate(item.id, "konamiPassword", e.target.value)}
                   className="bg-background h-8 text-sm"
                 />
               </div>
-              <div className="space-y-1">
-                <label className="text-xs text-muted-foreground">OTP / Access Code</label>
+              <div className="space-y-1 sm:col-span-2">
+                <label className="text-xs text-muted-foreground">OTP / Access Code (optional)</label>
                 <Input
                   placeholder="OTP or access code"
                   value={item.accessCode}
                   onChange={(e) => onUpdate(item.id, "accessCode", e.target.value)}
-                  className="bg-background h-8 text-sm"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs text-muted-foreground">Recovery Email (optional)</label>
-                <Input
-                  type="email"
-                  placeholder="backup@email.com"
-                  value={item.recoveryEmail}
-                  onChange={(e) => onUpdate(item.id, "recoveryEmail", e.target.value)}
                   className="bg-background h-8 text-sm"
                 />
               </div>
@@ -295,39 +392,9 @@ function BulkItemCard({
                 <label className="text-xs text-muted-foreground">Account Password</label>
                 <Input
                   type="password"
-                  placeholder="Password"
+                  placeholder="Current account password"
                   value={item.accountPassword}
                   onChange={(e) => onUpdate(item.id, "accountPassword", e.target.value)}
-                  className="bg-background h-8 text-sm"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs text-muted-foreground">Account Handle</label>
-                <Input
-                  placeholder="@username"
-                  value={item.accountHandle}
-                  onChange={(e) => onUpdate(item.id, "accountHandle", e.target.value)}
-                  className="bg-background h-8 text-sm"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs text-muted-foreground">Follower Count</label>
-                <Input
-                  type="number"
-                  min="0"
-                  placeholder="e.g. 50000"
-                  value={item.followerCount}
-                  onChange={(e) => onUpdate(item.id, "followerCount", e.target.value)}
-                  className="bg-background h-8 text-sm"
-                />
-              </div>
-              <div className="space-y-1 sm:col-span-2">
-                <label className="text-xs text-muted-foreground">Recovery Email (optional)</label>
-                <Input
-                  type="email"
-                  placeholder="backup@email.com"
-                  value={item.recoveryEmail}
-                  onChange={(e) => onUpdate(item.id, "recoveryEmail", e.target.value)}
                   className="bg-background h-8 text-sm"
                 />
               </div>
@@ -442,22 +509,36 @@ export default function BulkListingPage() {
     const err = validate();
     if (err) { toast({ title: "Please fix errors", description: err, variant: "destructive" }); return; }
 
-    const payload = items.map((item) => ({
-      gameName: item.category === "efootball" ? "eFootball" : (item.platform || "Social Media"),
-      category: item.category,
-      price: Number(item.price),
-      description: item.description.trim(),
-      pictureUrl: item.serverUrl || null,
-      konamiId: item.konamiId || null,
-      konamiPassword: item.konamiPassword || null,
-      accessCode: item.accessCode || null,
-      accountEmail: item.accountEmail || null,
-      accountPassword: item.accountPassword || null,
-      platform: item.platform || null,
-      accountHandle: item.accountHandle || null,
-      followerCount: item.followerCount ? parseInt(item.followerCount, 10) : null,
-      recoveryEmail: item.recoveryEmail || null,
-    }));
+    const payload = items.map((item) => {
+      // Parse comma-separated best players string → array of strings
+      const highlightedPlayers = item.topPlayers
+        ? item.topPlayers.split(",").map((s) => s.trim()).filter(Boolean)
+        : null;
+
+      return {
+        gameName: item.category === "efootball" ? "eFootball" : (item.platform || "Social Media"),
+        category: item.category,
+        price: Number(item.price),
+        description: item.description.trim(),
+        pictureUrl: item.serverUrl || null,
+        // eFootball
+        divisionRank: item.divisionRank || null,
+        squadRating: item.squadRating ? parseInt(item.squadRating, 10) : null,
+        highlightedPlayers: highlightedPlayers,
+        konamiId: item.konamiId || null,
+        konamiPassword: item.konamiPassword || null,
+        accessCode: item.accessCode || null,
+        // Social media
+        platform: item.platform || null,
+        accountHandle: item.accountHandle || null,
+        followerCount: item.followerCount ? parseInt(item.followerCount, 10) : null,
+        following: item.following ? parseInt(item.following, 10) : null,
+        accountAge: item.accountAge || null,
+        engagementRate: item.engagementRate || null,
+        accountEmail: item.accountEmail || null,
+        accountPassword: item.accountPassword || null,
+      };
+    });
 
     createBulkListings.mutate(
       { data: { items: payload as any } },
@@ -536,10 +617,22 @@ export default function BulkListingPage() {
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <div>
+          <div className="flex-1">
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <Layers className="w-6 h-6 text-primary" />
-              Bulk Listing
+              Multiple Listings
+              {urlCategory && (
+                <span className={`inline-flex items-center gap-1 text-sm font-medium px-2.5 py-0.5 rounded-full ${
+                  urlCategory === "efootball"
+                    ? "bg-primary/10 text-primary"
+                    : "bg-purple-500/10 text-purple-600"
+                }`}>
+                  {urlCategory === "efootball"
+                    ? <><Gamepad2 className="w-3.5 h-3.5" /> eFootball</>
+                    : <><Users className="w-3.5 h-3.5" /> Social Media</>
+                  }
+                </span>
+              )}
             </h1>
             <p className="text-sm text-muted-foreground mt-0.5">
               Upload up to {MAX_IMAGES} screenshots and list them all at once.
@@ -590,25 +683,9 @@ export default function BulkListingPage() {
               <div className="flex items-center gap-2 mb-3">
                 <Zap className="w-4 h-4 text-amber-500" />
                 <span className="text-sm font-semibold text-amber-700 dark:text-amber-400">Quick Fill</span>
-                <span className="text-xs text-muted-foreground">— apply category or price to all cards at once</span>
+                <span className="text-xs text-muted-foreground">— apply a value to all cards at once</span>
               </div>
               <div className="flex flex-wrap items-end gap-3">
-                <div className="space-y-1">
-                  <label className="text-xs text-muted-foreground">Category for all</label>
-                  <Select
-                    value={quickCategory}
-                    onValueChange={(v) => setQuickCategory(v as typeof quickCategory)}
-                  >
-                    <SelectTrigger className="bg-background h-8 text-sm w-44">
-                      <SelectValue placeholder="Leave unchanged" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="">Leave unchanged</SelectItem>
-                      <SelectItem value="efootball">eFootball</SelectItem>
-                      <SelectItem value="social_media">Social Media</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
                 <div className="space-y-1">
                   <label className="text-xs text-muted-foreground">Price for all (₦)</label>
                   <Input
@@ -625,7 +702,7 @@ export default function BulkListingPage() {
                   variant="outline"
                   size="sm"
                   onClick={applyQuickFill}
-                  disabled={!quickCategory && !quickPrice}
+                  disabled={!quickPrice}
                   className="h-8 gap-1.5 border-amber-500/40 text-amber-700 hover:bg-amber-500/10 dark:text-amber-400"
                 >
                   <Zap className="w-3.5 h-3.5" /> Apply to All
