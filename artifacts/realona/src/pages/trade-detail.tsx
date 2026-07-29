@@ -12,7 +12,7 @@ import {
   useGetTrade, useGetTradeMessages, useSendTradeMessage,
   useConfirmTradePayment, useSellerTransferred, useConfirmReceipt, useOpenDispute,
   useCancelTrade, useConfirmTradeAccess, useRateTradePartner, useGetTradeCredentials,
-  useRequestOtp, useMarkOtpSent, useMarkEmailOtpSent, useRequestEmailOtp,
+  useRequestOtp, useMarkOtpSent, useMarkEmailOtpSent, useRequestEmailOtp, useBuyerNotifyPayment,
 } from "@workspace/api-client-react";
 import { formatNaira } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -95,6 +95,7 @@ export default function TradeDetail() {
   const cancelTrade = useCancelTrade();
   const confirmAccess = useConfirmTradeAccess();
   const rateTrade = useRateTradePartner();
+  const notifyPayment = useBuyerNotifyPayment();
   const requestOtp = useRequestOtp();
   const markOtpSent = useMarkOtpSent();
   const markEmailOtpSent = useMarkEmailOtpSent();
@@ -134,6 +135,13 @@ export default function TradeDetail() {
   const handleConfirmPayment = () => {
     confirmPayment.mutate({ id: tradeId }, {
       onSuccess: () => { toast({ title: "Payment confirmed!", description: "Seller has been notified." }); invalidate(); },
+      onError: (err: any) => toast({ title: "Failed", description: err?.data?.error ?? err?.message, variant: "destructive" }),
+    });
+  };
+
+  const handleNotifyPayment = () => {
+    notifyPayment.mutate({ id: tradeId }, {
+      onSuccess: () => { toast({ title: "Admin notified!", description: "Admin will confirm your payment shortly." }); invalidate(); },
       onError: (err: any) => toast({ title: "Failed", description: err?.data?.error ?? err?.message, variant: "destructive" }),
     });
   };
@@ -325,11 +333,30 @@ export default function TradeDetail() {
                   <CardTitle className="text-sm text-muted-foreground uppercase tracking-wider">Actions</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
+                  {/* Buyer pending: show payment instructions + notify button */}
                   {isBuyer && trade.status === "pending" && (
-                    <Button className="w-full" onClick={handleConfirmPayment} disabled={confirmPayment.isPending}>
-                      <ShieldCheck className="w-4 h-4 mr-2" />
-                      {confirmPayment.isPending ? "Processing..." : "Confirm Payment"}
-                    </Button>
+                    <div className="space-y-3">
+                      <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 space-y-1.5">
+                        <p className="text-xs font-bold text-amber-700 dark:text-amber-400 flex items-center gap-1">
+                          <ShieldCheck className="w-3.5 h-3.5" /> Payment Instructions
+                        </p>
+                        <p className="text-xs text-muted-foreground">Transfer <span className="font-bold text-foreground">{formatNaira(trade.amount)}</span> to:</p>
+                        <p className="text-xs font-mono bg-muted rounded px-2 py-1">Moniepoint · 9160385331</p>
+                        <p className="text-xs font-mono bg-muted rounded px-2 py-1">Account Name: Olukoya Kolade</p>
+                        <p className="text-xs text-muted-foreground mt-1">After transferring, click the button below to notify admin.</p>
+                      </div>
+                      {(trade as any).buyerPaidNotified ? (
+                        <div className="rounded-lg border border-blue-500/30 bg-blue-500/5 p-3 text-center">
+                          <p className="text-xs text-blue-600 dark:text-blue-400 font-semibold">⏳ Waiting for admin to confirm your payment…</p>
+                          <p className="text-xs text-muted-foreground mt-1">Admin will confirm once payment is received.</p>
+                        </div>
+                      ) : (
+                        <Button className="w-full" onClick={handleNotifyPayment} disabled={notifyPayment.isPending}>
+                          <ShieldCheck className="w-4 h-4 mr-2" />
+                          {notifyPayment.isPending ? "Notifying..." : "I Have Made Payment"}
+                        </Button>
+                      )}
+                    </div>
                   )}
 
                   {isBuyer && ["payment_confirmed", "seller_transferred"].includes(trade.status) && (
@@ -340,7 +367,11 @@ export default function TradeDetail() {
                   )}
 
                   {isSeller && ["pending"].includes(trade.status) && (
-                    <p className="text-xs text-muted-foreground text-center">Waiting for buyer to confirm payment.</p>
+                    <p className="text-xs text-muted-foreground text-center">
+                      {(trade as any).buyerPaidNotified
+                        ? "Buyer has notified admin of payment. Waiting for admin to confirm."
+                        : "Waiting for buyer to make payment."}
+                    </p>
                   )}
                   {isSeller && ["payment_confirmed", "seller_transferred"].includes(trade.status) && (
                     <p className="text-xs text-muted-foreground text-center">Waiting for buyer to confirm access after OTP exchange.</p>
@@ -357,7 +388,7 @@ export default function TradeDetail() {
                   {/* OTP exchange section */}
                   {isBuyer && ["payment_confirmed", "seller_transferred"].includes(trade.status) && (
                     <div className="space-y-2 border-t border-border pt-3">
-                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Phase 4 – Login with OTP</p>
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Step 4 – Login with OTP</p>
                       <Button variant="outline" className="w-full" size="sm" onClick={handleRequestOtp} disabled={requestOtp.isPending}>
                         🔑 {requestOtp.isPending ? "Requesting..." : "Request OTP from Seller"}
                       </Button>
@@ -365,8 +396,15 @@ export default function TradeDetail() {
                   )}
 
                   {isBuyer && ["payment_confirmed", "seller_transferred"].includes(trade.status) && (
+                    <div className="rounded-lg border border-blue-500/20 bg-blue-500/5 p-3 text-xs text-blue-700 dark:text-blue-300 space-y-1">
+                      <p className="font-bold">📧 After logging in with the OTP:</p>
+                      <p>Go to <strong>account settings</strong> on Konami, change the account email to <strong>your own email address</strong>, then click the button below to request the email change OTP from the seller.</p>
+                    </div>
+                  )}
+
+                  {isBuyer && ["payment_confirmed", "seller_transferred"].includes(trade.status) && (
                     <div className="space-y-2">
-                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Phase 5 – Change Account Email</p>
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Step 7 – Request Email Change OTP</p>
                       <Button variant="outline" className="w-full" size="sm" onClick={handleRequestEmailOtp} disabled={requestEmailOtp.isPending}>
                         📧 {requestEmailOtp.isPending ? "Requesting..." : "Request Email Change OTP"}
                       </Button>
@@ -386,10 +424,11 @@ export default function TradeDetail() {
                     </div>
                   )}
 
-                  {/* Phase 6 – Buyer confirms account access */}
-                  {isBuyer && ["payment_confirmed", "seller_transferred"].includes(trade.status) && (
+                  {/* Step 10 – Buyer confirms access — only shown after email OTP was sent */}
+                  {isBuyer && ["payment_confirmed", "seller_transferred"].includes(trade.status) &&
+                    messages?.some((m: any) => m.isSystem && m.message?.includes("Email change OTP has been sent")) && (
                     <div className="border-t border-border pt-3">
-                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Phase 6 – Confirm Access</p>
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Step 10 – Confirm Account Access</p>
                       <Button className="w-full bg-emerald-600 hover:bg-emerald-700" onClick={handleConfirmAccess} disabled={confirmAccess.isPending}>
                         <CheckCircle className="w-4 h-4 mr-2" />
                         {confirmAccess.isPending ? "Confirming..." : "I Have Accessed the Account"}

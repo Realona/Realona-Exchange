@@ -474,6 +474,7 @@ export const GetTradesResponseItem = zod.object({
   "fee": zod.number().nullish(),
   "status": zod.enum(['pending', 'payment_confirmed', 'seller_transferred', 'completed', 'disputed', 'refunded', 'cancelled']),
   "accessConfirmed": zod.boolean(),
+  "buyerPaidNotified": zod.boolean().optional(),
   "disputeReason": zod.string().nullish(),
   "buyerRating": zod.number().nullish(),
   "sellerRating": zod.number().nullish(),
@@ -505,6 +506,7 @@ export const CreateTradeResponse = zod.object({
   "fee": zod.number().nullish(),
   "status": zod.enum(['pending', 'payment_confirmed', 'seller_transferred', 'completed', 'disputed', 'refunded', 'cancelled']),
   "accessConfirmed": zod.boolean(),
+  "buyerPaidNotified": zod.boolean().optional(),
   "disputeReason": zod.string().nullish(),
   "buyerRating": zod.number().nullish(),
   "sellerRating": zod.number().nullish(),
@@ -535,6 +537,7 @@ export const GetTradeResponse = zod.object({
   "fee": zod.number().nullish(),
   "status": zod.enum(['pending', 'payment_confirmed', 'seller_transferred', 'completed', 'disputed', 'refunded', 'cancelled']),
   "accessConfirmed": zod.boolean(),
+  "buyerPaidNotified": zod.boolean().optional(),
   "disputeReason": zod.string().nullish(),
   "buyerRating": zod.number().nullish(),
   "sellerRating": zod.number().nullish(),
@@ -565,6 +568,7 @@ export const ConfirmTradePaymentResponse = zod.object({
   "fee": zod.number().nullish(),
   "status": zod.enum(['pending', 'payment_confirmed', 'seller_transferred', 'completed', 'disputed', 'refunded', 'cancelled']),
   "accessConfirmed": zod.boolean(),
+  "buyerPaidNotified": zod.boolean().optional(),
   "disputeReason": zod.string().nullish(),
   "buyerRating": zod.number().nullish(),
   "sellerRating": zod.number().nullish(),
@@ -595,6 +599,7 @@ export const SellerTransferredResponse = zod.object({
   "fee": zod.number().nullish(),
   "status": zod.enum(['pending', 'payment_confirmed', 'seller_transferred', 'completed', 'disputed', 'refunded', 'cancelled']),
   "accessConfirmed": zod.boolean(),
+  "buyerPaidNotified": zod.boolean().optional(),
   "disputeReason": zod.string().nullish(),
   "buyerRating": zod.number().nullish(),
   "sellerRating": zod.number().nullish(),
@@ -625,6 +630,7 @@ export const ConfirmReceiptResponse = zod.object({
   "fee": zod.number().nullish(),
   "status": zod.enum(['pending', 'payment_confirmed', 'seller_transferred', 'completed', 'disputed', 'refunded', 'cancelled']),
   "accessConfirmed": zod.boolean(),
+  "buyerPaidNotified": zod.boolean().optional(),
   "disputeReason": zod.string().nullish(),
   "buyerRating": zod.number().nullish(),
   "sellerRating": zod.number().nullish(),
@@ -659,11 +665,24 @@ export const OpenDisputeResponse = zod.object({
   "fee": zod.number().nullish(),
   "status": zod.enum(['pending', 'payment_confirmed', 'seller_transferred', 'completed', 'disputed', 'refunded', 'cancelled']),
   "accessConfirmed": zod.boolean(),
+  "buyerPaidNotified": zod.boolean().optional(),
   "disputeReason": zod.string().nullish(),
   "buyerRating": zod.number().nullish(),
   "sellerRating": zod.number().nullish(),
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date().optional()
+})
+
+
+/**
+ * @summary Buyer notifies admin that they have made payment
+ */
+export const BuyerNotifyPaymentParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const BuyerNotifyPaymentResponse = zod.object({
+  "success": zod.boolean().optional()
 })
 
 
@@ -982,6 +1001,7 @@ export const GetAdminTradesResponseItem = zod.object({
   "fee": zod.number().nullish(),
   "status": zod.enum(['pending', 'payment_confirmed', 'seller_transferred', 'completed', 'disputed', 'refunded', 'cancelled']),
   "accessConfirmed": zod.boolean(),
+  "buyerPaidNotified": zod.boolean().optional(),
   "disputeReason": zod.string().nullish(),
   "buyerRating": zod.number().nullish(),
   "sellerRating": zod.number().nullish(),
@@ -1013,6 +1033,7 @@ export const ForceCompleteTradeResponse = zod.object({
   "fee": zod.number().nullish(),
   "status": zod.enum(['pending', 'payment_confirmed', 'seller_transferred', 'completed', 'disputed', 'refunded', 'cancelled']),
   "accessConfirmed": zod.boolean(),
+  "buyerPaidNotified": zod.boolean().optional(),
   "disputeReason": zod.string().nullish(),
   "buyerRating": zod.number().nullish(),
   "sellerRating": zod.number().nullish(),
@@ -1043,6 +1064,7 @@ export const RefundBuyerResponse = zod.object({
   "fee": zod.number().nullish(),
   "status": zod.enum(['pending', 'payment_confirmed', 'seller_transferred', 'completed', 'disputed', 'refunded', 'cancelled']),
   "accessConfirmed": zod.boolean(),
+  "buyerPaidNotified": zod.boolean().optional(),
   "disputeReason": zod.string().nullish(),
   "buyerRating": zod.number().nullish(),
   "sellerRating": zod.number().nullish(),

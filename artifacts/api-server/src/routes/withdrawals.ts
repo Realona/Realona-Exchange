@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db, withdrawalsTable, usersTable, tradesTable } from "@workspace/db";
-import { eq, sql, and, or } from "drizzle-orm";
+import { eq, sql, and, or, inArray } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
 import { emailWithdrawalRequested } from "../lib/email";
 import { RequestWithdrawalBody } from "@workspace/api-zod";
@@ -44,6 +44,21 @@ router.post("/withdrawals", requireAuth, async (req, res): Promise<void> => {
 
   if (amount <= 0) {
     res.status(400).json({ error: "Amount must be greater than zero" });
+    return;
+  }
+
+  // Block withdrawal if user has any active trade in progress
+  const activeTradeStatuses = ["payment_confirmed", "seller_transferred", "disputed"];
+  const [activeTrade] = await db
+    .select({ id: tradesTable.id, status: tradesTable.status })
+    .from(tradesTable)
+    .where(and(
+      or(eq(tradesTable.buyerId, req.userId!), eq(tradesTable.sellerId, req.userId!)),
+      inArray(tradesTable.status, activeTradeStatuses)
+    ))
+    .limit(1);
+  if (activeTrade) {
+    res.status(400).json({ error: `You have an active trade (#${activeTrade.id}) in progress. You cannot withdraw until the trade is complete.` });
     return;
   }
 

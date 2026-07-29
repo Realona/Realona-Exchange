@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { LogOut, Wallet, Settings, Bell, HandshakeIcon, Trophy, X, ShieldCheck, MessageCircle } from "lucide-react";
-import { useGetWalletBalance, useGetNotifications, useMarkAllNotificationsRead } from "@workspace/api-client-react";
+import { useGetWalletBalance, useGetNotifications, useMarkAllNotificationsRead, useGetMyOffers } from "@workspace/api-client-react";
 import { formatNaira } from "@/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState, useRef, useEffect } from "react";
@@ -32,6 +32,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   const unreadCount = notifications?.filter((n: any) => !n.isRead).length ?? 0;
   const recentNotes = notifications?.slice(0, 10) ?? [];
+
+  const { data: offers } = useGetMyOffers({
+    query: { queryKey: ["getMyOffers"], enabled: !!token, refetchInterval: 30000 }
+  });
+  // Count offers where it's YOUR turn to act: received pending/countered, or made offers where seller countered
+  const pendingOffersCount = offers?.filter((o: any) =>
+    (o.sellerId === user?.id && (o.status === "pending" || o.status === "countered")) ||
+    (o.buyerId === user?.id && o.status === "countered")
+  ).length ?? 0;
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -83,8 +92,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   <button className={`px-2.5 py-1.5 rounded-md ${navLink("/trades")}`}>Trades</button>
                 </Link>
                 <Link href="/offers">
-                  <button className={`px-2.5 py-1.5 rounded-md flex items-center gap-1 ${navLink("/offers")}`}>
+                  <button className={`px-2.5 py-1.5 rounded-md flex items-center gap-1 relative ${navLink("/offers")}`}>
                     <HandshakeIcon className="w-3.5 h-3.5" /> Offers
+                    {pendingOffersCount > 0 && (
+                      <span className="absolute -top-0.5 -right-1 bg-red-500 text-white text-[9px] font-bold min-w-[14px] h-[14px] rounded-full flex items-center justify-center px-0.5 leading-none">
+                        {pendingOffersCount > 9 ? "9+" : pendingOffersCount}
+                      </span>
+                    )}
                   </button>
                 </Link>
                 <Link href="/leaderboard">

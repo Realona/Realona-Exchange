@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
-import { useGetAdminTrades, useForceCompleteTrade, useRefundBuyer } from "@workspace/api-client-react";
+import { useGetAdminTrades, useForceCompleteTrade, useRefundBuyer, useConfirmTradePayment } from "@workspace/api-client-react";
 import { formatNaira } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
@@ -32,6 +32,7 @@ export default function AdminTrades() {
   const { data: trades } = useGetAdminTrades({ status: statusFilter === "all" ? undefined : statusFilter });
   const forceComplete = useForceCompleteTrade();
   const refundBuyer = useRefundBuyer();
+  const confirmPayment = useConfirmTradePayment();
 
   const handleForceComplete = (id: number) => {
     forceComplete.mutate({ id }, {
@@ -43,6 +44,13 @@ export default function AdminTrades() {
   const handleRefund = (id: number) => {
     refundBuyer.mutate({ id }, {
       onSuccess: () => { toast({ title: "Buyer refunded" }); queryClient.invalidateQueries({ queryKey: ["getAdminTrades"] }); },
+      onError: (err: any) => toast({ title: "Failed", description: err?.data?.error ?? err?.message, variant: "destructive" }),
+    });
+  };
+
+  const handleConfirmPayment = (id: number) => {
+    confirmPayment.mutate({ id }, {
+      onSuccess: () => { toast({ title: "Payment confirmed ✅", description: "Trade is now active." }); queryClient.invalidateQueries({ queryKey: ["getAdminTrades"] }); },
       onError: (err: any) => toast({ title: "Failed", description: err?.data?.error ?? err?.message, variant: "destructive" }),
     });
   };
@@ -88,11 +96,21 @@ export default function AdminTrades() {
                     {trade.disputeReason && <span className="text-red-400"> · {trade.disputeReason}</span>}
                   </p>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
                   <span className="font-bold">{formatNaira(trade.amount)}</span>
                   <Button size="sm" variant="outline" asChild>
                     <Link href={`/trades/${trade.id}`}>View</Link>
                   </Button>
+                  {trade.status === "pending" && (trade as any).buyerPaidNotified && (
+                    <Button
+                      size="sm"
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                      onClick={() => handleConfirmPayment(trade.id)}
+                      disabled={confirmPayment.isPending}
+                    >
+                      ✅ Confirm Payment
+                    </Button>
+                  )}
                   {["payment_confirmed", "seller_transferred", "disputed"].includes(trade.status) && (
                     <>
                       <Button

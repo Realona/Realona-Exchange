@@ -62,6 +62,7 @@ function formatTrade(
     fee: Number(trade.fee),
     status: trade.status,
     disputeReason: trade.disputeReason ?? null,
+    buyerPaidNotified: trade.buyerPaidNotified ?? false,
     createdAt: trade.createdAt,
     updatedAt: trade.updatedAt,
   };
@@ -185,10 +186,36 @@ router.get("/trades/:id", requireAuth, async (req, res): Promise<void> => {
   res.json(formatTrade(row.trade, { buyerUsername: row.buyerUsername, sellerUsername: row.sellerUsername, gameName: row.gameName, pictureUrl: row.pictureUrl }));
 });
 
+// Buyer notifies admin that they have made payment
+router.post("/trades/:id/buyer-paid", requireAuth, async (req, res): Promise<void> => {
+  const tradeId = parseInt(req.params.id as string);
+  if (isNaN(tradeId)) { res.status(400).json({ error: "Invalid trade ID" }); return; }
+
+  const [trade] = await db.select().from(tradesTable).where(eq(tradesTable.id, tradeId));
+  if (!trade) { res.status(404).json({ error: "Trade not found" }); return; }
+  if (trade.buyerId !== req.userId) { res.status(403).json({ error: "Not authorized" }); return; }
+  if (trade.status !== "pending") { res.status(400).json({ error: "Trade is not pending" }); return; }
+
+  await db.update(tradesTable).set({ buyerPaidNotified: true }).where(eq(tradesTable.id, tradeId));
+  await addSystemMsg(tradeId, "💰 Buyer has notified admin of payment. Waiting for admin to confirm.", req.userId!);
+
+  const [buyer] = await db.select({ username: usersTable.username }).from(usersTable).where(eq(usersTable.id, req.userId!));
+  await createNotification(trade.sellerId, "trade_update", "Buyer Paid", `${buyer?.username ?? "Buyer"} has notified admin of payment for Trade #${tradeId}. Waiting for admin confirmation.`, { tradeId });
+
+  res.json({ success: true });
+});
+
+// Admin confirms payment (admin-only — deducts from buyer wallet and moves trade forward)
 router.post("/trades/:id/confirm-payment", requireAuth, async (req, res): Promise<void> => {
   const params = ConfirmTradePaymentParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: "Invalid trade ID" });
+    return;
+  }
+
+  // Only admin can confirm payment
+  if (!req.user?.isAdmin && !req.user?.isSuperAdmin) {
+    res.status(403).json({ error: "Only admin can confirm payment" });
     return;
   }
 
@@ -197,26 +224,22 @@ router.post("/trades/:id/confirm-payment", requireAuth, async (req, res): Promis
     res.status(404).json({ error: "Trade not found" });
     return;
   }
-  if (trade.buyerId !== req.userId) {
-    res.status(403).json({ error: "Only buyer can confirm payment" });
-    return;
-  }
   if (trade.status !== "pending") {
     res.status(400).json({ error: "Trade is not in pending state" });
     return;
   }
 
   // Check buyer has enough balance
-  const [buyer] = await db.select().from(usersTable).where(eq(usersTable.id, req.userId!));
+  const [buyer] = await db.select().from(usersTable).where(eq(usersTable.id, trade.buyerId));
   if (Number(buyer.walletBalance) < Number(trade.amount)) {
-    res.status(400).json({ error: "Insufficient wallet balance. Please deposit funds first." });
+    res.status(400).json({ error: "Buyer has insufficient wallet balance. Please deposit funds to buyer's account first." });
     return;
   }
 
   // Deduct from buyer wallet (held in escrow)
   await db.update(usersTable).set({
     walletBalance: sql`${usersTable.walletBalance} - ${trade.amount}`,
-  }).where(eq(usersTable.id, req.userId!));
+  }).where(eq(usersTable.id, trade.buyerId));
 
   await db.update(tradesTable).set({ status: "payment_confirmed" }).where(eq(tradesTable.id, params.data.id));
   await addSystemMsg(params.data.id, "✅ Payment confirmed. Seller can now share account details.", req.userId!);

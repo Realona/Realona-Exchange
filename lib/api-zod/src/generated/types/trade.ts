@@ -29,6 +29,7 @@ export interface Trade {
   fee?: number | null;
   status: TradeStatus;
   accessConfirmed: boolean;
+  buyerPaidNotified?: boolean;
   /** @nullable */
   disputeReason?: string | null;
   /** @nullable */

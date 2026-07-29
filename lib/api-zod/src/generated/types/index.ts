@@ -23,6 +23,7 @@ export * from './bulkListingResult';
 export * from './bulkListingResultError';
 export * from './bulkListingSettings';
 export * from './bulkListingSettingsUpdate';
+export * from './buyerNotifyPayment200';
 export * from './claimGiveaway400';
 export * from './createDemoAccountInput';
 export * from './deleteDemoAccount200';

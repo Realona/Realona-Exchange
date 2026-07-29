@@ -16,6 +16,7 @@ export const tradesTable = pgTable("trades", {
   status: text("status").notNull().default("pending"),
   disputeReason: text("dispute_reason"),
   accessConfirmed: boolean("access_confirmed").notNull().default(false), // buyer clicked "I Have Accessed the Account"
+  buyerPaidNotified: boolean("buyer_paid_notified").notNull().default(false), // buyer clicked "I Have Made Payment"
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

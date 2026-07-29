@@ -509,6 +509,27 @@ paths:
               schema:
                 $ref: "#/components/schemas/Trade"
 
+  /trades/{id}/buyer-paid:
+    post:
+      operationId: buyerNotifyPayment
+      tags: [trades]
+      summary: Buyer notifies admin that they have made payment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+
   /trades/{id}/request-otp:
     post:
       operationId: requestOtp
@@ -2247,6 +2268,8 @@ components:
           type: string
           enum: [pending, payment_confirmed, seller_transferred, completed, disputed, refunded, cancelled]
         accessConfirmed:
+          type: boolean
+        buyerPaidNotified:
           type: boolean
         disputeReason:
           type: ["string", "null"]

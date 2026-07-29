@@ -32,6 +32,7 @@ import type {
   BulkListingResult,
   BulkListingSettings,
   BulkListingSettingsUpdate,
+  BuyerNotifyPayment200,
   ClaimGiveaway400,
   CreateDemoAccountInput,
   DeleteDemoAccount200,
@@ -1886,6 +1887,76 @@ export const useOpenDispute = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getOpenDisputeMutationOptions(options));
+    }
+
+export const getBuyerNotifyPaymentUrl = (id: number,) => {
+
+
+
+
+  return `/api/trades/${id}/buyer-paid`
+}
+
+/**
+ * @summary Buyer notifies admin that they have made payment
+ */
+export const buyerNotifyPayment = async (id: number, options?: RequestInit): Promise<BuyerNotifyPayment200> => {
+
+  return customFetch<BuyerNotifyPayment200>(getBuyerNotifyPaymentUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getBuyerNotifyPaymentMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof buyerNotifyPayment>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof buyerNotifyPayment>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['buyerNotifyPayment'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof buyerNotifyPayment>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  buyerNotifyPayment(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type BuyerNotifyPaymentMutationResult = NonNullable<Awaited<ReturnType<typeof buyerNotifyPayment>>>
+
+    export type BuyerNotifyPaymentMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Buyer notifies admin that they have made payment
+ */
+export const useBuyerNotifyPayment = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof buyerNotifyPayment>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof buyerNotifyPayment>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getBuyerNotifyPaymentMutationOptions(options));
     }
 
 export const getRequestOtpUrl = (id: number,) => {

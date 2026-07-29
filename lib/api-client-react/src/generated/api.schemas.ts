@@ -304,6 +304,7 @@ export interface Trade {
   fee?: number | null;
   status: TradeStatus;
   accessConfirmed: boolean;
+  buyerPaidNotified?: boolean;
   /** @nullable */
   disputeReason?: string | null;
   /** @nullable */
@@ -819,6 +820,10 @@ maxPrice?: number;
 divisionRank?: string;
 minSquadRating?: number;
 maxSquadRating?: number;
+};
+
+export type BuyerNotifyPayment200 = {
+  success?: boolean;
 };
 
 export type RequestOtp200 = {
