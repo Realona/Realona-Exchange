@@ -704,6 +704,18 @@ export const RequestEmailOtpResponse = zod.object({
 
 
 /**
+ * @summary Seller marks email-change OTP as sent
+ */
+export const MarkEmailOtpSentParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const MarkEmailOtpSentResponse = zod.object({
+  "success": zod.boolean().optional()
+})
+
+
+/**
  * @summary Get messages for a trade
  */
 export const GetTradeMessagesParams = zod.object({

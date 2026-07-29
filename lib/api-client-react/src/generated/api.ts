@@ -60,6 +60,7 @@ import type {
   ListingInput,
   ListingUpdate,
   LoginInput,
+  MarkEmailOtpSent200,
   MarkOtpSent200,
   MessageInput,
   Notification,
@@ -2095,6 +2096,76 @@ export const useRequestEmailOtp = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getRequestEmailOtpMutationOptions(options));
+    }
+
+export const getMarkEmailOtpSentUrl = (id: number,) => {
+
+
+
+
+  return `/api/trades/${id}/email-otp-sent`
+}
+
+/**
+ * @summary Seller marks email-change OTP as sent
+ */
+export const markEmailOtpSent = async (id: number, options?: RequestInit): Promise<MarkEmailOtpSent200> => {
+
+  return customFetch<MarkEmailOtpSent200>(getMarkEmailOtpSentUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getMarkEmailOtpSentMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof markEmailOtpSent>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof markEmailOtpSent>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['markEmailOtpSent'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof markEmailOtpSent>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  markEmailOtpSent(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type MarkEmailOtpSentMutationResult = NonNullable<Awaited<ReturnType<typeof markEmailOtpSent>>>
+
+    export type MarkEmailOtpSentMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Seller marks email-change OTP as sent
+ */
+export const useMarkEmailOtpSent = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof markEmailOtpSent>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof markEmailOtpSent>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getMarkEmailOtpSentMutationOptions(options));
     }
 
 export const getGetTradeMessagesUrl = (id: number,) => {

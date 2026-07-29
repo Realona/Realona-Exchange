@@ -58,6 +58,7 @@ export * from './listingInputCategory';
 export * from './listingStatus';
 export * from './listingUpdate';
 export * from './loginInput';
+export * from './markEmailOtpSent200';
 export * from './markOtpSent200';
 export * from './messageInput';
 export * from './notification';

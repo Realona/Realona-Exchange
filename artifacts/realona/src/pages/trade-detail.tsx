@@ -12,7 +12,7 @@ import {
   useGetTrade, useGetTradeMessages, useSendTradeMessage,
   useConfirmTradePayment, useSellerTransferred, useConfirmReceipt, useOpenDispute,
   useCancelTrade, useConfirmTradeAccess, useRateTradePartner, useGetTradeCredentials,
-  useRequestOtp, useMarkOtpSent, useRequestEmailOtp,
+  useRequestOtp, useMarkOtpSent, useMarkEmailOtpSent, useRequestEmailOtp,
 } from "@workspace/api-client-react";
 import { formatNaira } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -97,6 +97,7 @@ export default function TradeDetail() {
   const rateTrade = useRateTradePartner();
   const requestOtp = useRequestOtp();
   const markOtpSent = useMarkOtpSent();
+  const markEmailOtpSent = useMarkEmailOtpSent();
   const requestEmailOtp = useRequestEmailOtp();
 
   const canShowCredentials = (user?.id === trade?.buyerId) && ["payment_confirmed", "seller_transferred", "completed"].includes(trade?.status ?? "");
@@ -190,6 +191,13 @@ export default function TradeDetail() {
   const handleRequestEmailOtp = () => {
     requestEmailOtp.mutate({ id: tradeId }, {
       onSuccess: () => toast({ title: "Email OTP Requested", description: "Seller has been notified to send the second OTP." }),
+      onError: (err: any) => toast({ title: "Failed", description: err?.data?.error ?? err?.message, variant: "destructive" }),
+    });
+  };
+
+  const handleEmailOtpSent = () => {
+    markEmailOtpSent.mutate({ id: tradeId }, {
+      onSuccess: () => toast({ title: "Marked as sent!", description: "Buyer has been notified of the email change OTP." }),
       onError: (err: any) => toast({ title: "Failed", description: err?.data?.error ?? err?.message, variant: "destructive" }),
     });
   };
@@ -365,12 +373,15 @@ export default function TradeDetail() {
                     </div>
                   )}
 
-                  {/* OTP Sent button (seller) */}
+                  {/* OTP Actions (seller) */}
                   {isSeller && ["payment_confirmed", "seller_transferred"].includes(trade.status) && (
                     <div className="space-y-2 border-t border-border pt-3">
                       <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">OTP Actions</p>
                       <Button variant="outline" className="w-full border-green-500/30 text-green-600 hover:bg-green-500/10" size="sm" onClick={handleOtpSent} disabled={markOtpSent.isPending}>
-                        ✅ {markOtpSent.isPending ? "Marking..." : "OTP Sent"}
+                        📤 {markOtpSent.isPending ? "Marking..." : "OTP Sent (Step 4)"}
+                      </Button>
+                      <Button variant="outline" className="w-full border-blue-500/30 text-blue-600 hover:bg-blue-500/10" size="sm" onClick={handleEmailOtpSent} disabled={markEmailOtpSent.isPending}>
+                        📤 {markEmailOtpSent.isPending ? "Marking..." : "Email Change OTP Sent (Step 8)"}
                       </Button>
                     </div>
                   )}

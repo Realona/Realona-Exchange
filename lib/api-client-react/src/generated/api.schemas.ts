@@ -833,6 +833,10 @@ export type RequestEmailOtp200 = {
   success?: boolean;
 };
 
+export type MarkEmailOtpSent200 = {
+  success?: boolean;
+};
+
 export type GetAdminUsersParams = {
 search?: string;
 suspended?: boolean;

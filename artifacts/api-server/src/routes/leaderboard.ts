@@ -16,7 +16,7 @@ router.get("/leaderboard", async (req, res): Promise<void> => {
     FROM trades t
     JOIN users u ON u.id = t.seller_id
     LEFT JOIN trade_ratings r ON r.ratee_id = t.seller_id
-    WHERE t.status = 'completed'
+    WHERE t.status = 'completed' AND (u.is_demo IS NULL OR u.is_demo = false)
     GROUP BY u.id, u.username, u.is_verified
     ORDER BY count DESC
     LIMIT 10
@@ -33,7 +33,7 @@ router.get("/leaderboard", async (req, res): Promise<void> => {
     FROM trades t
     JOIN users u ON u.id = t.buyer_id
     LEFT JOIN trade_ratings r ON r.ratee_id = t.buyer_id
-    WHERE t.status = 'completed'
+    WHERE t.status = 'completed' AND (u.is_demo IS NULL OR u.is_demo = false)
     GROUP BY u.id, u.username, u.is_verified
     ORDER BY count DESC
     LIMIT 10
@@ -49,6 +49,7 @@ router.get("/leaderboard", async (req, res): Promise<void> => {
       ROUND(AVG(r.rating), 1) AS rating
     FROM trade_ratings r
     JOIN users u ON u.id = r.ratee_id
+    WHERE (u.is_demo IS NULL OR u.is_demo = false)
     GROUP BY u.id, u.username, u.is_verified
     HAVING COUNT(r.id) >= 1
     ORDER BY rating DESC, count DESC
@@ -66,7 +67,7 @@ router.get("/leaderboard", async (req, res): Promise<void> => {
     FROM users u
     LEFT JOIN trades t ON (t.buyer_id = u.id OR t.seller_id = u.id) AND t.status = 'completed'
     LEFT JOIN trade_ratings r ON r.ratee_id = u.id
-    WHERE u.created_at >= NOW() - INTERVAL '30 days'
+    WHERE u.created_at >= NOW() - INTERVAL '30 days' AND (u.is_demo IS NULL OR u.is_demo = false)
     GROUP BY u.id, u.username, u.is_verified
     ORDER BY count DESC, u.created_at DESC
     LIMIT 10

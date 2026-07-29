@@ -219,8 +219,8 @@ router.post("/trades/:id/confirm-payment", requireAuth, async (req, res): Promis
   }).where(eq(usersTable.id, req.userId!));
 
   await db.update(tradesTable).set({ status: "payment_confirmed" }).where(eq(tradesTable.id, params.data.id));
-  await addSystemMsg(params.data.id, "Payment confirmed. Seller can share OTP.", req.userId!);
-  await addSystemMsg(params.data.id, "🔐 Account credentials are now visible to the buyer. Buyer: please change the account email to your own immediately after gaining access.", req.userId!);
+  await addSystemMsg(params.data.id, "✅ Payment confirmed. Seller can now share account details.", req.userId!);
+  await addSystemMsg(params.data.id, "🔐 Account details have been revealed to the buyer.", req.userId!);
 
   const row = await getTradeWithDetails(params.data.id);
 
@@ -471,7 +471,8 @@ router.post("/trades/:id/confirm-access", requireAuth, async (req, res): Promise
 
   await db.update(listingsTable).set({ status: "sold" }).where(eq(listingsTable.id, trade.listingId));
   await db.update(tradesTable).set({ status: "completed", accessConfirmed: true }).where(eq(tradesTable.id, tradeId));
-  await addSystemMsg(tradeId, `Trade completed! Funds released to seller.`, req.userId!);
+  await addSystemMsg(tradeId, "✅ Buyer has confirmed access to the account.", req.userId!);
+  await addSystemMsg(tradeId, "🎉 Trade completed! Funds released to seller.", req.userId!);
 
   // Notify seller
   const [buyer] = await db.select({ username: usersTable.username }).from(usersTable).where(eq(usersTable.id, req.userId!));
@@ -500,7 +501,7 @@ router.post("/trades/:id/request-otp", requireAuth, async (req, res): Promise<vo
     res.status(400).json({ error: "OTP can only be requested after payment is confirmed" }); return;
   }
 
-  await addSystemMsg(tradeId, "🔑 Buyer is requesting the OTP/Access Code. Please send it via chat.", req.userId!);
+  await addSystemMsg(tradeId, "📩 Buyer is requesting the OTP.", req.userId!);
   const [buyer] = await db.select({ username: usersTable.username }).from(usersTable).where(eq(usersTable.id, req.userId!));
   await createNotification(trade.sellerId, "trade_update", "OTP Requested", `${buyer?.username ?? "Buyer"} is requesting the OTP code for Trade #${tradeId}. Please send it via trade chat.`, { tradeId });
 
@@ -516,7 +517,7 @@ router.post("/trades/:id/otp-sent", requireAuth, async (req, res): Promise<void>
   if (!trade) { res.status(404).json({ error: "Trade not found" }); return; }
   if (trade.sellerId !== req.userId) { res.status(403).json({ error: "Only seller can mark OTP as sent" }); return; }
 
-  await addSystemMsg(tradeId, "✅ Seller has sent the OTP/Access Code. Please check the chat and use it to log in.", req.userId!);
+  await addSystemMsg(tradeId, "📤 OTP has been sent by the seller.", req.userId!);
   const [seller] = await db.select({ username: usersTable.username }).from(usersTable).where(eq(usersTable.id, req.userId!));
   await createNotification(trade.buyerId, "trade_update", "OTP Sent", `${seller?.username ?? "Seller"} has sent the OTP code for Trade #${tradeId}. Check the trade chat.`, { tradeId });
 
@@ -532,9 +533,25 @@ router.post("/trades/:id/request-email-otp", requireAuth, async (req, res): Prom
   if (!trade) { res.status(404).json({ error: "Trade not found" }); return; }
   if (trade.buyerId !== req.userId) { res.status(403).json({ error: "Only buyer can request email OTP" }); return; }
 
-  await addSystemMsg(tradeId, "📧 Buyer is requesting the second OTP to change the account email. Seller please check your email and send the new OTP via chat.", req.userId!);
+  await addSystemMsg(tradeId, "📩 Buyer is requesting the email change OTP.", req.userId!);
   const [buyer] = await db.select({ username: usersTable.username }).from(usersTable).where(eq(usersTable.id, req.userId!));
   await createNotification(trade.sellerId, "trade_update", "Email Change OTP Requested", `${buyer?.username ?? "Buyer"} needs the second OTP to change the account email on Trade #${tradeId}. Please send it via chat.`, { tradeId });
+
+  res.json({ success: true });
+});
+
+// Seller marks email-change OTP as sent (Step 8)
+router.post("/trades/:id/email-otp-sent", requireAuth, async (req, res): Promise<void> => {
+  const tradeId = parseInt(req.params.id as string);
+  if (isNaN(tradeId)) { res.status(400).json({ error: "Invalid trade ID" }); return; }
+
+  const [trade] = await db.select().from(tradesTable).where(eq(tradesTable.id, tradeId));
+  if (!trade) { res.status(404).json({ error: "Trade not found" }); return; }
+  if (trade.sellerId !== req.userId) { res.status(403).json({ error: "Only seller can mark email OTP as sent" }); return; }
+
+  await addSystemMsg(tradeId, "📤 Email change OTP has been sent.", req.userId!);
+  const [seller] = await db.select({ username: usersTable.username }).from(usersTable).where(eq(usersTable.id, req.userId!));
+  await createNotification(trade.buyerId, "trade_update", "Email Change OTP Sent", `${seller?.username ?? "Seller"} has sent the email change OTP for Trade #${tradeId}. Check the trade chat.`, { tradeId });
 
   res.json({ success: true });
 });

@@ -572,6 +572,27 @@ paths:
                 properties:
                   success: { type: boolean }
 
+  /trades/{id}/email-otp-sent:
+    post:
+      operationId: markEmailOtpSent
+      tags: [trades]
+      summary: Seller marks email-change OTP as sent
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+
   # ─── CHAT ──────────────────────────────────────────────────────────────────
   /trades/{id}/messages:
     get:

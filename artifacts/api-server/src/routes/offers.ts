@@ -103,7 +103,14 @@ router.post("/offers/:id/respond", requireAuth, async (req, res): Promise<void> 
 
   const [offer] = await db.select().from(offersTable).where(eq(offersTable.id, offerId));
   if (!offer) { res.status(404).json({ error: "Offer not found" }); return; }
-  if (offer.sellerId !== req.userId) { res.status(403).json({ error: "Only the seller can respond to this offer" }); return; }
+  // When pending → seller responds; when countered → buyer responds (their turn to react)
+  const expectedResponder = offer.status === "countered" ? offer.buyerId : offer.sellerId;
+  if (expectedResponder !== req.userId) {
+    const msg = offer.status === "countered"
+      ? "It is the buyer's turn to respond to this counter offer"
+      : "Only the seller can respond to this offer";
+    res.status(403).json({ error: msg }); return;
+  }
   if (offer.status !== "pending" && offer.status !== "countered") { res.status(400).json({ error: "Offer is no longer active" }); return; }
 
   let newStatus: string;

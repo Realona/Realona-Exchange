@@ -51,6 +51,8 @@ export default function Offers() {
 
   const myOffersMade = offers?.filter((o: any) => o.buyerId === user?.id) ?? [];
   const offersReceived = offers?.filter((o: any) => o.sellerId === user?.id) ?? [];
+  // Offers where the buyer now needs to respond (seller countered back)
+  const buyerActionNeeded = myOffersMade.filter((o: any) => o.status === "countered").length;
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ["getMyOffers"] });
@@ -110,10 +112,20 @@ export default function Offers() {
               <Clock className="w-3 h-3" />
               {timeLeft(offer.expiresAt)}
             </div>
+            {/* Receiver can act on pending or countered-back offers */}
             {isReceiver && (offer.status === "pending" || offer.status === "countered") && (
               <div className="flex flex-col gap-1">
                 <Button size="sm" className="h-7 text-xs" onClick={() => handleRespond(offer.id, "accept")}>Accept</Button>
-                <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => { setCounterDialogOffer(offer); setCounterAmount(String(offer.amount)); }}>Counter</Button>
+                <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => { setCounterDialogOffer(offer); setCounterAmount(String(offer.counterAmount ?? offer.amount)); }}>Counter</Button>
+                <Button size="sm" variant="destructive" className="h-7 text-xs" onClick={() => handleRespond(offer.id, "reject")}>Reject</Button>
+              </div>
+            )}
+            {/* Buyer can act on a counter that the seller sent back */}
+            {!isReceiver && offer.status === "countered" && (
+              <div className="flex flex-col gap-1">
+                <p className="text-xs text-blue-500 font-semibold mb-1 text-right">Seller countered</p>
+                <Button size="sm" className="h-7 text-xs" onClick={() => handleRespond(offer.id, "accept")}>Accept</Button>
+                <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => { setCounterDialogOffer(offer); setCounterAmount(String(offer.counterAmount ?? offer.amount)); }}>Counter</Button>
                 <Button size="sm" variant="destructive" className="h-7 text-xs" onClick={() => handleRespond(offer.id, "reject")}>Reject</Button>
               </div>
             )}
@@ -150,7 +162,14 @@ export default function Offers() {
                 </span>
               )}
             </TabsTrigger>
-            <TabsTrigger value="made">Made</TabsTrigger>
+            <TabsTrigger value="made">
+            Made
+            {buyerActionNeeded > 0 && (
+              <span className="ml-2 bg-blue-500 text-white rounded-full text-xs w-5 h-5 flex items-center justify-center">
+                {buyerActionNeeded}
+              </span>
+            )}
+          </TabsTrigger>
           </TabsList>
 
           <TabsContent value="received">
@@ -188,7 +207,10 @@ export default function Offers() {
             <DialogHeader><DialogTitle>Counter Offer</DialogTitle></DialogHeader>
             <div className="space-y-3 py-2">
               <p className="text-sm text-muted-foreground">
-                Original offer: <span className="font-semibold text-foreground">{counterDialogOffer ? formatNaira(counterDialogOffer.amount) : ""}</span>
+                {counterDialogOffer?.status === "countered" && counterDialogOffer?.counterAmount
+                  ? <>Their counter: <span className="font-semibold text-foreground">{formatNaira(counterDialogOffer.counterAmount)}</span></>
+                  : <>Original offer: <span className="font-semibold text-foreground">{counterDialogOffer ? formatNaira(counterDialogOffer.amount) : ""}</span></>
+                }
               </p>
               <label className="text-sm font-medium">Your counter amount (₦)</label>
               <Input
