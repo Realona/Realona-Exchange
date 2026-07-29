@@ -96,12 +96,12 @@ export default function Home() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Button size="lg" asChild className="text-base h-12 px-8">
-                <Link href={user ? "/listings/new" : "/login"}>Sell eFootball Account</Link>
+                <Link href={user ? "/listings/new" : "/login"}>Sell Your Account</Link>
               </Button>
               <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <Input
-                  placeholder="Search eFootball accounts..."
+                  placeholder="Search accounts..."
                   className="h-12 pl-10 bg-background border-border text-base"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
@@ -120,7 +120,7 @@ export default function Home() {
               <div className="bg-primary/10 p-3 rounded-lg text-primary"><ShieldCheck className="w-6 h-6" /></div>
               <div>
                 <h3 className="font-semibold mb-1">100% Secure Escrow</h3>
-                <p className="text-sm text-muted-foreground">Funds are held safely until the buyer confirms full access to the eFootball account.</p>
+                <p className="text-sm text-muted-foreground">Funds are held safely until the buyer confirms full access to the account.</p>
               </div>
             </div>
             <div className="flex items-start gap-4">
@@ -344,7 +344,7 @@ export default function Home() {
             <div className="text-center py-20 border border-dashed border-border rounded-lg bg-card/50">
               <h3 className="text-xl font-semibold mb-2">{hasFilters ? "No listings match your filters" : "No listings yet"}</h3>
               <p className="text-muted-foreground mb-6">
-                {hasFilters ? "Try adjusting your filters." : "Be the first to list your eFootball account!"}
+                {hasFilters ? "Try adjusting your filters." : "Be the first to list your account!"}
               </p>
               {hasFilters ? (
                 <Button variant="outline" onClick={clearFilters}>Clear Filters</Button>
