@@ -15,3 +15,4 @@ export * from "./giveaways";
 export * from "./notifications";
 export * from "./wishlist";
 export * from "./platform-reviews";
+export * from "./pending-registrations";

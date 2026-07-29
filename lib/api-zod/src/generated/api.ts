@@ -17,7 +17,7 @@ export const HealthCheckResponse = zod.object({
 
 
 /**
- * @summary Register a new user
+ * @summary Register a new user (sends OTP, returns pending token)
  */
 export const registerBodyUsernameMin = 3;
 
@@ -34,6 +34,25 @@ export const RegisterBody = zod.object({
 })
 
 export const RegisterResponse = zod.object({
+  "pendingToken": zod.string(),
+  "message": zod.string()
+})
+
+
+/**
+ * @summary Verify OTP and create the user account
+ */
+export const verifyEmailBodyOtpMin = 6;
+export const verifyEmailBodyOtpMax = 6;
+
+
+
+export const VerifyEmailBody = zod.object({
+  "pendingToken": zod.string(),
+  "otp": zod.string().min(verifyEmailBodyOtpMin).max(verifyEmailBodyOtpMax)
+})
+
+export const VerifyEmailResponse = zod.object({
   "user": zod.object({
   "id": zod.number(),
   "email": zod.string(),
@@ -48,6 +67,19 @@ export const RegisterResponse = zod.object({
   "createdAt": zod.coerce.date()
 }),
   "token": zod.string()
+})
+
+
+/**
+ * @summary Resend OTP for a pending registration
+ */
+export const ResendOtpBody = zod.object({
+  "pendingToken": zod.string()
+})
+
+export const ResendOtpResponse = zod.object({
+  "success": zod.boolean(),
+  "message": zod.string().nullish()
 })
 
 

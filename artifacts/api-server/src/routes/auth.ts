@@ -1,9 +1,10 @@
 import { Router, type IRouter } from "express";
-import { db, usersTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { db, usersTable, pendingRegistrationsTable } from "@workspace/db";
+import { eq, and, gt } from "drizzle-orm";
 import { hashPassword, comparePassword, signToken, requireAuth } from "../lib/auth";
-import { emailWelcome } from "../lib/email";
-import { RegisterBody, LoginBody } from "@workspace/api-zod";
+import { emailWelcome, emailOtp } from "../lib/email";
+import { RegisterBody, LoginBody, VerifyEmailBody, ResendOtpBody } from "@workspace/api-zod";
+import crypto from "crypto";
 
 const router: IRouter = Router();
 
@@ -18,6 +19,14 @@ function formatUser(user: typeof usersTable.$inferSelect) {
     isSuspended: user.isSuspended,
     createdAt: user.createdAt,
   };
+}
+
+function generateOtp(): string {
+  return String(crypto.randomInt(100000, 999999));
+}
+
+function hashOtp(otp: string): string {
+  return crypto.createHash("sha256").update(otp).digest("hex");
 }
 
 router.post("/auth/register", async (req, res): Promise<void> => {
@@ -46,15 +55,132 @@ router.post("/auth/register", async (req, res): Promise<void> => {
     return;
   }
 
+  // Clean up any existing pending registration for this email
+  await db
+    .delete(pendingRegistrationsTable)
+    .where(eq(pendingRegistrationsTable.email, email));
+
   const passwordHash = await hashPassword(password);
+  const otp = generateOtp();
+  const otpHash = hashOtp(otp);
+  const pendingToken = crypto.randomBytes(32).toString("hex");
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+  await db.insert(pendingRegistrationsTable).values({
+    token: pendingToken,
+    email,
+    username,
+    passwordHash,
+    otpHash,
+    expiresAt,
+  });
+
+  emailOtp({ email, username, otp }).catch(() => {});
+
+  res.status(200).json({
+    pendingToken,
+    message: `A 6-digit verification code has been sent to ${email}`,
+  });
+});
+
+router.post("/auth/verify-email", async (req, res): Promise<void> => {
+  const parsed = VerifyEmailBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid request" });
+    return;
+  }
+  const { pendingToken, otp } = parsed.data;
+
+  const [pending] = await db
+    .select()
+    .from(pendingRegistrationsTable)
+    .where(
+      and(
+        eq(pendingRegistrationsTable.token, pendingToken),
+        gt(pendingRegistrationsTable.expiresAt, new Date())
+      )
+    );
+
+  if (!pending) {
+    res.status(400).json({ error: "Verification code expired or invalid. Please register again." });
+    return;
+  }
+
+  const otpHash = hashOtp(otp);
+  if (otpHash !== pending.otpHash) {
+    res.status(400).json({ error: "Incorrect verification code" });
+    return;
+  }
+
+  // Double-check email/username still available
+  const [existingEmail] = await db
+    .select()
+    .from(usersTable)
+    .where(eq(usersTable.email, pending.email));
+  if (existingEmail) {
+    await db.delete(pendingRegistrationsTable).where(eq(pendingRegistrationsTable.id, pending.id));
+    res.status(400).json({ error: "Email already registered" });
+    return;
+  }
+
+  const [existingUsername] = await db
+    .select()
+    .from(usersTable)
+    .where(eq(usersTable.username, pending.username));
+  if (existingUsername) {
+    await db.delete(pendingRegistrationsTable).where(eq(pendingRegistrationsTable.id, pending.id));
+    res.status(400).json({ error: "Username already taken" });
+    return;
+  }
+
   const [user] = await db
     .insert(usersTable)
-    .values({ email, username, passwordHash })
+    .values({ email: pending.email, username: pending.username, passwordHash: pending.passwordHash })
     .returning();
+
+  await db.delete(pendingRegistrationsTable).where(eq(pendingRegistrationsTable.id, pending.id));
 
   const token = signToken({ userId: user.id });
   emailWelcome({ email: user.email, username: user.username }).catch(() => {});
   res.status(201).json({ user: formatUser(user), token });
+});
+
+router.post("/auth/resend-otp", async (req, res): Promise<void> => {
+  const parsed = ResendOtpBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid request" });
+    return;
+  }
+  const { pendingToken } = parsed.data;
+
+  const [pending] = await db
+    .select()
+    .from(pendingRegistrationsTable)
+    .where(
+      and(
+        eq(pendingRegistrationsTable.token, pendingToken),
+        gt(pendingRegistrationsTable.expiresAt, new Date())
+      )
+    );
+
+  if (!pending) {
+    res.status(400).json({ error: "Session expired. Please register again." });
+    return;
+  }
+
+  // Generate fresh OTP and extend expiry
+  const otp = generateOtp();
+  const otpHash = hashOtp(otp);
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+  await db
+    .update(pendingRegistrationsTable)
+    .set({ otpHash, expiresAt })
+    .where(eq(pendingRegistrationsTable.id, pending.id));
+
+  emailOtp({ email: pending.email, username: pending.username, otp }).catch(() => {});
+
+  res.json({ success: true, message: "Verification code resent" });
 });
 
 router.post("/auth/login", async (req, res): Promise<void> => {

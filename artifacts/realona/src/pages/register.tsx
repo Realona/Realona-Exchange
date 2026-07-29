@@ -2,7 +2,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useRegister } from "@workspace/api-client-react";
-import { useAuth } from "@/hooks/use-auth";
 import { useLocation, Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,7 +21,6 @@ const registerSchema = z.object({
 });
 
 export default function Register() {
-  const { login } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   
@@ -46,13 +44,11 @@ export default function Register() {
         password: data.password,
       } 
     }, {
-      onSuccess: (res) => {
-        login(res.token, res.user);
-        toast({
-          title: "Account created!",
-          description: "Welcome to Realona Exchange.",
-        });
-        setLocation("/dashboard");
+      onSuccess: (res: any) => {
+        // Store pending token and email for OTP verification
+        sessionStorage.setItem("pendingToken", res.pendingToken);
+        sessionStorage.setItem("pendingEmail", data.email);
+        setLocation("/verify-otp");
       },
       onError: (err: any) => {
         toast({
@@ -130,7 +126,7 @@ export default function Register() {
                   )}
                 />
                 <Button type="submit" className="w-full" disabled={registerMutation.isPending}>
-                  {registerMutation.isPending ? "Creating account..." : "Register"}
+                  {registerMutation.isPending ? "Sending code..." : "Continue"}
                 </Button>
               </form>
             </Form>

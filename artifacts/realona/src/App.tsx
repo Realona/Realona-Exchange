@@ -35,6 +35,7 @@ import ActivityLogsPage from "@/pages/activity-logs";
 import ReviewsPage from "@/pages/reviews";
 import Wishlist from "@/pages/wishlist";
 import Purchases from "@/pages/purchases";
+import VerifyOtp from "@/pages/verify-otp";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -97,6 +98,7 @@ function Router() {
       <Route path="/how-it-works" component={HowItWorks} />
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
+      <Route path="/verify-otp" component={VerifyOtp} />
       <Route path="/dashboard">
         <ProtectedRoute component={Dashboard} />
       </Route>

@@ -283,6 +283,24 @@ export async function emailWithdrawalRejected(opts: {
 
 // ─── Auth emails ─────────────────────────────────────────────────────────────
 
+export async function emailOtp(opts: { email: string; username: string; otp: string }) {
+  await send(
+    opts.email,
+    "Your Realona verification code",
+    base(
+      "Verify your email address",
+      p(`Hi <strong>${opts.username}</strong>, thanks for registering on Realona Exchange!`) +
+      p("Enter the code below to complete your registration. It expires in <strong>10 minutes</strong>.") +
+      `<div style="text-align:center;margin:28px 0;">
+        <div style="display:inline-block;background:#0f172a;border:2px solid #16a34a;border-radius:12px;padding:20px 40px;">
+          <span style="font-size:36px;font-weight:800;letter-spacing:10px;color:#16a34a;font-family:monospace;">${opts.otp}</span>
+        </div>
+      </div>` +
+      p("If you did not create an account on Realona Exchange, you can safely ignore this email.")
+    )
+  );
+}
+
 export async function emailWelcome(opts: { email: string; username: string }) {
   await send(
     opts.email,

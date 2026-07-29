@@ -13,6 +13,24 @@ export interface ErrorResponse {
   error: string;
 }
 
+export interface RegisterPendingResponse {
+  pendingToken: string;
+  message: string;
+}
+
+export interface VerifyEmailInput {
+  pendingToken: string;
+  /**
+     * @minLength 6
+     * @maxLength 6
+     */
+  otp: string;
+}
+
+export interface ResendOtpInput {
+  pendingToken: string;
+}
+
 export interface SuccessResponse {
   success: boolean;
   /** @nullable */
