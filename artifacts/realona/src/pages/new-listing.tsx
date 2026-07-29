@@ -55,9 +55,9 @@ type SocialData = z.infer<typeof socialSchema>;
 type Category = "efootball" | "social_media";
 
 // ─── Player entry ────────────────────────────────────────────────────────────
-interface PlayerEntry { name: string; rating: string; }
+export interface PlayerEntry { name: string; rating: string; }
 
-function PlayerPicker({ players, onChange }: { players: PlayerEntry[]; onChange: (p: PlayerEntry[]) => void }) {
+export function PlayerPicker({ players, onChange }: { players: PlayerEntry[]; onChange: (p: PlayerEntry[]) => void }) {
   const add = () => { if (players.length < 5) onChange([...players, { name: "", rating: "" }]); };
   const remove = (i: number) => onChange(players.filter((_, idx) => idx !== i));
   const update = (i: number, field: keyof PlayerEntry, value: string) => {

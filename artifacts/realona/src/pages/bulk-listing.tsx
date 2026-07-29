@@ -13,9 +13,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useUpload } from "@workspace/object-storage-web";
 import {
   ArrowLeft, X, CheckCircle, Loader2, Layers,
-  ImagePlus, Zap, AlertCircle, PackageCheck, Gamepad2, Users,
+  ImagePlus, Zap, AlertCircle, PackageCheck, Gamepad2, Users, Plus, Star,
 } from "lucide-react";
-import { EFOOTBALL_DIVISIONS } from "./new-listing";
+import { EFOOTBALL_DIVISIONS, PlayerEntry, PlayerPicker } from "./new-listing";
 
 const SOCIAL_PLATFORMS = ["Instagram", "Twitter/X", "TikTok", "YouTube", "Facebook"];
 
@@ -32,10 +32,9 @@ interface BulkItem {
   // eFootball
   divisionRank: string;
   squadRating: string;
-  topPlayers: string; // comma-separated "Bellingham (92), Mbappe (91)"
+  topPlayers: PlayerEntry[];
   konamiId: string;
   konamiPassword: string;
-  accessCode: string;
   // Social media
   platform: string;
   accountHandle: string;
@@ -61,10 +60,9 @@ function makeBulkItem(file: File, defaults: Partial<BulkItem> = {}): BulkItem {
     description: "",
     divisionRank: "",
     squadRating: "",
-    topPlayers: "",
+    topPlayers: [],
     konamiId: "",
     konamiPassword: "",
-    accessCode: "",
     platform: "",
     accountHandle: "",
     followerCount: "",
@@ -84,6 +82,7 @@ function BulkItemCard({
   item,
   minPrice,
   onUpdate,
+  onUpdatePlayers,
   onRemove,
   onUploaded,
   onUploadStart,
@@ -93,6 +92,7 @@ function BulkItemCard({
   item: BulkItem;
   minPrice: number;
   onUpdate: (id: string, field: keyof BulkItem, value: string) => void;
+  onUpdatePlayers: (id: string, players: PlayerEntry[]) => void;
   onRemove: (id: string) => void;
   onUploaded: (id: string, url: string) => void;
   onUploadStart: (id: string) => void;
@@ -208,18 +208,10 @@ function BulkItemCard({
             </div>
 
             {/* Best Players */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                Best Players <span className="text-muted-foreground font-normal">(optional)</span>
-              </label>
-              <Input
-                placeholder='e.g. Bellingham (92), Mbappe (91), Haaland (90)'
-                value={item.topPlayers}
-                onChange={(e) => onUpdate(item.id, "topPlayers", e.target.value)}
-                className="bg-background h-9 text-sm"
-              />
-              <p className="text-xs text-muted-foreground">Comma-separated player names with optional ratings</p>
-            </div>
+            <PlayerPicker
+              players={item.topPlayers}
+              onChange={(players) => onUpdatePlayers(item.id, players)}
+            />
           </>
         )}
 
@@ -366,15 +358,6 @@ function BulkItemCard({
                   className="bg-background h-8 text-sm"
                 />
               </div>
-              <div className="space-y-1 sm:col-span-2">
-                <label className="text-xs text-muted-foreground">OTP / Access Code (optional)</label>
-                <Input
-                  placeholder="OTP or access code"
-                  value={item.accessCode}
-                  onChange={(e) => onUpdate(item.id, "accessCode", e.target.value)}
-                  className="bg-background h-8 text-sm"
-                />
-              </div>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -457,6 +440,12 @@ export default function BulkListingPage() {
     );
   };
 
+  const updateItemPlayers = (id: string, players: PlayerEntry[]) => {
+    setItems((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, topPlayers: players } : item))
+    );
+  };
+
   const removeItem = (id: string) => {
     setItems((prev) => {
       const item = prev.find((i) => i.id === id);
@@ -511,8 +500,10 @@ export default function BulkListingPage() {
 
     const payload = items.map((item) => {
       // Parse comma-separated best players string → array of strings
-      const highlightedPlayers = item.topPlayers
-        ? item.topPlayers.split(",").map((s) => s.trim()).filter(Boolean)
+      const highlightedPlayers = item.topPlayers.length > 0
+        ? item.topPlayers
+            .filter((p) => p.name.trim())
+            .map((p) => p.rating ? `${p.name.trim()} (${p.rating})` : p.name.trim())
         : null;
 
       return {
@@ -527,7 +518,6 @@ export default function BulkListingPage() {
         highlightedPlayers: highlightedPlayers,
         konamiId: item.konamiId || null,
         konamiPassword: item.konamiPassword || null,
-        accessCode: item.accessCode || null,
         // Social media
         platform: item.platform || null,
         accountHandle: item.accountHandle || null,
@@ -719,6 +709,7 @@ export default function BulkListingPage() {
                   item={item}
                   minPrice={MIN_PRICE}
                   onUpdate={updateItem}
+                  onUpdatePlayers={updateItemPlayers}
                   onRemove={removeItem}
                   onUploaded={markUploaded}
                   onUploadStart={markUploadStart}
