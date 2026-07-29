@@ -75,7 +75,11 @@ router.post("/auth/register", async (req, res): Promise<void> => {
     expiresAt,
   });
 
-  emailOtp({ email, username, otp }).catch(() => {});
+  try {
+    await emailOtp({ email, username, otp });
+  } catch (err: any) {
+    console.error("[auth] emailOtp failed for", email, "—", err?.message);
+  }
 
   res.status(200).json({
     pendingToken,
@@ -178,7 +182,11 @@ router.post("/auth/resend-otp", async (req, res): Promise<void> => {
     .set({ otpHash, expiresAt })
     .where(eq(pendingRegistrationsTable.id, pending.id));
 
-  emailOtp({ email: pending.email, username: pending.username, otp }).catch(() => {});
+  try {
+    await emailOtp({ email: pending.email, username: pending.username, otp });
+  } catch (err: any) {
+    console.error("[auth] resend emailOtp failed for", pending.email, "—", err?.message);
+  }
 
   res.json({ success: true, message: "Verification code resent" });
 });
