@@ -15,6 +15,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const [bellOpen, setBellOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const bellRef = useRef<HTMLDivElement>(null);
+  const [mobileBannerDismissed, setMobileBannerDismissed] = useState(
+    () => localStorage.getItem("mobileBannerDismissed") === "1"
+  );
+  // Detect narrow / touch viewport — typical mobile browser
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 900;
+  const showMobileBanner = isMobile && !mobileBannerDismissed;
+
+  const dismissMobileBanner = () => {
+    localStorage.setItem("mobileBannerDismissed", "1");
+    setMobileBannerDismissed(true);
+  };
 
   const { data: walletData } = useGetWalletBalance({
     query: { queryKey: ["getWalletBalance"], enabled: !!token }
@@ -70,6 +81,22 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
+      {/* ── Mobile desktop-mode banner ── */}
+      {showMobileBanner && (
+        <div className="sticky top-0 z-[60] flex items-center gap-3 px-4 py-2.5 text-white text-xs font-medium" style={{ background: "hsl(38,92%,42%)" }}>
+          <span className="text-base shrink-0">📱</span>
+          <span className="flex-1 leading-snug">
+            For the best experience, enable <strong>Desktop Mode</strong> in your browser menu before using Realona Exchange.
+          </span>
+          <button
+            onClick={dismissMobileBanner}
+            className="shrink-0 p-1 rounded hover:bg-black/10 transition-colors"
+            aria-label="Dismiss"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
       {/* ── Blue header ── */}
       <header className="sticky top-0 z-50 shadow-md" style={{ background: "hsl(221,70%,48%)" }}>
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
