@@ -351,13 +351,6 @@ function EfootballForm({ onBack }: { onBack: () => void }) {
                 <FormMessage />
               </FormItem>
             )} />
-            <FormField control={form.control} name="accessCode" render={({ field }) => (
-              <FormItem>
-                <FormLabel>Access / Transfer Code <span className="text-muted-foreground text-xs font-normal">(optional)</span></FormLabel>
-                <FormControl><Input placeholder="Account transfer or access code" {...field} value={field.value as string} className="bg-background" /></FormControl>
-                <FormMessage />
-              </FormItem>
-            )} />
           </CardContent>
         </Card>
 
