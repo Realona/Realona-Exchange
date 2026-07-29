@@ -33,6 +33,7 @@ const efootballSchema = z.object({
   konamiId: z.string().optional().or(z.literal("")),
   konamiPassword: z.string().optional().or(z.literal("")),
   accessCode: z.string().optional().or(z.literal("")),
+  recoveryEmail: z.string().email("Must be a valid email").optional().or(z.literal("")),
 });
 
 // ─── Social media schema ─────────────────────────────────────────────────────
@@ -199,7 +200,7 @@ function EfootballForm({ onBack }: { onBack: () => void }) {
 
   const form = useForm<EfootballData>({
     resolver: zodResolver(efootballSchema),
-    defaultValues: { price: 0, description: "", pictureUrl: "", divisionRank: "", squadRating: "", konamiId: "", konamiPassword: "", accessCode: "" },
+    defaultValues: { price: 0, description: "", pictureUrl: "", divisionRank: "", squadRating: "", konamiId: "", konamiPassword: "", accessCode: "", recoveryEmail: "" },
   });
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -228,6 +229,7 @@ function EfootballForm({ onBack }: { onBack: () => void }) {
         konamiId: data.konamiId || undefined,
         konamiPassword: data.konamiPassword || undefined,
         accessCode: data.accessCode || undefined,
+        accountEmail: data.recoveryEmail || undefined,
         highlightedPlayers: highlightedPlayers.length > 0 ? highlightedPlayers : undefined,
       },
     }, {
@@ -348,6 +350,22 @@ function EfootballForm({ onBack }: { onBack: () => void }) {
               <FormItem>
                 <FormLabel>Konami Password</FormLabel>
                 <FormControl><Input type="password" placeholder="Current password" {...field} value={field.value as string} className="bg-background" /></FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
+            <FormField control={form.control} name="accessCode" render={({ field }) => (
+              <FormItem>
+                <FormLabel>Access Code / OTP <span className="text-muted-foreground font-normal text-xs">(optional)</span></FormLabel>
+                <FormControl><Input placeholder="OTP or access code" {...field} value={field.value as string} className="bg-background" /></FormControl>
+                <FormDescription className="text-xs">Leave blank — the buyer will request this via chat during the trade.</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )} />
+            <FormField control={form.control} name="recoveryEmail" render={({ field }) => (
+              <FormItem>
+                <FormLabel>Recovery Email <span className="text-muted-foreground font-normal text-xs">(optional)</span></FormLabel>
+                <FormControl><Input type="email" placeholder="Email linked to the Konami account" {...field} value={field.value as string} className="bg-background" /></FormControl>
+                <FormDescription className="text-xs">The email currently registered on the Konami account. Revealed to the buyer after payment.</FormDescription>
                 <FormMessage />
               </FormItem>
             )} />

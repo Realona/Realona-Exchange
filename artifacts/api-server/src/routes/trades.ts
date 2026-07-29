@@ -146,7 +146,7 @@ router.post("/trades", requireAuth, async (req, res): Promise<void> => {
   }).returning();
 
   // Add system message
-  await addSystemMsg(trade.id, `Trade #${trade.id} created. Buyer must confirm payment to proceed.`, req.userId!);
+  await addSystemMsg(trade.id, `Trade initiated. Please make payment.`, req.userId!);
 
   const row = await getTradeWithDetails(trade.id);
 
@@ -219,7 +219,8 @@ router.post("/trades/:id/confirm-payment", requireAuth, async (req, res): Promis
   }).where(eq(usersTable.id, req.userId!));
 
   await db.update(tradesTable).set({ status: "payment_confirmed" }).where(eq(tradesTable.id, params.data.id));
-  await addSystemMsg(params.data.id, "Payment confirmed by buyer. Seller should now transfer the game account.", req.userId!);
+  await addSystemMsg(params.data.id, "Payment confirmed. Seller can share OTP.", req.userId!);
+  await addSystemMsg(params.data.id, "🔐 Account credentials are now visible to the buyer. Buyer: please change the account email to your own immediately after gaining access.", req.userId!);
 
   const row = await getTradeWithDetails(params.data.id);
 
@@ -306,7 +307,7 @@ router.post("/trades/:id/confirm-receipt", requireAuth, async (req, res): Promis
   await db.update(listingsTable).set({ status: "sold" }).where(eq(listingsTable.id, trade.listingId));
 
   await db.update(tradesTable).set({ status: "completed" }).where(eq(tradesTable.id, params.data.id));
-  await addSystemMsg(params.data.id, `Trade completed! Seller received ₦${sellerAmount.toLocaleString()}. Platform fee: ₦${Number(trade.fee).toLocaleString()}.`, req.userId!);
+  await addSystemMsg(params.data.id, `Trade completed! Funds released to seller.`, req.userId!);
 
   // Notify users who wishlisted this listing that it's been sold
   const [listingRow] = await db.select({ gameName: listingsTable.gameName }).from(listingsTable).where(eq(listingsTable.id, trade.listingId));
@@ -441,8 +442,10 @@ router.get("/trades/:id/credentials", requireAuth, async (req, res): Promise<voi
     konamiId: listing.konamiId ?? null,
     konamiPassword: listing.konamiPassword ?? null,
     accessCode: listing.accessCode ?? null,
-    accountEmail: listing.accountEmail ?? null,
+    recoveryEmail: listing.category === "efootball" ? (listing.accountEmail ?? null) : null,
+    accountEmail: listing.category !== "efootball" ? (listing.accountEmail ?? null) : null,
     accountPassword: listing.accountPassword ?? null,
+    category: listing.category ?? null,
   });
 });
 
@@ -468,7 +471,7 @@ router.post("/trades/:id/confirm-access", requireAuth, async (req, res): Promise
 
   await db.update(listingsTable).set({ status: "sold" }).where(eq(listingsTable.id, trade.listingId));
   await db.update(tradesTable).set({ status: "completed", accessConfirmed: true }).where(eq(tradesTable.id, tradeId));
-  await addSystemMsg(tradeId, `Buyer confirmed account access! Trade #${tradeId} is now complete. Seller received ₦${sellerAmount.toLocaleString()}.`, req.userId!);
+  await addSystemMsg(tradeId, `Trade completed! Funds released to seller.`, req.userId!);
 
   // Notify seller
   const [buyer] = await db.select({ username: usersTable.username }).from(usersTable).where(eq(usersTable.id, req.userId!));

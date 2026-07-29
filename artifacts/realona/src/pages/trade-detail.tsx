@@ -33,7 +33,7 @@ function StatusStep({ label, done, active }: { label: string; done: boolean; act
 const STEPS = [
   { status: "pending", label: "Trade Created" },
   { status: "payment_confirmed", label: "Payment Confirmed" },
-  { status: "seller_transferred", label: "Account Transferred" },
+  { status: "otp_exchange", label: "OTP Exchange" },
   { status: "completed", label: "Trade Complete" },
 ];
 
@@ -75,7 +75,7 @@ export default function TradeDetail() {
   const [showPassword, setShowPassword] = useState(false);
   const [ratingValue, setRatingValue] = useState(0);
   const [ratingComment, setRatingComment] = useState("");
-  const [credRevealed, setCredRevealed] = useState(false);
+  const [credRevealed, setCredRevealed] = useState(true);
   const chatBottomRef = useRef<HTMLDivElement>(null);
 
   const { data: trade, isLoading: tradeLoading } = useGetTrade(
@@ -324,27 +324,7 @@ export default function TradeDetail() {
                     </Button>
                   )}
 
-                  {isSeller && trade.status === "payment_confirmed" && (
-                    <Button className="w-full" onClick={handleSellerTransferred} disabled={sellerTransfer.isPending}>
-                      <ArrowRight className="w-4 h-4 mr-2" />
-                      {sellerTransfer.isPending ? "Marking..." : "Mark Account as Sent"}
-                    </Button>
-                  )}
-
-                  {isBuyer && trade.status === "seller_transferred" && (
-                    <div className="space-y-2">
-                      <Button className="w-full bg-green-600 hover:bg-green-700" onClick={handleConfirmReceipt} disabled={confirmReceipt.isPending}>
-                        <CheckCircle className="w-4 h-4 mr-2" />
-                        {confirmReceipt.isPending ? "Completing..." : "Confirm Receipt & Release Funds"}
-                      </Button>
-                      <Button variant="outline" className="w-full text-red-500 border-red-500/30 hover:bg-red-500/10" onClick={() => setDisputeOpen(true)}>
-                        <AlertTriangle className="w-4 h-4 mr-2" />
-                        Open Dispute
-                      </Button>
-                    </div>
-                  )}
-
-                  {isBuyer && trade.status === "payment_confirmed" && (
+                  {isBuyer && ["payment_confirmed", "seller_transferred"].includes(trade.status) && (
                     <Button variant="outline" className="w-full text-red-500 border-red-500/30 hover:bg-red-500/10" onClick={() => setDisputeOpen(true)}>
                       <AlertTriangle className="w-4 h-4 mr-2" />
                       Open Dispute
@@ -354,8 +334,8 @@ export default function TradeDetail() {
                   {isSeller && ["pending"].includes(trade.status) && (
                     <p className="text-xs text-muted-foreground text-center">Waiting for buyer to confirm payment.</p>
                   )}
-                  {isSeller && trade.status === "seller_transferred" && (
-                    <p className="text-xs text-muted-foreground text-center">Waiting for buyer to confirm receipt.</p>
+                  {isSeller && ["payment_confirmed", "seller_transferred"].includes(trade.status) && (
+                    <p className="text-xs text-muted-foreground text-center">Waiting for buyer to confirm access after OTP exchange.</p>
                   )}
 
                   {/* Cancel button */}
@@ -366,13 +346,19 @@ export default function TradeDetail() {
                     </Button>
                   )}
 
-                  {/* OTP flow buttons (buyer) */}
+                  {/* OTP exchange section */}
                   {isBuyer && ["payment_confirmed", "seller_transferred"].includes(trade.status) && (
                     <div className="space-y-2 border-t border-border pt-3">
-                      <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">OTP / Access Code</p>
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Phase 4 – Login with OTP</p>
                       <Button variant="outline" className="w-full" size="sm" onClick={handleRequestOtp} disabled={requestOtp.isPending}>
                         🔑 {requestOtp.isPending ? "Requesting..." : "Request OTP from Seller"}
                       </Button>
+                    </div>
+                  )}
+
+                  {isBuyer && ["payment_confirmed", "seller_transferred"].includes(trade.status) && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Phase 5 – Change Account Email</p>
                       <Button variant="outline" className="w-full" size="sm" onClick={handleRequestEmailOtp} disabled={requestEmailOtp.isPending}>
                         📧 {requestEmailOtp.isPending ? "Requesting..." : "Request Email Change OTP"}
                       </Button>
@@ -381,17 +367,23 @@ export default function TradeDetail() {
 
                   {/* OTP Sent button (seller) */}
                   {isSeller && ["payment_confirmed", "seller_transferred"].includes(trade.status) && (
-                    <Button variant="outline" className="w-full border-green-500/30 text-green-500 hover:bg-green-500/10" size="sm" onClick={handleOtpSent} disabled={markOtpSent.isPending}>
-                      ✅ {markOtpSent.isPending ? "Marking..." : "I Have Sent the OTP"}
-                    </Button>
+                    <div className="space-y-2 border-t border-border pt-3">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">OTP Actions</p>
+                      <Button variant="outline" className="w-full border-green-500/30 text-green-600 hover:bg-green-500/10" size="sm" onClick={handleOtpSent} disabled={markOtpSent.isPending}>
+                        ✅ {markOtpSent.isPending ? "Marking..." : "OTP Sent"}
+                      </Button>
+                    </div>
                   )}
 
-                  {/* Confirm Access button (buyer, after payment confirmed) */}
+                  {/* Phase 6 – Buyer confirms account access */}
                   {isBuyer && ["payment_confirmed", "seller_transferred"].includes(trade.status) && (
-                    <Button className="w-full bg-emerald-600 hover:bg-emerald-700" onClick={handleConfirmAccess} disabled={confirmAccess.isPending}>
-                      <CheckCircle className="w-4 h-4 mr-2" />
-                      {confirmAccess.isPending ? "Confirming..." : "I Have Accessed the Account"}
-                    </Button>
+                    <div className="border-t border-border pt-3">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Phase 6 – Confirm Access</p>
+                      <Button className="w-full bg-emerald-600 hover:bg-emerald-700" onClick={handleConfirmAccess} disabled={confirmAccess.isPending}>
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                        {confirmAccess.isPending ? "Confirming..." : "I Have Accessed the Account"}
+                      </Button>
+                    </div>
                   )}
                 </CardContent>
               </Card>
@@ -407,20 +399,12 @@ export default function TradeDetail() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm">
-                  {!credRevealed ? (
-                    <div className="text-center py-2">
-                      <p className="text-xs text-muted-foreground mb-3">Credentials are hidden for security. Click to reveal.</p>
-                      <Button size="sm" variant="outline" onClick={() => setCredRevealed(true)}>
-                        <Eye className="w-3.5 h-3.5 mr-1.5" />
-                        Reveal Credentials
-                      </Button>
-                    </div>
-                  ) : credentials ? (
+                  {credentials ? (
                     <div className="space-y-2">
                       {[
                         { label: "Konami ID", value: (credentials as any).konamiId },
                         { label: "Konami Password", value: (credentials as any).konamiPassword },
-                        { label: "Access Code", value: (credentials as any).accessCode },
+                        { label: "Recovery Email", value: (credentials as any).recoveryEmail },
                         { label: "Account Email", value: (credentials as any).accountEmail },
                         { label: "Account Password", value: (credentials as any).accountPassword },
                       ].filter(f => f.value).map(({ label, value }) => (
