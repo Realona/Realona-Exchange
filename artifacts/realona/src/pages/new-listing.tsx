@@ -574,35 +574,50 @@ function SocialMediaForm({ onBack }: { onBack: () => void }) {
   );
 }
 
-// ─── Category chooser ─────────────────────────────────────────────────────────
+// ─── Category + mode chooser ──────────────────────────────────────────────────
+type Mode = "single" | "bulk";
+
 export default function NewListing() {
   const [category, setCategory] = useState<Category | null>(null);
+  const [mode, setMode] = useState<Mode | null>(null);
   const [, setLocation] = useLocation();
 
-  if (category === "efootball") {
-    return (
-      <Layout>
-        <div className="container mx-auto px-4 py-8 max-w-2xl">
-          <div className="mb-6">
-            <div className="flex items-center gap-3 mb-1">
-              <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Gamepad2 className="w-5 h-5 text-primary" />
+  // ── Step 3: show the actual single-listing form ──────────────────────────────
+  if (category && mode === "single") {
+    if (category === "efootball") {
+      return (
+        <Layout>
+          <div className="container mx-auto px-4 py-8 max-w-2xl">
+            <div className="mb-6">
+              <button
+                onClick={() => setMode(null)}
+                className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4 transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4" /> Back
+              </button>
+              <div className="flex items-center gap-3 mb-1">
+                <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Gamepad2 className="w-5 h-5 text-primary" />
+                </div>
+                <h1 className="text-2xl font-bold">Sell eFootball Account</h1>
               </div>
-              <h1 className="text-2xl font-bold">Sell eFootball Account</h1>
+              <p className="text-muted-foreground text-sm ml-12">List your account and get paid securely through escrow.</p>
             </div>
-            <p className="text-muted-foreground text-sm ml-12">List your account and get paid securely through escrow.</p>
+            <EfootballForm onBack={() => setMode(null)} />
           </div>
-          <EfootballForm onBack={() => setCategory(null)} />
-        </div>
-      </Layout>
-    );
-  }
-
-  if (category === "social_media") {
+        </Layout>
+      );
+    }
     return (
       <Layout>
         <div className="container mx-auto px-4 py-8 max-w-2xl">
           <div className="mb-6">
+            <button
+              onClick={() => setMode(null)}
+              className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4 transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" /> Back
+            </button>
             <div className="flex items-center gap-3 mb-1">
               <div className="w-9 h-9 rounded-lg bg-purple-500/10 flex items-center justify-center">
                 <Users className="w-5 h-5 text-purple-600" />
@@ -611,13 +626,86 @@ export default function NewListing() {
             </div>
             <p className="text-muted-foreground text-sm ml-12">List your account and get paid securely through escrow.</p>
           </div>
-          <SocialMediaForm onBack={() => setCategory(null)} />
+          <SocialMediaForm onBack={() => setMode(null)} />
         </div>
       </Layout>
     );
   }
 
-  // Category chooser
+  // ── Step 2: Single or Multiple listings? ─────────────────────────────────────
+  if (category) {
+    const isEfootball = category === "efootball";
+    const Icon = isEfootball ? Gamepad2 : Users;
+    const label = isEfootball ? "eFootball Account" : "Social Media Account";
+
+    return (
+      <Layout>
+        <div className="container mx-auto px-4 py-16 max-w-2xl">
+          <button
+            onClick={() => setCategory(null)}
+            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-8 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" /> Back
+          </button>
+
+          <div className="flex items-center gap-3 mb-2">
+            <div className={`w-10 h-10 rounded-xl ${isEfootball ? "bg-primary/10" : "bg-purple-500/10"} flex items-center justify-center`}>
+              <Icon className={`w-5 h-5 ${isEfootball ? "text-primary" : "text-purple-600"}`} />
+            </div>
+            <h1 className="text-2xl font-bold">{label}</h1>
+          </div>
+          <p className="text-muted-foreground mb-10">How many accounts are you listing?</p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            {/* Single listing */}
+            <button
+              type="button"
+              onClick={() => setMode("single")}
+              className={`group text-left p-6 rounded-2xl border-2 border-border bg-card ${isEfootball ? "hover:border-primary" : "hover:border-purple-500"} hover:shadow-lg transition-all duration-200`}
+            >
+              <div className={`w-12 h-12 rounded-xl ${isEfootball ? "bg-primary/10 group-hover:bg-primary/20" : "bg-purple-500/10 group-hover:bg-purple-500/20"} flex items-center justify-center mb-4 transition-colors`}>
+                <Icon className={`w-6 h-6 ${isEfootball ? "text-primary" : "text-purple-600"}`} />
+              </div>
+              <h2 className="text-lg font-bold mb-1">Single Listing</h2>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                List one account with full details — price, credentials, screenshots, and description.
+              </p>
+              <div className={`mt-5 text-sm font-semibold ${isEfootball ? "text-primary" : "text-purple-600"} group-hover:translate-x-1 transition-transform inline-flex items-center gap-1`}>
+                Continue →
+              </div>
+            </button>
+
+            {/* Bulk listing */}
+            <button
+              type="button"
+              onClick={() => setLocation(`/listings/bulk?category=${category}`)}
+              className="group text-left p-6 rounded-2xl border-2 border-border bg-card hover:border-amber-400 hover:shadow-lg transition-all duration-200"
+            >
+              <div className="w-12 h-12 rounded-xl bg-amber-500/10 group-hover:bg-amber-500/20 flex items-center justify-center mb-4 transition-colors">
+                <Layers className="w-6 h-6 text-amber-500" />
+              </div>
+              <h2 className="text-lg font-bold mb-1 flex items-center gap-2">
+                Multiple Listings
+                <span className="text-xs bg-amber-500/10 text-amber-600 px-2 py-0.5 rounded-full font-medium">up to 10</span>
+              </h2>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Upload screenshots for multiple accounts and list them all at once. Great for power sellers.
+              </p>
+              <div className="mt-5 text-sm font-semibold text-amber-600 group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">
+                Continue →
+              </div>
+            </button>
+          </div>
+
+          <p className="text-center text-xs text-muted-foreground mt-6">
+            All listings are protected by our escrow system. Credentials are only revealed after payment is confirmed.
+          </p>
+        </div>
+      </Layout>
+    );
+  }
+
+  // ── Step 1: Category chooser ──────────────────────────────────────────────────
   return (
     <Layout>
       <div className="container mx-auto px-4 py-16 max-w-2xl">
@@ -674,32 +762,7 @@ export default function NewListing() {
           </button>
         </div>
 
-        {/* Bulk listing option */}
-        <button
-          type="button"
-          onClick={() => setLocation("/listings/bulk")}
-          className="group col-span-1 sm:col-span-2 text-left p-5 rounded-2xl border-2 border-border bg-card hover:border-amber-400 hover:shadow-lg transition-all duration-200 flex items-center justify-between"
-        >
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-amber-500/10 group-hover:bg-amber-500/20 flex items-center justify-center transition-colors shrink-0">
-              <Layers className="w-6 h-6 text-amber-500" />
-            </div>
-            <div>
-              <h2 className="text-base font-bold mb-0.5 flex items-center gap-2">
-                Bulk Listing
-                <span className="text-xs bg-amber-500/10 text-amber-600 px-2 py-0.5 rounded-full font-medium">Up to 10 accounts</span>
-              </h2>
-              <p className="text-sm text-muted-foreground leading-snug">
-                Upload multiple screenshots and list all your accounts in one go. Perfect for power sellers.
-              </p>
-            </div>
-          </div>
-          <div className="text-sm font-semibold text-amber-600 group-hover:translate-x-1 transition-transform shrink-0 ml-4">
-            Select →
-          </div>
-        </button>
-
-        <p className="text-center text-xs text-muted-foreground mt-2 col-span-1 sm:col-span-2">
+        <p className="text-center text-xs text-muted-foreground mt-6">
           All listings are protected by our escrow system. Credentials are only revealed after payment is confirmed.
         </p>
       </div>

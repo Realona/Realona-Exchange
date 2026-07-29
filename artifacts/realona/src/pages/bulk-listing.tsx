@@ -341,15 +341,25 @@ function BulkItemCard({
 
 // ─── Main page ─────────────────────────────────────────────────────────────────
 export default function BulkListingPage() {
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Read ?category= from URL
+  const urlCategory = (() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const c = params.get("category");
+      if (c === "efootball" || c === "social_media") return c;
+    } catch {}
+    return null;
+  })();
 
   const MAX_IMAGES = 10;
   const MIN_PRICE = 1000;
 
   const [items, setItems] = useState<BulkItem[]>([]);
-  const [quickCategory, setQuickCategory] = useState<"efootball" | "social_media" | "">("");
+  const [quickCategory, setQuickCategory] = useState<"efootball" | "social_media" | "">(urlCategory ?? "");
   const [quickPrice, setQuickPrice] = useState("");
   const [result, setResult] = useState<{ created: number; errors: number; total: number } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);

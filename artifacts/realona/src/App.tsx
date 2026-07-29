@@ -112,6 +112,9 @@ function Router() {
       <Route path="/listings/my">
         <ProtectedRoute component={MyListings} />
       </Route>
+      <Route path="/listings/bulk">
+        <ProtectedRoute component={BulkListing} />
+      </Route>
       <Route path="/listings/:id" component={ListingDetail} />
       <Route path="/trades">
         <ProtectedRoute component={Trades} />
@@ -170,9 +173,6 @@ function Router() {
       <Route path="/reviews" component={ReviewsPage} />
       <Route path="/activity">
         <ProtectedRoute component={ActivityLogsPage} />
-      </Route>
-      <Route path="/listings/bulk">
-        <ProtectedRoute component={BulkListing} />
       </Route>
       <Route component={NotFound} />
     </Switch>
