@@ -28,6 +28,7 @@ router.use(healthRouter);
 router.use(authRouter);
 router.use(usersRouter);
 router.use(listingsRouter);
+router.use(tradeFeedRouter);
 router.use(tradesRouter);
 router.use(chatRouter);
 router.use(depositsRouter);
@@ -44,7 +45,6 @@ router.use(giveawaysRouter);
 router.use(leaderboardRouter);
 router.use(wishlistRouter);
 router.use(purchasesRouter);
-router.use(tradeFeedRouter);
 router.use(platformReviewsRouter);
 
 export default router;

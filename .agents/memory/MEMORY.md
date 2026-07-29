@@ -5,3 +5,6 @@
 - [Orval codegen conflict](orval-codegen-conflict.md) — inline requestBody schemas in openapi.yaml produce duplicate Body types; always use $ref to named schemas to avoid TS2308 export clash.
 - [Withdrawal escrow logic](withdrawal-escrow.md) — only deduct pending (unpaid) buyer trades from available balance; payment_confirmed+ already deducted wallet at confirm-payment time.
 - [First-trade fee logic](first-trade-fee.md) — check completed trade count before creating trade; isAdmin/isSuperAdmin also exempt from fee.
+- [Express route ordering](route-ordering.md) — specific routes (e.g. /trades/feed) must be mounted before /:id wildcard routers or they get swallowed.
+- [Admin pages pattern](admin-pages-pattern.md) — 4 touch points: page file, AdminNav in users.tsx, nav in index.tsx, route in App.tsx.
+- [OpenAPI yaml merge risk](openapi-merge-risk.md) — task agent merges can wipe yaml additions; grep + re-add + re-run codegen after every merge.

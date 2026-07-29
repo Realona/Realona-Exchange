@@ -23,6 +23,7 @@ function AdminNav() {
     { href: "/admin/trades", label: "Trades" },
     { href: "/admin/withdrawals", label: "Withdrawals" },
     { href: "/admin/reports", label: "Reports" },
+    { href: "/admin/reviews", label: "Reviews" },
   ];
   if (user?.isSuperAdmin) navLinks.push({ href: "/admin/settings", label: "Settings" });
   return (

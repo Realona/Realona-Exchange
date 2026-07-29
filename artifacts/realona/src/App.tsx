@@ -28,6 +28,7 @@ import AdminDeposits from "@/pages/admin/deposits";
 import AdminKycReview from "@/pages/admin/kyc-review";
 import AdminAnnouncements from "@/pages/admin/announcements";
 import AdminGiveaways from "@/pages/admin/giveaways";
+import AdminReviews from "@/pages/admin/reviews";
 import PublicWishlistPage from "@/pages/public-wishlist";
 import FAQPage from "@/pages/faq";
 import ActivityLogsPage from "@/pages/activity-logs";
@@ -144,6 +145,9 @@ function Router() {
       </Route>
       <Route path="/admin/giveaways">
         <AdminRoute component={AdminGiveaways} />
+      </Route>
+      <Route path="/admin/reviews">
+        <AdminRoute component={AdminReviews} />
       </Route>
       <Route path="/offers">
         <ProtectedRoute component={Offers} />

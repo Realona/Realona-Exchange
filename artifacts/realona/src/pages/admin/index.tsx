@@ -49,6 +49,7 @@ export default function AdminDashboard() {
     { href: "/admin/announcements", label: "Announcements" },
     { href: "/admin/giveaways", label: "Giveaways" },
     { href: "/admin/reports", label: "Reports" },
+    { href: "/admin/reviews", label: "Reviews" },
   ];
   if (user.isSuperAdmin) navLinks.push({ href: "/admin/settings", label: "Settings" });
 
