@@ -36,6 +36,7 @@ import ReviewsPage from "@/pages/reviews";
 import Wishlist from "@/pages/wishlist";
 import Purchases from "@/pages/purchases";
 import VerifyOtp from "@/pages/verify-otp";
+import BulkListing from "@/pages/bulk-listing";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -169,6 +170,9 @@ function Router() {
       <Route path="/reviews" component={ReviewsPage} />
       <Route path="/activity">
         <ProtectedRoute component={ActivityLogsPage} />
+      </Route>
+      <Route path="/listings/bulk">
+        <ProtectedRoute component={BulkListing} />
       </Route>
       <Route component={NotFound} />
     </Switch>

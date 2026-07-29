@@ -12,7 +12,7 @@ import { useCreateListing } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
-import { ShieldCheck, Upload, CheckCircle, Loader2, X, Gamepad2, Users, Plus, ArrowLeft, Star } from "lucide-react";
+import { ShieldCheck, Upload, CheckCircle, Loader2, X, Gamepad2, Users, Plus, ArrowLeft, Star, Layers } from "lucide-react";
 import { useRef, useState } from "react";
 import { useUpload } from "@workspace/object-storage-web";
 
@@ -577,6 +577,7 @@ function SocialMediaForm({ onBack }: { onBack: () => void }) {
 // ─── Category chooser ─────────────────────────────────────────────────────────
 export default function NewListing() {
   const [category, setCategory] = useState<Category | null>(null);
+  const [, setLocation] = useLocation();
 
   if (category === "efootball") {
     return (
@@ -673,7 +674,32 @@ export default function NewListing() {
           </button>
         </div>
 
-        <p className="text-center text-xs text-muted-foreground mt-8">
+        {/* Bulk listing option */}
+        <button
+          type="button"
+          onClick={() => setLocation("/listings/bulk")}
+          className="group col-span-1 sm:col-span-2 text-left p-5 rounded-2xl border-2 border-border bg-card hover:border-amber-400 hover:shadow-lg transition-all duration-200 flex items-center justify-between"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-amber-500/10 group-hover:bg-amber-500/20 flex items-center justify-center transition-colors shrink-0">
+              <Layers className="w-6 h-6 text-amber-500" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold mb-0.5 flex items-center gap-2">
+                Bulk Listing
+                <span className="text-xs bg-amber-500/10 text-amber-600 px-2 py-0.5 rounded-full font-medium">Up to 10 accounts</span>
+              </h2>
+              <p className="text-sm text-muted-foreground leading-snug">
+                Upload multiple screenshots and list all your accounts in one go. Perfect for power sellers.
+              </p>
+            </div>
+          </div>
+          <div className="text-sm font-semibold text-amber-600 group-hover:translate-x-1 transition-transform shrink-0 ml-4">
+            Select →
+          </div>
+        </button>
+
+        <p className="text-center text-xs text-muted-foreground mt-2 col-span-1 sm:col-span-2">
           All listings are protected by our escrow system. Credentials are only revealed after payment is confirmed.
         </p>
       </div>

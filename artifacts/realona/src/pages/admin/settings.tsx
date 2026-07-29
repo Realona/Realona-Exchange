@@ -3,7 +3,7 @@ import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { useGetPlatformFee, useUpdatePlatformFee, useGetAdmins, useCreateAdmin } from "@workspace/api-client-react";
+import { useGetPlatformFee, useUpdatePlatformFee, useGetAdmins, useCreateAdmin, useGetBulkListingSettings, useUpdateBulkListingSettings } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { AdminNav } from "./users";
@@ -17,11 +17,15 @@ export default function AdminSettings() {
   const [fee, setFee] = useState("");
   const [adminUserId, setAdminUserId] = useState("");
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [bulkMaxImages, setBulkMaxImages] = useState("");
+  const [bulkMinPrice, setBulkMinPrice] = useState("");
 
   const { data: feeData } = useGetPlatformFee();
   const { data: admins } = useGetAdmins();
+  const { data: bulkSettings } = useGetBulkListingSettings();
   const updateFee = useUpdatePlatformFee();
   const createAdmin = useCreateAdmin();
+  const updateBulkSettings = useUpdateBulkListingSettings();
 
   if (!user?.isSuperAdmin) {
     return (
@@ -62,6 +66,13 @@ export default function AdminSettings() {
     });
   };
 
+  const handleUpdateBulkSettings = (updates: { enabled?: boolean; maxImages?: number; minPrice?: number }) => {
+    updateBulkSettings.mutate({ data: updates }, {
+      onSuccess: () => { toast({ title: "Bulk listing settings updated" }); queryClient.invalidateQueries({ queryKey: ["getBulkListingSettings"] }); },
+      onError: (err: any) => toast({ title: "Failed", description: err?.data?.error ?? err?.message, variant: "destructive" }),
+    });
+  };
+
   return (
     <Layout>
       <AdminNav />
@@ -88,6 +99,70 @@ export default function AdminSettings() {
               />
               <Button type="submit" disabled={updateFee.isPending}>
                 {updateFee.isPending ? "Saving..." : "Update Fee"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        {/* Bulk Listing */}
+        <Card className="border-border bg-card">
+          <CardHeader>
+            <CardTitle className="text-base">Bulk Listing</CardTitle>
+            <CardDescription>
+              Control whether sellers can list multiple accounts at once.
+              Current: <strong>{bulkSettings?.enabled ? "Enabled" : "Disabled"}</strong> ·
+              Max images: <strong>{bulkSettings?.maxImages ?? "…"}</strong> ·
+              Min price: <strong>₦{(bulkSettings?.minPrice ?? 0).toLocaleString()}</strong>
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex gap-3 flex-wrap items-center">
+              <Button
+                variant={bulkSettings?.enabled ? "destructive" : "default"}
+                size="sm"
+                disabled={updateBulkSettings.isPending}
+                onClick={() => handleUpdateBulkSettings({ enabled: !bulkSettings?.enabled })}
+              >
+                {bulkSettings?.enabled ? "Disable Bulk Listing" : "Enable Bulk Listing"}
+              </Button>
+            </div>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const updates: Record<string, number> = {};
+                if (bulkMaxImages) updates.maxImages = parseInt(bulkMaxImages, 10);
+                if (bulkMinPrice) updates.minPrice = parseFloat(bulkMinPrice);
+                if (Object.keys(updates).length > 0) handleUpdateBulkSettings(updates);
+                setBulkMaxImages("");
+                setBulkMinPrice("");
+              }}
+              className="flex gap-3 flex-wrap items-end"
+            >
+              <div className="space-y-1">
+                <label className="text-xs text-muted-foreground">Max images per batch</label>
+                <Input
+                  type="number"
+                  min="1"
+                  max="50"
+                  placeholder={`Current: ${bulkSettings?.maxImages ?? "…"}`}
+                  value={bulkMaxImages}
+                  onChange={(e) => setBulkMaxImages(e.target.value)}
+                  className="bg-background w-44"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs text-muted-foreground">Minimum price (₦)</label>
+                <Input
+                  type="number"
+                  min="0"
+                  placeholder={`Current: ₦${(bulkSettings?.minPrice ?? 0).toLocaleString()}`}
+                  value={bulkMinPrice}
+                  onChange={(e) => setBulkMinPrice(e.target.value)}
+                  className="bg-background w-44"
+                />
+              </div>
+              <Button type="submit" size="sm" disabled={updateBulkSettings.isPending || (!bulkMaxImages && !bulkMinPrice)}>
+                {updateBulkSettings.isPending ? "Saving…" : "Update Limits"}
               </Button>
             </form>
           </CardContent>

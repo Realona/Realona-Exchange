@@ -28,6 +28,10 @@ import type {
   AnnouncementInput,
   AuthResponse,
   BalanceAdjustInput,
+  BulkListingInput,
+  BulkListingResult,
+  BulkListingSettings,
+  BulkListingSettingsUpdate,
   Deposit,
   DepositRequest,
   DisputeInput,
@@ -1006,6 +1010,76 @@ export const useCreateListing = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getCreateListingMutationOptions(options));
+    }
+
+export const getCreateBulkListingsUrl = () => {
+
+
+
+
+  return `/api/listings/bulk`
+}
+
+/**
+ * @summary Create multiple listings at once (bulk upload)
+ */
+export const createBulkListings = async (bulkListingInput: BulkListingInput, options?: RequestInit): Promise<BulkListingResult> => {
+
+  return customFetch<BulkListingResult>(getCreateBulkListingsUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(bulkListingInput)
+  }
+);}
+
+
+
+
+export const getCreateBulkListingsMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createBulkListings>>, TError,{data: BodyType<BulkListingInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createBulkListings>>, TError,{data: BodyType<BulkListingInput>}, TContext> => {
+
+const mutationKey = ['createBulkListings'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createBulkListings>>, {data: BodyType<BulkListingInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createBulkListings(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateBulkListingsMutationResult = NonNullable<Awaited<ReturnType<typeof createBulkListings>>>
+    export type CreateBulkListingsMutationBody = BodyType<BulkListingInput>
+    export type CreateBulkListingsMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Create multiple listings at once (bulk upload)
+ */
+export const useCreateBulkListings = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createBulkListings>>, TError,{data: BodyType<BulkListingInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createBulkListings>>,
+        TError,
+        {data: BodyType<BulkListingInput>},
+        TContext
+      > => {
+      return useMutation(getCreateBulkListingsMutationOptions(options));
     }
 
 export const getGetMyListingsUrl = () => {
@@ -3722,6 +3796,153 @@ export const useUpdatePlatformFee = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getUpdatePlatformFeeMutationOptions(options));
+    }
+
+export const getGetBulkListingSettingsUrl = () => {
+
+
+
+
+  return `/api/admin/bulk-listing-settings`
+}
+
+/**
+ * @summary Get bulk listing settings (super admin only)
+ */
+export const getBulkListingSettings = async ( options?: RequestInit): Promise<BulkListingSettings> => {
+
+  return customFetch<BulkListingSettings>(getGetBulkListingSettingsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetBulkListingSettingsQueryKey = () => {
+    return [
+    `/api/admin/bulk-listing-settings`
+    ] as const;
+    }
+
+
+export const getGetBulkListingSettingsQueryOptions = <TData = Awaited<ReturnType<typeof getBulkListingSettings>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getBulkListingSettings>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetBulkListingSettingsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getBulkListingSettings>>> = ({ signal }) => getBulkListingSettings({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getBulkListingSettings>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetBulkListingSettingsQueryResult = NonNullable<Awaited<ReturnType<typeof getBulkListingSettings>>>
+export type GetBulkListingSettingsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get bulk listing settings (super admin only)
+ */
+
+export function useGetBulkListingSettings<TData = Awaited<ReturnType<typeof getBulkListingSettings>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getBulkListingSettings>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetBulkListingSettingsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getUpdateBulkListingSettingsUrl = () => {
+
+
+
+
+  return `/api/admin/bulk-listing-settings`
+}
+
+/**
+ * @summary Update bulk listing settings (super admin only)
+ */
+export const updateBulkListingSettings = async (bulkListingSettingsUpdate: BulkListingSettingsUpdate, options?: RequestInit): Promise<BulkListingSettings> => {
+
+  return customFetch<BulkListingSettings>(getUpdateBulkListingSettingsUrl(),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(bulkListingSettingsUpdate)
+  }
+);}
+
+
+
+
+export const getUpdateBulkListingSettingsMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateBulkListingSettings>>, TError,{data: BodyType<BulkListingSettingsUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateBulkListingSettings>>, TError,{data: BodyType<BulkListingSettingsUpdate>}, TContext> => {
+
+const mutationKey = ['updateBulkListingSettings'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateBulkListingSettings>>, {data: BodyType<BulkListingSettingsUpdate>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  updateBulkListingSettings(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateBulkListingSettingsMutationResult = NonNullable<Awaited<ReturnType<typeof updateBulkListingSettings>>>
+    export type UpdateBulkListingSettingsMutationBody = BodyType<BulkListingSettingsUpdate>
+    export type UpdateBulkListingSettingsMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Update bulk listing settings (super admin only)
+ */
+export const useUpdateBulkListingSettings = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateBulkListingSettings>>, TError,{data: BodyType<BulkListingSettingsUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateBulkListingSettings>>,
+        TError,
+        {data: BodyType<BulkListingSettingsUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateBulkListingSettingsMutationOptions(options));
     }
 
 export const getFlutterwaveWebhookUrl = () => {

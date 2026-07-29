@@ -10,7 +10,7 @@ import {
   ForceCompleteTradeParams, RefundBuyerParams,
   ApproveWithdrawalParams, RejectWithdrawalParams, RejectWithdrawalBody,
   ResolveReportParams, ResolveReportBody,
-  CreateAdminBody, UpdatePlatformFeeBody,
+  CreateAdminBody, UpdatePlatformFeeBody, UpdateBulkListingSettingsBody,
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
@@ -627,6 +627,48 @@ router.patch("/admin/giveaways/:id", requireAdmin, async (req, res): Promise<voi
     rewardAmount: Number(item.rewardAmount), maxUsers: item.maxUsers,
     claimedCount: item.claimedCount, taskType: item.taskType, isActive: item.isActive,
     expiresAt: item.expiresAt ?? null, createdAt: item.createdAt, hasUserClaimed: false,
+  });
+});
+
+// Bulk listing settings
+router.get("/admin/bulk-listing-settings", requireSuperAdmin, async (req, res): Promise<void> => {
+  const configs = await db.select().from(platformConfigTable).where(
+    sql`${platformConfigTable.key} IN ('bulk_listing_enabled', 'bulk_listing_max_images', 'bulk_listing_min_price')`
+  );
+  const cfg = Object.fromEntries(configs.map(c => [c.key, c.value]));
+  res.json({
+    enabled: cfg["bulk_listing_enabled"] !== "false",
+    maxImages: parseInt(cfg["bulk_listing_max_images"] ?? "10", 10),
+    minPrice: parseFloat(cfg["bulk_listing_min_price"] ?? "1000"),
+  });
+});
+
+router.patch("/admin/bulk-listing-settings", requireSuperAdmin, async (req, res): Promise<void> => {
+  const parsed = UpdateBulkListingSettingsBody.safeParse(req.body);
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
+
+  const { enabled, maxImages, minPrice } = parsed.data;
+  if (enabled !== undefined) {
+    await db.delete(platformConfigTable).where(eq(platformConfigTable.key, "bulk_listing_enabled"));
+    await db.insert(platformConfigTable).values({ key: "bulk_listing_enabled", value: String(enabled) });
+  }
+  if (maxImages !== undefined) {
+    await db.delete(platformConfigTable).where(eq(platformConfigTable.key, "bulk_listing_max_images"));
+    await db.insert(platformConfigTable).values({ key: "bulk_listing_max_images", value: String(maxImages) });
+  }
+  if (minPrice !== undefined) {
+    await db.delete(platformConfigTable).where(eq(platformConfigTable.key, "bulk_listing_min_price"));
+    await db.insert(platformConfigTable).values({ key: "bulk_listing_min_price", value: String(minPrice) });
+  }
+
+  const configs = await db.select().from(platformConfigTable).where(
+    sql`${platformConfigTable.key} IN ('bulk_listing_enabled', 'bulk_listing_max_images', 'bulk_listing_min_price')`
+  );
+  const cfg = Object.fromEntries(configs.map(c => [c.key, c.value]));
+  res.json({
+    enabled: cfg["bulk_listing_enabled"] !== "false",
+    maxImages: parseInt(cfg["bulk_listing_max_images"] ?? "10", 10),
+    minPrice: parseFloat(cfg["bulk_listing_min_price"] ?? "1000"),
   });
 });
 

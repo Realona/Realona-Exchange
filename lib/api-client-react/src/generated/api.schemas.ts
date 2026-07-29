@@ -192,6 +192,83 @@ export interface ListingUpdate {
   status?: string;
 }
 
+export type BulkListingItemCategory = typeof BulkListingItemCategory[keyof typeof BulkListingItemCategory];
+
+
+export const BulkListingItemCategory = {
+  efootball: 'efootball',
+  social_media: 'social_media',
+} as const;
+
+export interface BulkListingItem {
+  category?: BulkListingItemCategory;
+  gameName: string;
+  price: number;
+  description: string;
+  /** @nullable */
+  pictureUrl?: string | null;
+  /** @nullable */
+  accountEmail?: string | null;
+  /** @nullable */
+  accountPassword?: string | null;
+  /** @nullable */
+  konamiId?: string | null;
+  /** @nullable */
+  konamiPassword?: string | null;
+  /** @nullable */
+  accessCode?: string | null;
+  /** @nullable */
+  divisionRank?: string | null;
+  /** @nullable */
+  squadRating?: number | null;
+  /** @nullable */
+  platform?: string | null;
+  /** @nullable */
+  accountHandle?: string | null;
+  /** @nullable */
+  followerCount?: number | null;
+  /** @nullable */
+  following?: number | null;
+  /** @nullable */
+  accountAge?: string | null;
+  /** @nullable */
+  engagementRate?: string | null;
+  highlightedPlayers?: string[] | null;
+}
+
+export interface BulkListingInput {
+  /**
+     * @minItems 1
+     * @maxItems 10
+     */
+  items: BulkListingItem[];
+}
+
+export interface BulkListingResultError {
+  index: number;
+  message: string;
+}
+
+export interface BulkListingResult {
+  created: number;
+  errors: number;
+  total: number;
+  listings?: Listing[];
+  errorDetails?: BulkListingResultError[];
+}
+
+export interface BulkListingSettings {
+  enabled: boolean;
+  maxImages: number;
+  minPrice: number;
+}
+
+export interface BulkListingSettingsUpdate {
+  enabled?: boolean;
+  maxImages?: number;
+  minPrice?: number;
+}
+
 export type TradeStatus = typeof TradeStatus[keyof typeof TradeStatus];
 
 

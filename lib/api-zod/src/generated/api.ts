@@ -270,6 +270,73 @@ export const CreateListingResponse = zod.object({
 
 
 /**
+ * @summary Create multiple listings at once (bulk upload)
+ */
+export const createBulkListingsBodyItemsMax = 10;
+
+
+
+export const CreateBulkListingsBody = zod.object({
+  "items": zod.array(zod.object({
+  "category": zod.enum(['efootball', 'social_media']).optional(),
+  "gameName": zod.string(),
+  "price": zod.number(),
+  "description": zod.string(),
+  "pictureUrl": zod.string().nullish(),
+  "accountEmail": zod.string().nullish(),
+  "accountPassword": zod.string().nullish(),
+  "konamiId": zod.string().nullish(),
+  "konamiPassword": zod.string().nullish(),
+  "accessCode": zod.string().nullish(),
+  "divisionRank": zod.string().nullish(),
+  "squadRating": zod.number().nullish(),
+  "platform": zod.string().nullish(),
+  "accountHandle": zod.string().nullish(),
+  "followerCount": zod.number().nullish(),
+  "following": zod.number().nullish(),
+  "accountAge": zod.string().nullish(),
+  "engagementRate": zod.string().nullish(),
+  "highlightedPlayers": zod.array(zod.string()).nullish()
+})).min(1).max(createBulkListingsBodyItemsMax)
+})
+
+export const CreateBulkListingsResponse = zod.object({
+  "created": zod.number(),
+  "errors": zod.number(),
+  "total": zod.number(),
+  "listings": zod.array(zod.object({
+  "id": zod.number(),
+  "sellerId": zod.number(),
+  "sellerUsername": zod.string().nullish(),
+  "sellerIsVerified": zod.boolean().optional(),
+  "sellerRating": zod.number().nullish(),
+  "category": zod.enum(['efootball', 'social_media']),
+  "gameName": zod.string(),
+  "price": zod.number(),
+  "description": zod.string(),
+  "pictureUrl": zod.string().nullish(),
+  "accountEmail": zod.string().nullish(),
+  "accountPassword": zod.string().nullish(),
+  "divisionRank": zod.string().nullish(),
+  "squadRating": zod.number().nullish(),
+  "platform": zod.string().nullish(),
+  "accountHandle": zod.string().nullish(),
+  "followerCount": zod.number().nullish(),
+  "following": zod.number().nullish(),
+  "accountAge": zod.string().nullish(),
+  "engagementRate": zod.string().nullish(),
+  "viewCount": zod.number().optional(),
+  "status": zod.enum(['active', 'sold', 'deleted']),
+  "createdAt": zod.coerce.date()
+})).optional(),
+  "errorDetails": zod.array(zod.object({
+  "index": zod.number(),
+  "message": zod.string()
+})).optional()
+})
+
+
+/**
  * @summary Get current user listings
  */
 export const GetMyListingsResponseItem = zod.object({
@@ -1142,6 +1209,32 @@ export const UpdatePlatformFeeBody = zod.object({
 
 export const UpdatePlatformFeeResponse = zod.object({
   "feePercent": zod.number()
+})
+
+
+/**
+ * @summary Get bulk listing settings (super admin only)
+ */
+export const GetBulkListingSettingsResponse = zod.object({
+  "enabled": zod.boolean(),
+  "maxImages": zod.number(),
+  "minPrice": zod.number()
+})
+
+
+/**
+ * @summary Update bulk listing settings (super admin only)
+ */
+export const UpdateBulkListingSettingsBody = zod.object({
+  "enabled": zod.boolean().optional(),
+  "maxImages": zod.number().optional(),
+  "minPrice": zod.number().optional()
+})
+
+export const UpdateBulkListingSettingsResponse = zod.object({
+  "enabled": zod.boolean(),
+  "maxImages": zod.number(),
+  "minPrice": zod.number()
 })
 
 

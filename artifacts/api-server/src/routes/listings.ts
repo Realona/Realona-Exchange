@@ -1,8 +1,8 @@
 import { Router, type IRouter } from "express";
-import { db, listingsTable, usersTable, wishlistTable } from "@workspace/db";
+import { db, listingsTable, usersTable, wishlistTable, platformConfigTable } from "@workspace/db";
 import { eq, and, gte, lte, ilike, or, sql } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
-import { CreateListingBody, UpdateListingBody, GetListingParams, UpdateListingParams, DeleteListingParams, GetListingsQueryParams } from "@workspace/api-zod";
+import { CreateListingBody, UpdateListingBody, GetListingParams, UpdateListingParams, DeleteListingParams, GetListingsQueryParams, CreateBulkListingsBody } from "@workspace/api-zod";
 import { createNotification } from "../lib/notifier";
 
 const router: IRouter = Router();
@@ -104,6 +104,90 @@ router.post("/listings", requireAuth, async (req, res): Promise<void> => {
 
   const [seller] = await db.select({ username: usersTable.username }).from(usersTable).where(eq(usersTable.id, req.userId!));
   res.status(201).json(formatListing(listing, seller?.username));
+});
+
+router.post("/listings/bulk", requireAuth, async (req, res): Promise<void> => {
+  // Load platform settings
+  const configs = await db.select().from(platformConfigTable).where(
+    sql`${platformConfigTable.key} IN ('bulk_listing_enabled', 'bulk_listing_max_images', 'bulk_listing_min_price')`
+  );
+  const cfg = Object.fromEntries(configs.map(c => [c.key, c.value]));
+
+  if (cfg["bulk_listing_enabled"] === "false") {
+    res.status(403).json({ error: "Bulk listing is currently disabled" });
+    return;
+  }
+
+  const maxImages = parseInt(cfg["bulk_listing_max_images"] ?? "10", 10);
+  const minPrice = parseFloat(cfg["bulk_listing_min_price"] ?? "1000");
+
+  const parsed = CreateBulkListingsBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const items = parsed.data.items;
+
+  if (items.length > maxImages) {
+    res.status(400).json({ error: `Maximum ${maxImages} listings per batch` });
+    return;
+  }
+
+  // Check for duplicate Konami IDs within the batch
+  const konamiIds = items.map(i => i.konamiId).filter(Boolean);
+  if (new Set(konamiIds).size !== konamiIds.length) {
+    res.status(400).json({ error: "Duplicate Konami IDs found in this batch" });
+    return;
+  }
+
+  const createdListings: (typeof listingsTable.$inferSelect)[] = [];
+  const errorDetails: { index: number; message: string }[] = [];
+
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    if (item.price < minPrice) {
+      errorDetails.push({ index: i, message: `Price must be at least ₦${minPrice.toLocaleString()}` });
+      continue;
+    }
+    try {
+      const [listing] = await db.insert(listingsTable).values({
+        sellerId: req.userId!,
+        category: item.category ?? "efootball",
+        gameName: item.gameName,
+        price: String(item.price),
+        description: item.description,
+        pictureUrl: item.pictureUrl ?? null,
+        accountEmail: item.accountEmail ?? null,
+        accountPassword: item.accountPassword ?? null,
+        konamiId: item.konamiId ?? null,
+        konamiPassword: item.konamiPassword ?? null,
+        accessCode: item.accessCode ?? null,
+        divisionRank: item.divisionRank ?? null,
+        squadRating: item.squadRating ?? null,
+        platform: item.platform ?? null,
+        accountHandle: item.accountHandle ?? null,
+        followerCount: item.followerCount ?? null,
+        following: item.following ?? null,
+        accountAge: item.accountAge ?? null,
+        engagementRate: item.engagementRate ?? null,
+        highlightedPlayers: item.highlightedPlayers ? JSON.stringify(item.highlightedPlayers) : null,
+      }).returning();
+      createdListings.push(listing);
+    } catch (err: any) {
+      errorDetails.push({ index: i, message: err?.message ?? "Failed to create listing" });
+    }
+  }
+
+  const [seller] = await db.select({ username: usersTable.username }).from(usersTable).where(eq(usersTable.id, req.userId!));
+
+  res.status(201).json({
+    created: createdListings.length,
+    errors: errorDetails.length,
+    total: items.length,
+    listings: createdListings.map(l => formatListing(l, seller?.username)),
+    errorDetails,
+  });
 });
 
 router.get("/listings/my", requireAuth, async (req, res): Promise<void> => {

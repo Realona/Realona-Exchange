@@ -282,6 +282,25 @@ paths:
               schema:
                 $ref: "#/components/schemas/Listing"
 
+  /listings/bulk:
+    post:
+      operationId: createBulkListings
+      tags: [listings]
+      summary: Create multiple listings at once (bulk upload)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BulkListingInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BulkListingResult"
+
   /listings/my:
     get:
       operationId: getMyListings
@@ -997,6 +1016,36 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PlatformFee"
+
+  /admin/bulk-listing-settings:
+    get:
+      operationId: getBulkListingSettings
+      tags: [admin]
+      summary: Get bulk listing settings (super admin only)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BulkListingSettings"
+    patch:
+      operationId: updateBulkListingSettings
+      tags: [admin]
+      summary: Update bulk listing settings (super admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BulkListingSettingsUpdate"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BulkListingSettings"
 
   # ─── WEBHOOKS ──────────────────────────────────────────────────────────────
   /webhooks/flutterwave:
@@ -1942,6 +1991,113 @@ components:
           type: string
         status:
           type: string
+
+    BulkListingItem:
+      type: object
+      required: [gameName, price, description]
+      properties:
+        category:
+          type: string
+          enum: [efootball, social_media]
+        gameName:
+          type: string
+        price:
+          type: number
+        description:
+          type: string
+        pictureUrl:
+          type: ["string", "null"]
+        accountEmail:
+          type: ["string", "null"]
+        accountPassword:
+          type: ["string", "null"]
+        konamiId:
+          type: ["string", "null"]
+        konamiPassword:
+          type: ["string", "null"]
+        accessCode:
+          type: ["string", "null"]
+        divisionRank:
+          type: ["string", "null"]
+        squadRating:
+          type: ["integer", "null"]
+        platform:
+          type: ["string", "null"]
+        accountHandle:
+          type: ["string", "null"]
+        followerCount:
+          type: ["integer", "null"]
+        following:
+          type: ["integer", "null"]
+        accountAge:
+          type: ["string", "null"]
+        engagementRate:
+          type: ["string", "null"]
+        highlightedPlayers:
+          type: array
+          items:
+            type: string
+          nullable: true
+
+    BulkListingInput:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/BulkListingItem"
+          minItems: 1
+          maxItems: 10
+
+    BulkListingResultError:
+      type: object
+      required: [index, message]
+      properties:
+        index:
+          type: integer
+        message:
+          type: string
+
+    BulkListingResult:
+      type: object
+      required: [created, errors, total]
+      properties:
+        created:
+          type: integer
+        errors:
+          type: integer
+        total:
+          type: integer
+        listings:
+          type: array
+          items:
+            $ref: "#/components/schemas/Listing"
+        errorDetails:
+          type: array
+          items:
+            $ref: "#/components/schemas/BulkListingResultError"
+
+    BulkListingSettings:
+      type: object
+      required: [enabled, maxImages, minPrice]
+      properties:
+        enabled:
+          type: boolean
+        maxImages:
+          type: integer
+        minPrice:
+          type: number
+
+    BulkListingSettingsUpdate:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        maxImages:
+          type: integer
+        minPrice:
+          type: number
 
     # ── Trade ──
     Trade:
