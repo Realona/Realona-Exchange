@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Link } from "wouter";
 import { useGetListings } from "@workspace/api-client-react";
 import { formatNaira } from "@/lib/utils";
-import { Search, ShieldCheck, Zap, MessageSquare, SlidersHorizontal, X, Users } from "lucide-react";
+import { Search, ShieldCheck, Zap, MessageSquare, SlidersHorizontal, X, Users, Star } from "lucide-react";
 import { useState } from "react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -237,6 +237,18 @@ export default function Home() {
                       )}
                     </div>
                     <p className="text-sm text-foreground line-clamp-3 mb-2">{listing.description}</p>
+                    {/* Player highlights for eFootball */}
+                    {(listing as any).category !== "social_media" && (listing as any).highlightedPlayers?.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {((listing as any).highlightedPlayers as string[]).slice(0, 3).map((p: string) => (
+                          <span key={p} className="bg-primary/10 text-primary text-[10px] px-2 py-0.5 rounded-full border border-primary/20">{p}</span>
+                        ))}
+                        {((listing as any).highlightedPlayers as string[]).length > 3 && (
+                          <span className="text-[10px] text-muted-foreground">+{((listing as any).highlightedPlayers as string[]).length - 3}</span>
+                        )}
+                      </div>
+                    )}
+
                     <div className="text-sm text-muted-foreground flex items-center gap-2">
                       <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-primary text-xs font-bold">
                         {listing.sellerUsername?.[0]?.toUpperCase()}

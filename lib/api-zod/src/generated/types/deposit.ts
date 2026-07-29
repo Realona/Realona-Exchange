@@ -10,6 +10,8 @@ import type { DepositStatus } from './depositStatus';
 export interface Deposit {
   id: number;
   userId: number;
+  /** @nullable */
+  username?: string | null;
   amount: number;
   reference: string;
   status: DepositStatus;

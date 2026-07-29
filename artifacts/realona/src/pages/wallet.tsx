@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useGetWalletBalance, useGetDeposits, useGetWithdrawals, useRequestWithdrawal } from "@workspace/api-client-react";
+import { useGetWalletBalance, useGetDeposits, useGetWithdrawals, useRequestWithdrawal, useRequestDeposit } from "@workspace/api-client-react";
 import { formatNaira } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { Copy, Wallet, ArrowDownCircle, ArrowUpCircle, Building2, CheckCircle, AlertCircle, Info } from "lucide-react";
@@ -23,8 +23,12 @@ export default function WalletPage() {
     accountName: "Olukoya Kolade",
   };
 
+  const [depositAmount, setDepositAmount] = useState("");
+  const [depositSubmitted, setDepositSubmitted] = useState(false);
+
   const { data: walletData } = useGetWalletBalance();
   const { data: deposits } = useGetDeposits();
+  const requestDeposit = useRequestDeposit();
   const { data: withdrawals } = useGetWithdrawals();
   const withdrawMutation = useRequestWithdrawal();
 
@@ -36,6 +40,23 @@ export default function WalletPage() {
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
     toast({ title: "Copied!", description: "Account number copied to clipboard." });
+  };
+
+  const handleDepositRequest = (e: React.FormEvent) => {
+    e.preventDefault();
+    const amt = Number(depositAmount);
+    if (!amt || amt < 1050) {
+      toast({ title: "Minimum deposit is ₦1,050", description: "₦1,000 for wallet + ₦50 service charge", variant: "destructive" }); return;
+    }
+    requestDeposit.mutate({ data: { amount: amt } }, {
+      onSuccess: () => {
+        toast({ title: "Deposit request submitted!", description: "Transfer the amount to Moniepoint and wait for admin confirmation." });
+        queryClient.invalidateQueries({ queryKey: ["getDeposits"] });
+        setDepositSubmitted(true);
+        setDepositAmount("");
+      },
+      onError: (err: any) => toast({ title: "Failed", description: err?.data?.error ?? err?.message, variant: "destructive" }),
+    });
   };
 
   const handleWithdraw = (e: React.FormEvent) => {
@@ -152,12 +173,41 @@ export default function WalletPage() {
                     </div>
                   </div>
 
-                  {/* Instructions */}
-                  <div className="flex items-start gap-3 bg-green-500/10 border border-green-500/20 rounded-lg p-4">
-                    <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
-                    <p className="text-sm text-green-600 dark:text-green-400">
-                      Transfer the exact amount to the account above, then <strong>send your payment proof</strong> (screenshot + your username) to our admin on WhatsApp or via chat. Your wallet will be credited within <strong>5 minutes</strong>.
+                  {/* Deposit Request Form */}
+                  <div className="border border-border rounded-xl p-4 bg-background space-y-3">
+                    <p className="font-semibold text-sm">Step 2 — Submit Your Deposit Request</p>
+                    <p className="text-xs text-muted-foreground">
+                      Enter the exact amount you will transfer. Include your username <strong className="text-foreground">{user?.username}</strong> in the Moniepoint narration.
                     </p>
+                    {depositSubmitted ? (
+                      <div className="flex items-center gap-3 bg-green-500/10 border border-green-500/20 rounded-lg p-3">
+                        <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />
+                        <div>
+                          <p className="text-sm font-medium text-green-600 dark:text-green-400">Request submitted!</p>
+                          <p className="text-xs text-muted-foreground">Now transfer the amount to Moniepoint. Admin will confirm within 5 minutes.</p>
+                          <button className="text-xs text-primary underline mt-1" onClick={() => setDepositSubmitted(false)}>Submit another deposit</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <form onSubmit={handleDepositRequest} className="flex gap-2">
+                        <div className="relative flex-1">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">₦</span>
+                          <Input
+                            type="number"
+                            min="1050"
+                            step="50"
+                            placeholder="e.g. 5050"
+                            value={depositAmount}
+                            onChange={e => setDepositAmount(e.target.value)}
+                            className="pl-7 bg-muted"
+                          />
+                        </div>
+                        <Button type="submit" disabled={requestDeposit.isPending || !depositAmount}>
+                          {requestDeposit.isPending ? "Submitting..." : "Submit Request"}
+                        </Button>
+                      </form>
+                    )}
+                    <p className="text-xs text-muted-foreground">Min: ₦1,050 (₦1,000 + ₦50 service charge). Include your username in narration.</p>
                   </div>
 
                   <div className="flex items-start gap-3 bg-red-500/10 border border-red-500/20 rounded-lg p-4">

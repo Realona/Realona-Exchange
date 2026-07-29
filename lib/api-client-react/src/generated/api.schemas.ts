@@ -163,6 +163,7 @@ export interface ListingInput {
   following?: number;
   accountAge?: string;
   engagementRate?: string;
+  highlightedPlayers?: string[] | null;
 }
 
 export interface ListingUpdate {
@@ -242,6 +243,11 @@ export interface MessageInput {
   message: string;
 }
 
+export interface DepositRequest {
+  /** @minimum 1050 */
+  amount: number;
+}
+
 export type DepositStatus = typeof DepositStatus[keyof typeof DepositStatus];
 
 
@@ -254,6 +260,8 @@ export const DepositStatus = {
 export interface Deposit {
   id: number;
   userId: number;
+  /** @nullable */
+  username?: string | null;
   amount: number;
   reference: string;
   status: DepositStatus;
@@ -616,6 +624,18 @@ maxPrice?: number;
 divisionRank?: string;
 minSquadRating?: number;
 maxSquadRating?: number;
+};
+
+export type RequestOtp200 = {
+  success?: boolean;
+};
+
+export type MarkOtpSent200 = {
+  success?: boolean;
+};
+
+export type RequestEmailOtp200 = {
+  success?: boolean;
 };
 
 export type GetAdminUsersParams = {

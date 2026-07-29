@@ -28,6 +28,7 @@ import type {
   AuthResponse,
   BalanceAdjustInput,
   Deposit,
+  DepositRequest,
   DisputeInput,
   ErrorResponse,
   GetAdminDepositsParams,
@@ -47,6 +48,7 @@ import type {
   ListingInput,
   ListingUpdate,
   LoginInput,
+  MarkOtpSent200,
   MessageInput,
   Notification,
   Offer,
@@ -58,6 +60,8 @@ import type {
   RejectInput,
   Report,
   ReportInput,
+  RequestEmailOtp200,
+  RequestOtp200,
   ResolveReportInput,
   SuccessResponse,
   SuspendInput,
@@ -1652,6 +1656,216 @@ export const useOpenDispute = <TError = ErrorType<unknown>,
       return useMutation(getOpenDisputeMutationOptions(options));
     }
 
+export const getRequestOtpUrl = (id: number,) => {
+
+
+
+
+  return `/api/trades/${id}/request-otp`
+}
+
+/**
+ * @summary Buyer requests OTP from seller
+ */
+export const requestOtp = async (id: number, options?: RequestInit): Promise<RequestOtp200> => {
+
+  return customFetch<RequestOtp200>(getRequestOtpUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getRequestOtpMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestOtp>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof requestOtp>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['requestOtp'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof requestOtp>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  requestOtp(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RequestOtpMutationResult = NonNullable<Awaited<ReturnType<typeof requestOtp>>>
+
+    export type RequestOtpMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Buyer requests OTP from seller
+ */
+export const useRequestOtp = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestOtp>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof requestOtp>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getRequestOtpMutationOptions(options));
+    }
+
+export const getMarkOtpSentUrl = (id: number,) => {
+
+
+
+
+  return `/api/trades/${id}/otp-sent`
+}
+
+/**
+ * @summary Seller marks OTP as sent
+ */
+export const markOtpSent = async (id: number, options?: RequestInit): Promise<MarkOtpSent200> => {
+
+  return customFetch<MarkOtpSent200>(getMarkOtpSentUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getMarkOtpSentMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof markOtpSent>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof markOtpSent>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['markOtpSent'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof markOtpSent>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  markOtpSent(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type MarkOtpSentMutationResult = NonNullable<Awaited<ReturnType<typeof markOtpSent>>>
+
+    export type MarkOtpSentMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Seller marks OTP as sent
+ */
+export const useMarkOtpSent = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof markOtpSent>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof markOtpSent>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getMarkOtpSentMutationOptions(options));
+    }
+
+export const getRequestEmailOtpUrl = (id: number,) => {
+
+
+
+
+  return `/api/trades/${id}/request-email-otp`
+}
+
+/**
+ * @summary Buyer requests second OTP for email change
+ */
+export const requestEmailOtp = async (id: number, options?: RequestInit): Promise<RequestEmailOtp200> => {
+
+  return customFetch<RequestEmailOtp200>(getRequestEmailOtpUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getRequestEmailOtpMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestEmailOtp>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof requestEmailOtp>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['requestEmailOtp'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof requestEmailOtp>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  requestEmailOtp(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RequestEmailOtpMutationResult = NonNullable<Awaited<ReturnType<typeof requestEmailOtp>>>
+
+    export type RequestEmailOtpMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Buyer requests second OTP for email change
+ */
+export const useRequestEmailOtp = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestEmailOtp>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof requestEmailOtp>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getRequestEmailOtpMutationOptions(options));
+    }
+
 export const getGetTradeMessagesUrl = (id: number,) => {
 
 
@@ -1876,6 +2090,76 @@ export function useGetDeposits<TData = Awaited<ReturnType<typeof getDeposits>>, 
 
 
 
+
+export const getRequestDepositUrl = () => {
+
+
+
+
+  return `/api/deposits/request`
+}
+
+/**
+ * @summary Submit a deposit request (creates pending record, admin confirms)
+ */
+export const requestDeposit = async (depositRequest: DepositRequest, options?: RequestInit): Promise<Deposit> => {
+
+  return customFetch<Deposit>(getRequestDepositUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(depositRequest)
+  }
+);}
+
+
+
+
+export const getRequestDepositMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestDeposit>>, TError,{data: BodyType<DepositRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof requestDeposit>>, TError,{data: BodyType<DepositRequest>}, TContext> => {
+
+const mutationKey = ['requestDeposit'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof requestDeposit>>, {data: BodyType<DepositRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  requestDeposit(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RequestDepositMutationResult = NonNullable<Awaited<ReturnType<typeof requestDeposit>>>
+    export type RequestDepositMutationBody = BodyType<DepositRequest>
+    export type RequestDepositMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Submit a deposit request (creates pending record, admin confirms)
+ */
+export const useRequestDeposit = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestDeposit>>, TError,{data: BodyType<DepositRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof requestDeposit>>,
+        TError,
+        {data: BodyType<DepositRequest>},
+        TContext
+      > => {
+      return useMutation(getRequestDepositMutationOptions(options));
+    }
 
 export const getGetWithdrawalsUrl = () => {
 

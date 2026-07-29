@@ -6,11 +6,18 @@ import { CreateListingBody, UpdateListingBody, GetListingParams, UpdateListingPa
 
 const router: IRouter = Router();
 
-function formatListing(listing: typeof listingsTable.$inferSelect, sellerUsername?: string | null) {
+function parseHighlightedPlayers(raw: string | null | undefined): string[] | null {
+  if (!raw) return null;
+  try { return JSON.parse(raw); } catch { return null; }
+}
+
+function formatListing(listing: typeof listingsTable.$inferSelect & { highlighted_players?: string | null }, sellerUsername?: string | null, extras?: { sellerIsVerified?: boolean; sellerRating?: number | null }) {
   return {
     id: listing.id,
     sellerId: listing.sellerId,
     sellerUsername: sellerUsername ?? null,
+    sellerIsVerified: extras?.sellerIsVerified ?? false,
+    sellerRating: extras?.sellerRating ?? null,
     category: listing.category ?? "efootball",
     gameName: listing.gameName,
     price: Number(listing.price),
@@ -26,6 +33,7 @@ function formatListing(listing: typeof listingsTable.$inferSelect, sellerUsernam
     following: listing.following ?? null,
     accountAge: listing.accountAge ?? null,
     engagementRate: listing.engagementRate ?? null,
+    highlightedPlayers: parseHighlightedPlayers((listing as any).highlightedPlayers ?? null),
     viewCount: listing.viewCount ?? 0,
     status: listing.status,
     createdAt: listing.createdAt,
@@ -89,6 +97,7 @@ router.post("/listings", requireAuth, async (req, res): Promise<void> => {
       following: d.following ?? null,
       accountAge: d.accountAge ?? null,
       engagementRate: d.engagementRate ?? null,
+      highlightedPlayers: d.highlightedPlayers ? JSON.stringify(d.highlightedPlayers) : null,
     })
     .returning();
 

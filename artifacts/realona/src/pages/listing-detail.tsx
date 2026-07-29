@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { useGetListing, useCreateTrade, useMakeOffer } from "@workspace/api-client-react";
 import { formatNaira } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { ShieldCheck, User, ArrowRightLeft, AlertTriangle, HandshakeIcon, Users, Clock, Star, Instagram, Gamepad2 } from "lucide-react";
+import { ShieldCheck, User, ArrowRightLeft, AlertTriangle, HandshakeIcon, Users, Star, Gamepad2, Share2, Copy, Link } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
 const SOCIAL_PLATFORM_ICONS: Record<string, string> = {
@@ -260,6 +260,52 @@ export default function ListingDetail() {
                 <a href="/login" className="text-primary underline underline-offset-4">Login</a> to purchase this account.
               </p>
             )}
+
+            {/* Player Highlights (eFootball) */}
+            {(listing as any).highlightedPlayers?.length > 0 && (
+              <Card className="border-border bg-card">
+                <CardContent className="p-4">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium mb-3">⭐ Top Players</p>
+                  <div className="flex flex-wrap gap-2">
+                    {(listing as any).highlightedPlayers.map((player: string) => (
+                      <span key={player} className="bg-primary/10 text-primary border border-primary/20 rounded-full px-3 py-1 text-xs font-medium">{player}</span>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Social Sharing */}
+            <Card className="border-border bg-card">
+              <CardContent className="p-4">
+                <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium mb-3">
+                  <Share2 className="w-3.5 h-3.5 inline mr-1.5" />Share This Listing
+                </p>
+                <div className="flex gap-2 flex-wrap">
+                  <Button
+                    variant="outline" size="sm"
+                    className="text-xs border-green-500/30 text-green-600 hover:bg-green-500/10"
+                    onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(`Check out this ${listing.gameName} account on Realona Exchange — ${listing.description.slice(0, 80)}... Price: ₦${Number(listing.price).toLocaleString()} 👉 ${window.location.href}`)}`, "_blank")}
+                  >
+                    📱 WhatsApp
+                  </Button>
+                  <Button
+                    variant="outline" size="sm"
+                    className="text-xs"
+                    onClick={() => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Buy this ${listing.gameName} account on Realona Exchange for ₦${Number(listing.price).toLocaleString()} 🎮`)}&url=${encodeURIComponent(window.location.href)}`, "_blank")}
+                  >
+                    𝕏 Twitter/X
+                  </Button>
+                  <Button
+                    variant="outline" size="sm"
+                    className="text-xs"
+                    onClick={() => { navigator.clipboard.writeText(window.location.href); toast({ title: "Link copied!" }); }}
+                  >
+                    <Copy className="w-3 h-3 mr-1.5" />Copy Link
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>

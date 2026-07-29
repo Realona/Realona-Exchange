@@ -12,6 +12,7 @@ import {
   useGetTrade, useGetTradeMessages, useSendTradeMessage,
   useConfirmTradePayment, useSellerTransferred, useConfirmReceipt, useOpenDispute,
   useCancelTrade, useConfirmTradeAccess, useRateTradePartner, useGetTradeCredentials,
+  useRequestOtp, useMarkOtpSent, useRequestEmailOtp,
 } from "@workspace/api-client-react";
 import { formatNaira } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -92,6 +93,9 @@ export default function TradeDetail() {
   const cancelTrade = useCancelTrade();
   const confirmAccess = useConfirmTradeAccess();
   const rateTrade = useRateTradePartner();
+  const requestOtp = useRequestOtp();
+  const markOtpSent = useMarkOtpSent();
+  const requestEmailOtp = useRequestEmailOtp();
 
   const canShowCredentials = (user?.id === trade?.buyerId) && ["payment_confirmed", "seller_transferred", "completed"].includes(trade?.status ?? "");
   const { data: credentials } = useGetTradeCredentials(tradeId, {
@@ -163,6 +167,27 @@ export default function TradeDetail() {
     if (!ratingValue) return;
     rateTrade.mutate({ id: tradeId, data: { rating: ratingValue, comment: ratingComment || undefined } }, {
       onSuccess: () => { toast({ title: "Rating submitted!" }); invalidate(); },
+      onError: (err: any) => toast({ title: "Failed", description: err?.data?.error ?? err?.message, variant: "destructive" }),
+    });
+  };
+
+  const handleRequestOtp = () => {
+    requestOtp.mutate({ id: tradeId }, {
+      onSuccess: () => toast({ title: "OTP Requested", description: "Seller has been notified to send the OTP via chat." }),
+      onError: (err: any) => toast({ title: "Failed", description: err?.data?.error ?? err?.message, variant: "destructive" }),
+    });
+  };
+
+  const handleOtpSent = () => {
+    markOtpSent.mutate({ id: tradeId }, {
+      onSuccess: () => toast({ title: "Marked as sent!", description: "Buyer has been notified." }),
+      onError: (err: any) => toast({ title: "Failed", description: err?.data?.error ?? err?.message, variant: "destructive" }),
+    });
+  };
+
+  const handleRequestEmailOtp = () => {
+    requestEmailOtp.mutate({ id: tradeId }, {
+      onSuccess: () => toast({ title: "Email OTP Requested", description: "Seller has been notified to send the second OTP." }),
       onError: (err: any) => toast({ title: "Failed", description: err?.data?.error ?? err?.message, variant: "destructive" }),
     });
   };
@@ -335,6 +360,26 @@ export default function TradeDetail() {
                     <Button variant="outline" className="w-full text-muted-foreground border-border" onClick={handleCancel} disabled={cancelTrade.isPending}>
                       <XCircle className="w-4 h-4 mr-2" />
                       {cancelTrade.isPending ? "Cancelling..." : "Cancel Trade"}
+                    </Button>
+                  )}
+
+                  {/* OTP flow buttons (buyer) */}
+                  {isBuyer && ["payment_confirmed", "seller_transferred"].includes(trade.status) && (
+                    <div className="space-y-2 border-t border-border pt-3">
+                      <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">OTP / Access Code</p>
+                      <Button variant="outline" className="w-full" size="sm" onClick={handleRequestOtp} disabled={requestOtp.isPending}>
+                        🔑 {requestOtp.isPending ? "Requesting..." : "Request OTP from Seller"}
+                      </Button>
+                      <Button variant="outline" className="w-full" size="sm" onClick={handleRequestEmailOtp} disabled={requestEmailOtp.isPending}>
+                        📧 {requestEmailOtp.isPending ? "Requesting..." : "Request Email Change OTP"}
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* OTP Sent button (seller) */}
+                  {isSeller && ["payment_confirmed", "seller_transferred"].includes(trade.status) && (
+                    <Button variant="outline" className="w-full border-green-500/30 text-green-500 hover:bg-green-500/10" size="sm" onClick={handleOtpSent} disabled={markOtpSent.isPending}>
+                      ✅ {markOtpSent.isPending ? "Marking..." : "I Have Sent the OTP"}
                     </Button>
                   )}
 

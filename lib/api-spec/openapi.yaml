@@ -440,6 +440,69 @@ paths:
               schema:
                 $ref: "#/components/schemas/Trade"
 
+  /trades/{id}/request-otp:
+    post:
+      operationId: requestOtp
+      tags: [trades]
+      summary: Buyer requests OTP from seller
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+
+  /trades/{id}/otp-sent:
+    post:
+      operationId: markOtpSent
+      tags: [trades]
+      summary: Seller marks OTP as sent
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+
+  /trades/{id}/request-email-otp:
+    post:
+      operationId: requestEmailOtp
+      tags: [trades]
+      summary: Buyer requests second OTP for email change
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+
   # ─── CHAT ──────────────────────────────────────────────────────────────────
   /trades/{id}/messages:
     get:
@@ -500,6 +563,25 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Deposit"
+
+  /deposits/request:
+    post:
+      operationId: requestDeposit
+      tags: [deposits]
+      summary: Submit a deposit request (creates pending record, admin confirms)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DepositRequest"
+      responses:
+        "201":
+          description: Deposit request created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Deposit"
 
   # ─── WITHDRAWALS ───────────────────────────────────────────────────────────
   /withdrawals:
@@ -1566,6 +1648,11 @@ components:
           type: string
         engagementRate:
           type: string
+        highlightedPlayers:
+          type: array
+          items:
+            type: string
+          nullable: true
 
     ListingUpdate:
       type: object
@@ -1672,6 +1759,14 @@ components:
           minLength: 1
 
     # ── Deposit ──
+    DepositRequest:
+      type: object
+      required: [amount]
+      properties:
+        amount:
+          type: number
+          minimum: 1050
+
     Deposit:
       type: object
       required: [id, userId, amount, reference, status, createdAt]
@@ -1680,6 +1775,8 @@ components:
           type: integer
         userId:
           type: integer
+        username:
+          type: ["string", "null"]
         amount:
           type: number
         reference:

@@ -206,7 +206,8 @@ export const CreateListingBody = zod.object({
   "followerCount": zod.number().optional(),
   "following": zod.number().optional(),
   "accountAge": zod.string().optional(),
-  "engagementRate": zod.string().optional()
+  "engagementRate": zod.string().optional(),
+  "highlightedPlayers": zod.array(zod.string()).nullish()
 })
 
 export const CreateListingResponse = zod.object({
@@ -568,6 +569,42 @@ export const OpenDisputeResponse = zod.object({
 
 
 /**
+ * @summary Buyer requests OTP from seller
+ */
+export const RequestOtpParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const RequestOtpResponse = zod.object({
+  "success": zod.boolean().optional()
+})
+
+
+/**
+ * @summary Seller marks OTP as sent
+ */
+export const MarkOtpSentParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const MarkOtpSentResponse = zod.object({
+  "success": zod.boolean().optional()
+})
+
+
+/**
+ * @summary Buyer requests second OTP for email change
+ */
+export const RequestEmailOtpParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const RequestEmailOtpResponse = zod.object({
+  "success": zod.boolean().optional()
+})
+
+
+/**
  * @summary Get messages for a trade
  */
 export const GetTradeMessagesParams = zod.object({
@@ -617,12 +654,35 @@ export const SendTradeMessageResponse = zod.object({
 export const GetDepositsResponseItem = zod.object({
   "id": zod.number(),
   "userId": zod.number(),
+  "username": zod.string().nullish(),
   "amount": zod.number(),
   "reference": zod.string(),
   "status": zod.enum(['pending', 'completed', 'failed']),
   "createdAt": zod.coerce.date()
 })
 export const GetDepositsResponse = zod.array(GetDepositsResponseItem)
+
+
+/**
+ * @summary Submit a deposit request (creates pending record, admin confirms)
+ */
+export const requestDepositBodyAmountMin = 1050;
+
+
+
+export const RequestDepositBody = zod.object({
+  "amount": zod.number().min(requestDepositBodyAmountMin)
+})
+
+export const RequestDepositResponse = zod.object({
+  "id": zod.number(),
+  "userId": zod.number(),
+  "username": zod.string().nullish(),
+  "amount": zod.number(),
+  "reference": zod.string(),
+  "status": zod.enum(['pending', 'completed', 'failed']),
+  "createdAt": zod.coerce.date()
+})
 
 
 /**
@@ -1529,6 +1589,7 @@ export const GetAdminDepositsQueryParams = zod.object({
 export const GetAdminDepositsResponseItem = zod.object({
   "id": zod.number(),
   "userId": zod.number(),
+  "username": zod.string().nullish(),
   "amount": zod.number(),
   "reference": zod.string(),
   "status": zod.enum(['pending', 'completed', 'failed']),

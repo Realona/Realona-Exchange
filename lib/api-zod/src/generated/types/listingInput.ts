@@ -30,4 +30,5 @@ export interface ListingInput {
   following?: number;
   accountAge?: string;
   engagementRate?: string;
+  highlightedPlayers?: string[] | null;
 }

@@ -2,7 +2,8 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { LogOut, Wallet, Settings, Bell, HandshakeIcon, Trophy, X, ShieldCheck } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { LogOut, Wallet, Settings, Bell, HandshakeIcon, Trophy, X, ShieldCheck, MessageCircle, Phone } from "lucide-react";
 import { useGetWalletBalance, useGetNotifications, useMarkAllNotificationsRead } from "@workspace/api-client-react";
 import { formatNaira } from "@/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
@@ -13,6 +14,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const queryClient = useQueryClient();
   const [bellOpen, setBellOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
   const bellRef = useRef<HTMLDivElement>(null);
 
   const { data: walletData } = useGetWalletBalance({
@@ -198,6 +200,54 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <main className="flex-1">
         {children}
       </main>
+
+      {/* Floating Chat Admin button */}
+      <button
+        onClick={() => setChatOpen(true)}
+        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-primary text-primary-foreground rounded-full px-4 py-3 shadow-lg hover:bg-primary/90 transition-colors text-sm font-semibold"
+        aria-label="Chat with Admin"
+      >
+        <MessageCircle className="w-4 h-4" />
+        <span className="hidden sm:inline">Chat Admin</span>
+      </button>
+
+      {/* Chat Admin Dialog */}
+      <Dialog open={chatOpen} onOpenChange={setChatOpen}>
+        <DialogContent className="bg-card border-border max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MessageCircle className="w-5 h-5 text-primary" />
+              Contact Admin
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <p className="text-sm text-muted-foreground">
+              Need help with a trade, deposit, or have a question? Reach our admin directly.
+            </p>
+            <div className="space-y-3">
+              <a
+                href="https://wa.me/2349160385331"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 p-3 rounded-lg border border-green-500/30 bg-green-500/5 hover:bg-green-500/10 transition-colors"
+              >
+                <span className="text-2xl">📱</span>
+                <div>
+                  <p className="font-semibold text-sm text-green-600 dark:text-green-400">WhatsApp</p>
+                  <p className="text-xs text-muted-foreground">+234 916 038 5331</p>
+                </div>
+              </a>
+              <div className="text-xs text-muted-foreground text-center">
+                Available 8am – 10pm (WAT) daily
+              </div>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted rounded-lg p-3">
+                <ShieldCheck className="w-4 h-4 shrink-0 text-primary" />
+                <span>Admin will <strong>never</strong> ask you to send money outside Realona.</span>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <footer className="border-t border-border bg-card py-8 mt-12">
         <div className="container mx-auto px-4 text-center text-muted-foreground text-sm flex flex-col gap-2">

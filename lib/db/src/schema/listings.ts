@@ -30,6 +30,8 @@ export const listingsTable = pgTable("listings", {
   accountAge: text("account_age"),       // "1-6 months", "1+ years", etc.
   engagementRate: text("engagement_rate"),
 
+  highlightedPlayers: text("highlighted_players"), // JSON array of player name strings
+
   status: text("status").notNull().default("active"), // active, sold, deleted
   viewCount: integer("view_count").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

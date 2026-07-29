@@ -37,6 +37,7 @@ const schema = z.object({
   accessCode: z.string().optional().or(z.literal("")),
   divisionRank: z.string().optional().or(z.literal("")),
   squadRating: z.coerce.number().int().min(2000).max(5000).optional().or(z.literal("")),
+  highlightedPlayers: z.array(z.string()).optional(),
   // Social media fields
   platform: z.string().optional().or(z.literal("")),
   accountHandle: z.string().optional().or(z.literal("")),
@@ -142,6 +143,7 @@ export default function NewListing() {
           following: data.following ? Number(data.following) : undefined,
           accountAge: data.accountAge || undefined,
           engagementRate: data.engagementRate || undefined,
+          highlightedPlayers: data.highlightedPlayers?.filter(Boolean) ?? undefined,
         },
       },
       {
@@ -220,6 +222,25 @@ export default function NewListing() {
                     <div className="flex items-center gap-3 bg-primary/10 border border-primary/20 rounded-lg px-4 py-3">
                       <span className="text-sm font-medium text-primary">Game:</span>
                       <span className="font-bold text-foreground">eFootball</span>
+                    </div>
+
+                    {/* Player Highlights */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Top Players <span className="text-muted-foreground text-xs font-normal">(optional – up to 5)</span></label>
+                      <p className="text-xs text-muted-foreground">List your best players so buyers can find your account by player name.</p>
+                      {[0, 1, 2, 3, 4].map(i => (
+                        <Input
+                          key={i}
+                          placeholder={`Player ${i + 1} (e.g. Erling Haaland)`}
+                          className="bg-background"
+                          onChange={e => {
+                            const current = (form.getValues("highlightedPlayers") as string[]) ?? ["", "", "", "", ""];
+                            const updated = [...current];
+                            updated[i] = e.target.value;
+                            form.setValue("highlightedPlayers", updated.filter(Boolean).length > 0 ? updated : undefined);
+                          }}
+                        />
+                      ))}
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
