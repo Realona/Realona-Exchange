@@ -7,8 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   useGetTrades, useGetMyListings, useGetWalletBalance,
-  useGetAnnouncements, useGetActiveGiveaways
+  useGetAnnouncements, useGetActiveGiveaways, useClaimGiveaway
 } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 import { formatNaira } from "@/lib/utils";
 import {
   Wallet, ShoppingBag, ArrowRightLeft, Plus, TrendingUp,
@@ -51,16 +53,44 @@ export default function Dashboard() {
   const { data: myListings } = useGetMyListings();
   const { data: walletData } = useGetWalletBalance();
   const { data: announcements } = useGetAnnouncements();
-  const { data: giveaways } = useGetActiveGiveaways();
+  const { data: giveaways, refetch: refetchGiveaways } = useGetActiveGiveaways();
   const [dismissedAnnouncement, setDismissedAnnouncement] = useState<number | null>(null);
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const claimGiveaway = useClaimGiveaway();
 
   const recentTrades = trades?.slice(0, 5) ?? [];
   const activeListings = myListings?.filter((l: any) => l.status === "active") ?? [];
   const completedTrades = trades?.filter((t: any) => t.status === "completed").length ?? 0;
   const activeTrades = trades?.filter((t: any) => !["completed", "refunded", "cancelled"].includes(t.status)).length ?? 0;
+  const totalListings = myListings?.length ?? 0;
 
   const activeAnnouncement = announcements?.find((a: any) => a.id !== dismissedAnnouncement);
   const featuredGiveaway = giveaways?.find((g: any) => !g.hasUserClaimed);
+
+  function isTaskComplete(taskType: string) {
+    if (taskType === "registration") return true;
+    if (taskType === "first_listing") return totalListings > 0;
+    if (taskType === "first_trade") return completedTrades > 0;
+    return false;
+  }
+
+  async function handleClaim(giveawayId: number) {
+    claimGiveaway.mutate({ id: giveawayId }, {
+      onSuccess: (data: any) => {
+        toast({
+          title: "🎉 Reward Claimed!",
+          description: `₦${Number(data.amountCredited).toLocaleString()} has been added to your wallet.`,
+        });
+        refetchGiveaways();
+        queryClient.invalidateQueries({ queryKey: ["getWalletBalance"] });
+      },
+      onError: (err: any) => {
+        const msg = err?.response?.data?.error ?? err?.message ?? "Could not claim reward.";
+        toast({ title: "Claim failed", description: msg, variant: "destructive" });
+      },
+    });
+  }
 
   return (
     <Layout>
@@ -213,7 +243,28 @@ export default function Dashboard() {
                         </div>
                         <span className="text-xs text-muted-foreground">{featuredGiveaway.claimedCount}/{featuredGiveaway.maxUsers}</span>
                       </div>
-                      <Badge variant="outline" className="mt-2 text-xs capitalize">{featuredGiveaway.taskType.replace("_", " ")}</Badge>
+                      <Badge variant="outline" className="mt-2 text-xs capitalize">{featuredGiveaway.taskType.replace(/_/g, " ")}</Badge>
+
+                      {/* Claim section */}
+                      <div className="mt-3">
+                        {isTaskComplete(featuredGiveaway.taskType) ? (
+                          <Button
+                            size="sm"
+                            className="w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold"
+                            onClick={() => handleClaim(featuredGiveaway.id)}
+                            disabled={claimGiveaway.isPending}
+                          >
+                            <Gift className="w-3.5 h-3.5 mr-1.5" />
+                            {claimGiveaway.isPending ? "Claiming..." : `Claim ₦${Number(featuredGiveaway.rewardAmount).toLocaleString()} Reward`}
+                          </Button>
+                        ) : (
+                          <p className="text-xs text-muted-foreground italic">
+                            {featuredGiveaway.taskType === "first_listing" && "Create your first listing to unlock this reward."}
+                            {featuredGiveaway.taskType === "first_trade" && "Complete your first trade to unlock this reward."}
+                            {featuredGiveaway.taskType === "registration" && "You can claim this reward now!"}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </CardContent>

@@ -32,6 +32,7 @@ import type {
   BulkListingResult,
   BulkListingSettings,
   BulkListingSettingsUpdate,
+  ClaimGiveaway400,
   Deposit,
   DepositRequest,
   DisputeInput,
@@ -45,6 +46,7 @@ import type {
   GetPublicWishlist200,
   GetPurchasesParams,
   Giveaway,
+  GiveawayClaimResult,
   GiveawayInput,
   HealthStatus,
   KycInput,
@@ -5116,6 +5118,76 @@ export function useGetActiveGiveaways<TData = Awaited<ReturnType<typeof getActiv
 
 
 
+
+export const getClaimGiveawayUrl = (id: number,) => {
+
+
+
+
+  return `/api/giveaways/${id}/claim`
+}
+
+/**
+ * @summary Claim a giveaway reward after completing its task
+ */
+export const claimGiveaway = async (id: number, options?: RequestInit): Promise<GiveawayClaimResult> => {
+
+  return customFetch<GiveawayClaimResult>(getClaimGiveawayUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getClaimGiveawayMutationOptions = <TError = ErrorType<ClaimGiveaway400>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof claimGiveaway>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof claimGiveaway>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['claimGiveaway'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof claimGiveaway>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  claimGiveaway(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ClaimGiveawayMutationResult = NonNullable<Awaited<ReturnType<typeof claimGiveaway>>>
+
+    export type ClaimGiveawayMutationError = ErrorType<ClaimGiveaway400>
+
+    /**
+ * @summary Claim a giveaway reward after completing its task
+ */
+export const useClaimGiveaway = <TError = ErrorType<ClaimGiveaway400>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof claimGiveaway>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof claimGiveaway>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getClaimGiveawayMutationOptions(options));
+    }
 
 export const getGetAdminKycSubmissionsUrl = (params?: GetAdminKycSubmissionsParams,) => {
   const normalizedParams = new URLSearchParams();

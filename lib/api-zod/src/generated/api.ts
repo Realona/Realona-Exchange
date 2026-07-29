@@ -1528,6 +1528,19 @@ export const GetActiveGiveawaysResponse = zod.array(GetActiveGiveawaysResponseIt
 
 
 /**
+ * @summary Claim a giveaway reward after completing its task
+ */
+export const ClaimGiveawayParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const ClaimGiveawayResponse = zod.object({
+  "success": zod.boolean(),
+  "amountCredited": zod.number()
+})
+
+
+/**
  * @summary Get all KYC submissions
  */
 export const GetAdminKycSubmissionsQueryParams = zod.object({

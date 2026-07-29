@@ -1293,6 +1293,32 @@ paths:
                 type: array
                 items: { $ref: "#/components/schemas/Giveaway" }
 
+  /giveaways/{id}/claim:
+    post:
+      operationId: claimGiveaway
+      tags: [giveaways]
+      summary: Claim a giveaway reward after completing its task
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Reward credited to wallet
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GiveawayClaimResult"
+        "400":
+          description: Task not completed, already claimed, or reward exhausted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error: { type: string }
+
   # ─── ADMIN: KYC ────────────────────────────────────────────────────────────
   /admin/kyc:
     get:
@@ -2623,6 +2649,15 @@ components:
         createdAt:
           type: string
           format: date-time
+
+    GiveawayClaimResult:
+      type: object
+      required: [success, amountCredited]
+      properties:
+        success:
+          type: boolean
+        amountCredited:
+          type: number
 
     GiveawayInput:
       type: object

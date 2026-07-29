@@ -661,6 +661,11 @@ export interface Giveaway {
   createdAt: string;
 }
 
+export interface GiveawayClaimResult {
+  success: boolean;
+  amountCredited: number;
+}
+
 export type GiveawayInputTaskType = typeof GiveawayInputTaskType[keyof typeof GiveawayInputTaskType];
 
 
@@ -824,6 +829,10 @@ status?: string;
 
 export type GetAdminWithdrawalsParams = {
 status?: string;
+};
+
+export type ClaimGiveaway400 = {
+  error?: string;
 };
 
 export type GetAdminKycSubmissionsParams = {
