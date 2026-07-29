@@ -92,6 +92,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     <Trophy className="w-3.5 h-3.5" /> Leaderboard
                   </button>
                 </Link>
+                <Link href="/reviews">
+                  <button className={`px-2.5 py-1.5 rounded-md ${navLink("/reviews")}`}>Reviews</button>
+                </Link>
 
                 <div className="h-4 w-px bg-white/20 mx-1" />
 
@@ -180,6 +183,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <>
                 <Link href="/leaderboard">
                   <button className={`px-2.5 py-1.5 rounded-md ${navLink("/leaderboard")}`}>Leaderboard</button>
+                </Link>
+                <Link href="/reviews">
+                  <button className={`px-2.5 py-1.5 rounded-md ${navLink("/reviews")}`}>Reviews</button>
                 </Link>
                 <Link href="/faq">
                   <button className={`px-2.5 py-1.5 rounded-md ${navLink("/faq")}`}>FAQ</button>
@@ -280,6 +286,19 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </div>
           <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} Realona Exchange. Secure Escrow Trading Platform.</p>
           <p className="text-xs text-muted-foreground">Nigeria's premier eFootball & social media account marketplace.</p>
+
+          {/* Moniepoint trust badge */}
+          <div className="flex items-center justify-center mt-3">
+            <div className="inline-flex items-center gap-2 bg-[#f0faf4] border border-[#00a551]/20 rounded-full px-4 py-1.5">
+              <span className="text-xs text-[#006633] font-medium">Payments verified by</span>
+              <span className="font-extrabold text-sm tracking-tight" style={{ color: "#00a551" }}>Moniepoint</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.35C17.25 22.15 21 17.25 21 12V7L12 2z" fill="#00a551" opacity="0.15"/>
+                <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.35C17.25 22.15 21 17.25 21 12V7L12 2z" stroke="#00a551" strokeWidth="1.5" strokeLinejoin="round"/>
+                <path d="M8.5 12l2.5 2.5 4.5-4.5" stroke="#00a551" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+          </div>
         </div>
       </footer>
     </div>

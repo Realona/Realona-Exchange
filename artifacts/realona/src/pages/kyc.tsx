@@ -1,13 +1,15 @@
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useGetKycStatus, useSubmitKyc, useRequestUploadUrl } from "@workspace/api-client-react";
+import { useGetKycStatus, useSubmitKyc } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { ShieldCheck, Upload, CheckCircle, Clock, XCircle, Loader2, FileText } from "lucide-react";
+import { useUpload } from "@workspace/object-storage-web";
+import { useState } from "react";
 
 const DOCUMENT_TYPES = [
   { value: "national_id", label: "National ID (NIN)" },
@@ -27,38 +29,45 @@ export default function KYCPage() {
   const [docType, setDocType] = useState("");
   const [docUrl, setDocUrl] = useState("");
   const [selfieUrl, setSelfieUrl] = useState("");
-  const [docUploading, setDocUploading] = useState(false);
-  const [selfieUploading, setSelfieUploading] = useState(false);
-  const docInputRef = useRef<HTMLInputElement>(null);
-  const selfieInputRef = useRef<HTMLInputElement>(null);
+  const docInputRef = useRef<HTMLInputElement | null>(null);
+  const selfieInputRef = useRef<HTMLInputElement | null>(null);
 
   const { data: kycStatus, isLoading } = useGetKycStatus();
   const submitKyc = useSubmitKyc();
-  const requestUpload = useRequestUploadUrl();
 
-  const handleUpload = async (file: File, isSelfie: boolean) => {
-    const setter = isSelfie ? setSelfieUploading : setDocUploading;
-    setter(true);
-    try {
-      const { uploadUrl, objectUrl } = await new Promise<any>((resolve, reject) => {
-        requestUpload.mutate(
-          { data: { name: file.name, size: file.size, contentType: file.type } },
-          {
-            onSuccess: resolve,
-            onError: reject,
-          }
-        );
-      });
-      await fetch(uploadUrl, { method: "PUT", body: file, headers: { "Content-Type": file.type } });
-      const serveUrl = `/api/storage/objects${objectUrl.replace(/^\/objects/, "")}`;
-      if (isSelfie) setSelfieUrl(serveUrl);
-      else setDocUrl(serveUrl);
-      toast({ title: isSelfie ? "Selfie uploaded!" : "Document uploaded!" });
-    } catch {
-      toast({ title: "Upload failed", variant: "destructive" });
-    } finally {
-      setter(false);
-    }
+  // Two separate upload instances — one per file slot
+  const { uploadFile: uploadDoc, isUploading: docUploading } = useUpload({
+    basePath: "/api/storage",
+    onSuccess: (response) => {
+      const url = `/api/storage/objects${response.objectPath.replace(/^\/objects/, "")}`;
+      setDocUrl(url);
+      toast({ title: "Document uploaded!" });
+    },
+    onError: (err) => toast({ title: "Upload failed", description: err.message, variant: "destructive" }),
+  });
+
+  const { uploadFile: uploadSelfie, isUploading: selfieUploading } = useUpload({
+    basePath: "/api/storage",
+    onSuccess: (response) => {
+      const url = `/api/storage/objects${response.objectPath.replace(/^\/objects/, "")}`;
+      setSelfieUrl(url);
+      toast({ title: "Selfie uploaded!" });
+    },
+    onError: (err) => toast({ title: "Upload failed", description: err.message, variant: "destructive" }),
+  });
+
+  const handleDocChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await uploadDoc(file);
+    if (docInputRef.current) docInputRef.current.value = "";
+  };
+
+  const handleSelfieChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await uploadSelfie(file);
+    if (selfieInputRef.current) selfieInputRef.current.value = "";
   };
 
   const handleSubmit = () => {
@@ -175,8 +184,7 @@ export default function KYCPage() {
               {/* Document upload */}
               <div className="space-y-1.5">
                 <label className="text-sm font-medium">Document Image</label>
-                <input ref={docInputRef} type="file" accept="image/*" className="hidden"
-                  onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0], false)} />
+                <input ref={docInputRef} type="file" accept="image/*" className="hidden" onChange={handleDocChange} />
                 <div
                   className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors hover:border-primary/50 ${docUrl ? "border-green-500/30 bg-green-500/5" : "border-border"}`}
                   onClick={() => docInputRef.current?.click()}
@@ -199,9 +207,10 @@ export default function KYCPage() {
 
               {/* Selfie upload (optional) */}
               <div className="space-y-1.5">
-                <label className="text-sm font-medium">Selfie with ID <span className="text-muted-foreground text-xs">(optional — for Level 2)</span></label>
-                <input ref={selfieInputRef} type="file" accept="image/*" className="hidden"
-                  onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0], true)} />
+                <label className="text-sm font-medium">
+                  Selfie <span className="text-muted-foreground text-xs">(optional — for Level 2)</span>
+                </label>
+                <input ref={selfieInputRef} type="file" accept="image/*" className="hidden" onChange={handleSelfieChange} />
                 <div
                   className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors hover:border-primary/50 ${selfieUrl ? "border-green-500/30 bg-green-500/5" : "border-border"}`}
                   onClick={() => selfieInputRef.current?.click()}
@@ -216,7 +225,7 @@ export default function KYCPage() {
                   ) : (
                     <div className="text-muted-foreground">
                       <Upload className="w-6 h-6 mx-auto mb-1" />
-                      <p className="text-xs">Click to upload selfie holding your ID</p>
+                      <p className="text-xs">Click to upload a selfie of yourself</p>
                     </div>
                   )}
                 </div>
