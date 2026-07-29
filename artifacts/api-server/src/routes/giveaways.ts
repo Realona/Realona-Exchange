@@ -61,7 +61,7 @@ router.post("/giveaways/:id/claim", requireAuth, async (req, res): Promise<void>
   // Check task completion
   const userId = req.userId!;
   if (giveaway.taskType === "first_listing") {
-    const [row] = await db.select({ cnt: count() }).from(listingsTable).where(eq(listingsTable.userId, userId));
+    const [row] = await db.select({ cnt: count() }).from(listingsTable).where(eq(listingsTable.sellerId, userId));
     if (!row || row.cnt === 0) {
       res.status(400).json({ error: "You need to list at least one account to claim this reward" }); return;
     }

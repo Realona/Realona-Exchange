@@ -95,18 +95,41 @@ export default function Dashboard() {
   return (
     <Layout>
       <div className="container mx-auto px-4 py-8">
-        {/* Announcement Banner */}
+        {/* Announcement Banner — full-width, high-contrast, centre of attention */}
         {activeAnnouncement && (
-          <div className={`flex items-start gap-3 rounded-xl border p-4 mb-6 ${priorityClass(activeAnnouncement.priority)}`}>
-            {priorityIcon(activeAnnouncement.priority)}
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-sm">{activeAnnouncement.title}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">{activeAnnouncement.description}</p>
+          <div className={`relative rounded-2xl border-2 p-5 mb-8 shadow-lg ${
+            activeAnnouncement.priority === "urgent"
+              ? "bg-red-500 border-red-400 text-white"
+              : activeAnnouncement.priority === "important"
+              ? "bg-amber-400 border-amber-300 text-amber-950"
+              : "bg-primary border-primary/80 text-primary-foreground"
+          }`}>
+            <div className="flex items-start gap-4">
+              <div className={`rounded-full p-2.5 shrink-0 ${
+                activeAnnouncement.priority === "urgent" ? "bg-white/20"
+                : activeAnnouncement.priority === "important" ? "bg-amber-950/15"
+                : "bg-white/15"
+              }`}>
+                {activeAnnouncement.priority === "urgent"
+                  ? <AlertTriangle className="w-5 h-5" />
+                  : activeAnnouncement.priority === "important"
+                  ? <Zap className="w-5 h-5" />
+                  : <Megaphone className="w-5 h-5" />}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-base leading-tight">{activeAnnouncement.title}</p>
+                {activeAnnouncement.description && (
+                  <p className="mt-1 text-sm opacity-90 leading-snug">{activeAnnouncement.description}</p>
+                )}
+              </div>
+              <button
+                className="shrink-0 opacity-70 hover:opacity-100 transition-opacity p-1 rounded"
+                onClick={() => setDismissedAnnouncement(activeAnnouncement.id)}
+                aria-label="Dismiss"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
-            <Button variant="ghost" size="icon" className="w-6 h-6 shrink-0"
-              onClick={() => setDismissedAnnouncement(activeAnnouncement.id)}>
-              <X className="w-3.5 h-3.5" />
-            </Button>
           </div>
         )}
 
