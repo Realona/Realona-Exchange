@@ -649,6 +649,90 @@ export const SendTradeMessageResponse = zod.object({
 
 
 /**
+ * @summary Public anonymous feed of recent completed trades
+ */
+export const GetTradeFeedResponseItem = zod.object({
+  "id": zod.number(),
+  "amount": zod.number(),
+  "createdAt": zod.coerce.date(),
+  "gameName": zod.string(),
+  "category": zod.string(),
+  "pictureUrl": zod.string().nullish(),
+  "platform": zod.string().nullish()
+})
+export const GetTradeFeedResponse = zod.array(GetTradeFeedResponseItem)
+
+
+/**
+ * @summary Get all platform reviews
+ */
+export const GetPlatformReviewsResponse = zod.object({
+  "reviews": zod.array(zod.object({
+  "id": zod.number(),
+  "userId": zod.number(),
+  "rating": zod.number(),
+  "review": zod.string(),
+  "adminResponse": zod.string().nullish(),
+  "createdAt": zod.coerce.date(),
+  "username": zod.string().nullish(),
+  "isVerified": zod.boolean().nullish()
+})),
+  "averageRating": zod.number(),
+  "totalCount": zod.number()
+})
+
+
+/**
+ * @summary Submit or update a platform review
+ */
+export const createPlatformReviewBodyRatingMax = 5;
+
+export const createPlatformReviewBodyReviewMin = 10;
+export const createPlatformReviewBodyReviewMax = 1000;
+
+
+
+export const CreatePlatformReviewBody = zod.object({
+  "rating": zod.number().min(1).max(createPlatformReviewBodyRatingMax),
+  "review": zod.string().min(createPlatformReviewBodyReviewMin).max(createPlatformReviewBodyReviewMax)
+})
+
+export const CreatePlatformReviewResponse = zod.object({
+  "id": zod.number(),
+  "userId": zod.number(),
+  "rating": zod.number(),
+  "review": zod.string(),
+  "adminResponse": zod.string().nullish(),
+  "createdAt": zod.coerce.date(),
+  "username": zod.string().nullish(),
+  "isVerified": zod.boolean().nullish()
+})
+
+
+/**
+ * @summary Admin responds to a review
+ */
+export const AdminRespondToReviewParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const AdminRespondToReviewBody = zod.object({
+  "response": zod.string()
+})
+
+export const AdminRespondToReviewResponse = zod.object({
+  "id": zod.number(),
+  "userId": zod.number(),
+  "rating": zod.number(),
+  "review": zod.string(),
+  "adminResponse": zod.string().nullish(),
+  "createdAt": zod.coerce.date(),
+  "username": zod.string().nullish(),
+  "isVerified": zod.boolean().nullish()
+})
+
+
+/**
  * @summary Get current user's wishlist
  */
 export const GetWishlistResponseItem = zod.object({

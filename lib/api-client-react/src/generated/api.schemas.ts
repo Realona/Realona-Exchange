@@ -602,6 +602,55 @@ export interface Leaderboard {
   mostTrusted: LeaderboardEntry[];
 }
 
+export interface TradeFeedItem {
+  id: number;
+  amount: number;
+  createdAt: string;
+  gameName: string;
+  category: string;
+  /** @nullable */
+  pictureUrl?: string | null;
+  /** @nullable */
+  platform?: string | null;
+}
+
+export interface PlatformReview {
+  id: number;
+  userId: number;
+  rating: number;
+  review: string;
+  /** @nullable */
+  adminResponse?: string | null;
+  createdAt: string;
+  /** @nullable */
+  username?: string | null;
+  /** @nullable */
+  isVerified?: boolean | null;
+}
+
+export interface AdminReviewResponse {
+  response: string;
+}
+
+export interface PlatformReviewInput {
+  /**
+     * @minimum 1
+     * @maximum 5
+     */
+  rating: number;
+  /**
+     * @minLength 10
+     * @maxLength 1000
+     */
+  review: string;
+}
+
+export interface PlatformReviewsResponse {
+  reviews: PlatformReview[];
+  averageRating: number;
+  totalCount: number;
+}
+
 export type WishlistItemListing = {
   id?: number;
   gameName?: string;

@@ -2,3 +2,6 @@
 - [Wishlist architecture](wishlist-arch.md) — wishlist_items table + public share URL pattern + price-drop trigger location.
 - [DB schema additions](db-schema-additions.md) — columns added via raw psql ALTER TABLE; must also add to Drizzle schema file or ORM won't select them.
 - [Listings formatListing](format-listing.md) — highlightedPlayers stored as JSON string in TEXT column; parsed back to array in formatListing helper.
+- [Orval codegen conflict](orval-codegen-conflict.md) — inline requestBody schemas in openapi.yaml produce duplicate Body types; always use $ref to named schemas to avoid TS2308 export clash.
+- [Withdrawal escrow logic](withdrawal-escrow.md) — only deduct pending (unpaid) buyer trades from available balance; payment_confirmed+ already deducted wallet at confirm-payment time.
+- [First-trade fee logic](first-trade-fee.md) — check completed trade count before creating trade; isAdmin/isSuperAdmin also exempt from fee.

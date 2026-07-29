@@ -129,13 +129,14 @@ export default function Leaderboard() {
 
         {isLoading ? (
           <div className="space-y-6">
-            {[...Array(3)].map((_, i) => <div key={i} className="h-64 bg-muted rounded-xl animate-pulse" />)}
+            {[...Array(4)].map((_, i) => <div key={i} className="h-64 bg-muted rounded-xl animate-pulse" />)}
           </div>
         ) : (
           <div className="space-y-6">
             <Section title="Top Sellers" icon={TrendingUp} entries={data?.topSellers ?? []} />
             <Section title="Top Buyers" icon={Users} entries={data?.topBuyers ?? []} />
             <Section title="Most Trusted" icon={Star} entries={data?.mostTrusted ?? []} showRating />
+            <Section title="Newcomer of the Month 🌟" icon={Users} entries={(data as any)?.newcomers ?? []} />
           </div>
         )}
 

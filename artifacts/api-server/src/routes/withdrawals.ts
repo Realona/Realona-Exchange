@@ -47,26 +47,21 @@ router.post("/withdrawals", requireAuth, async (req, res): Promise<void> => {
     return;
   }
 
-  // Check no active trades
-  const activeTrades = await db
-    .select()
-    .from(tradesTable)
-    .where(
-      and(
-        or(eq(tradesTable.buyerId, req.userId!), eq(tradesTable.sellerId, req.userId!))!,
-        sql`${tradesTable.status} IN ('pending', 'payment_confirmed', 'seller_transferred', 'disputed')`
-      )!
-    );
-
-  if (activeTrades.length > 0) {
-    res.status(400).json({ error: "Cannot withdraw while you have active trades. Complete all trades first." });
-    return;
-  }
-
-  // Check sufficient balance
+  // Compute escrowed amount: pending buyer trades where buyer hasn't yet confirmed payment
+  // (payment_confirmed+ already have wallet deducted, so they don't reduce available balance again)
   const [user] = await db.select().from(usersTable).where(eq(usersTable.id, req.userId!));
-  if (Number(user.walletBalance) < amount) {
-    res.status(400).json({ error: "Insufficient wallet balance" });
+  const pendingBuyerTrades = await db
+    .select({ amount: tradesTable.amount })
+    .from(tradesTable)
+    .where(and(eq(tradesTable.buyerId, req.userId!), eq(tradesTable.status, "pending")));
+  const escrowedAmount = pendingBuyerTrades.reduce((sum, t) => sum + Number(t.amount), 0);
+  const availableBalance = Number(user.walletBalance) - escrowedAmount;
+
+  if (amount > availableBalance) {
+    const msg = escrowedAmount > 0
+      ? `₦${escrowedAmount.toLocaleString()} is held for a pending trade. You can withdraw up to ₦${Math.max(0, availableBalance).toLocaleString()}.`
+      : "Insufficient wallet balance";
+    res.status(400).json({ error: msg });
     return;
   }
 

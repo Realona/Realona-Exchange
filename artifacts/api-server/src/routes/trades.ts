@@ -126,7 +126,15 @@ router.post("/trades", requireAuth, async (req, res): Promise<void> => {
 
   const feePercent = await getPlatformFee();
   const amount = Number(listing.price);
-  const fee = parseFloat((amount * feePercent / 100).toFixed(2));
+
+  // First trade 0% fee + admin/superadmin exemption
+  const isAdminBuyer = req.user?.isAdmin || req.user?.isSuperAdmin;
+  const [tradeCountRow] = await db
+    .select({ count: sql<number>`COUNT(*)::int` })
+    .from(tradesTable)
+    .where(and(eq(tradesTable.buyerId, req.userId!), eq(tradesTable.status, "completed")));
+  const isFirstTrade = Number(tradeCountRow?.count ?? 0) === 0;
+  const fee = (isFirstTrade || isAdminBuyer) ? 0 : parseFloat((amount * feePercent / 100).toFixed(2));
 
   const [trade] = await db.insert(tradesTable).values({
     listingId: listing.id,

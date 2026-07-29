@@ -55,6 +55,23 @@ router.get("/leaderboard", async (req, res): Promise<void> => {
     LIMIT 10
   `);
 
+  // Newcomer of the Month: registered in last 30 days, most completed trades
+  const newcomers = await db.execute(sql`
+    SELECT
+      u.id AS "userId",
+      u.username,
+      u.is_verified AS "isVerified",
+      COUNT(t.id)::int AS count,
+      ROUND(AVG(r.rating), 1) AS rating
+    FROM users u
+    LEFT JOIN trades t ON (t.buyer_id = u.id OR t.seller_id = u.id) AND t.status = 'completed'
+    LEFT JOIN trade_ratings r ON r.ratee_id = u.id
+    WHERE u.created_at >= NOW() - INTERVAL '30 days'
+    GROUP BY u.id, u.username, u.is_verified
+    ORDER BY count DESC, u.created_at DESC
+    LIMIT 10
+  `);
+
   function addRanks(rows: any[]) {
     return rows.map((r, i) => ({ rank: i + 1, ...r }));
   }
@@ -63,6 +80,7 @@ router.get("/leaderboard", async (req, res): Promise<void> => {
     topSellers: addRanks(topSellers.rows),
     topBuyers: addRanks(topBuyers.rows),
     mostTrusted: addRanks(mostTrusted.rows),
+    newcomers: addRanks(newcomers.rows),
   });
 });
 

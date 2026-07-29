@@ -7,6 +7,7 @@
  */
 
 export * from './adminInput';
+export * from './adminReviewResponse';
 export * from './adminStats';
 export * from './adminUser';
 export * from './announcement';
@@ -55,6 +56,9 @@ export * from './offerResponseAction';
 export * from './offerStatus';
 export * from './platformFee';
 export * from './platformFeeUpdate';
+export * from './platformReview';
+export * from './platformReviewInput';
+export * from './platformReviewsResponse';
 export * from './purchase';
 export * from './registerInput';
 export * from './rejectInput';
@@ -69,6 +73,7 @@ export * from './successResponse';
 export * from './suspendInput';
 export * from './trade';
 export * from './tradeCredentials';
+export * from './tradeFeedItem';
 export * from './tradeInput';
 export * from './tradeMessage';
 export * from './tradeRatingInput';

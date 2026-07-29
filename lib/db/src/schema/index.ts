@@ -14,3 +14,4 @@ export * from "./announcements";
 export * from "./giveaways";
 export * from "./notifications";
 export * from "./wishlist";
+export * from "./platform-reviews";

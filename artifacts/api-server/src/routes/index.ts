@@ -19,6 +19,8 @@ import giveawaysRouter from "./giveaways";
 import leaderboardRouter from "./leaderboard";
 import wishlistRouter from "./wishlist";
 import purchasesRouter from "./purchases";
+import tradeFeedRouter from "./trade-feed";
+import platformReviewsRouter from "./platform-reviews";
 
 const router: IRouter = Router();
 
@@ -42,5 +44,7 @@ router.use(giveawaysRouter);
 router.use(leaderboardRouter);
 router.use(wishlistRouter);
 router.use(purchasesRouter);
+router.use(tradeFeedRouter);
+router.use(platformReviewsRouter);
 
 export default router;

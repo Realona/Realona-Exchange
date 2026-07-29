@@ -2,9 +2,9 @@ import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "wouter";
-import { useGetListings, useAddToWishlist, useRemoveFromWishlist, useGetWishlist } from "@workspace/api-client-react";
+import { useGetListings, useAddToWishlist, useRemoveFromWishlist, useGetWishlist, useGetTradeFeed } from "@workspace/api-client-react";
 import { formatNaira } from "@/lib/utils";
-import { Search, ShieldCheck, Zap, MessageSquare, SlidersHorizontal, X, Users, Star, Heart } from "lucide-react";
+import { Search, ShieldCheck, Zap, MessageSquare, SlidersHorizontal, X, Users, Star, Heart, TrendingUp } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
@@ -21,6 +21,8 @@ export default function Home() {
   const [maxRating, setMaxRating] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [category, setCategory] = useState<"all" | "efootball" | "social_media">("all");
+  const [verifiedOnly, setVerifiedOnly] = useState(false);
+  const [playerSearch, setPlayerSearch] = useState("");
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -48,7 +50,7 @@ export default function Home() {
     }
   };
 
-  const hasFilters = divisionRank || minRating || maxRating;
+  const hasFilters = divisionRank || minRating || maxRating || verifiedOnly || playerSearch;
 
   const { data: allListings, isLoading } = useGetListings({
     search: search || undefined,
@@ -57,14 +59,22 @@ export default function Home() {
     maxSquadRating: maxRating ? Number(maxRating) : undefined,
   });
 
-  const listings = category === "all"
-    ? allListings
-    : allListings?.filter((l: any) => (l.category ?? "efootball") === category);
+  const listings = (allListings ?? []).filter((l: any) => {
+    if (category !== "all" && (l.category ?? "efootball") !== category) return false;
+    if (verifiedOnly && !l.sellerIsVerified) return false;
+    if (playerSearch) {
+      const players: string[] = Array.isArray(l.highlightedPlayers) ? l.highlightedPlayers : [];
+      if (!players.some((p: string) => p.toLowerCase().includes(playerSearch.toLowerCase()))) return false;
+    }
+    return true;
+  });
 
   const clearFilters = () => {
     setDivisionRank("");
     setMinRating("");
     setMaxRating("");
+    setVerifiedOnly(false);
+    setPlayerSearch("");
   };
 
   return (
@@ -168,7 +178,7 @@ export default function Home() {
           {/* Filter panel */}
           {showFilters && (
             <div className="bg-card border border-border rounded-lg p-4 mb-6">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
                   <label className="text-sm font-medium mb-2 block">Division Rank</label>
                   <Select value={divisionRank} onValueChange={setDivisionRank}>
@@ -198,6 +208,28 @@ export default function Home() {
                     className="bg-background"
                   />
                 </div>
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Player Name</label>
+                  <Input
+                    placeholder="e.g. Mbappe"
+                    value={playerSearch}
+                    onChange={e => setPlayerSearch(e.target.value)}
+                    className="bg-background"
+                  />
+                </div>
+              </div>
+              {/* Verified seller toggle */}
+              <div className="mt-3 flex items-center gap-2">
+                <button
+                  onClick={() => setVerifiedOnly(v => !v)}
+                  className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${verifiedOnly ? "bg-primary" : "bg-muted"}`}
+                >
+                  <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-lg transition-transform ${verifiedOnly ? "translate-x-4" : "translate-x-0"}`} />
+                </button>
+                <label className="text-sm font-medium cursor-pointer select-none flex items-center gap-1" onClick={() => setVerifiedOnly(v => !v)}>
+                  Verified Sellers Only
+                  <ShieldCheck className="w-3.5 h-3.5 text-primary" />
+                </label>
               </div>
               {hasFilters && (
                 <Button variant="ghost" size="sm" onClick={clearFilters} className="mt-3 text-muted-foreground hover:text-foreground">
@@ -319,6 +351,47 @@ export default function Home() {
           )}
         </div>
       </section>
+
+      {/* Public Trade Feed */}
+      <TradeFeed />
     </Layout>
+  );
+}
+
+function TradeFeed() {
+  const { data: feed, isLoading } = useGetTradeFeed({ query: { queryKey: ["getTradeFeed"] } });
+
+  if (isLoading || !feed || feed.length === 0) return null;
+
+  return (
+    <section className="py-12 bg-card border-t border-border">
+      <div className="container mx-auto px-4">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="bg-primary/10 p-2 rounded-lg text-primary"><TrendingUp className="w-5 h-5" /></div>
+          <div>
+            <h2 className="text-xl font-bold">Recent Sales</h2>
+            <p className="text-sm text-muted-foreground">Live anonymous feed of recently completed trades</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+          {feed.slice(0, 12).map((item: any) => (
+            <div key={item.id} className="bg-background border border-border rounded-xl p-3 text-center hover:border-primary/30 transition-colors">
+              {item.pictureUrl ? (
+                <img src={item.pictureUrl} alt="" className="w-full aspect-square object-cover rounded-lg mb-2" />
+              ) : (
+                <div className="w-full aspect-square bg-muted rounded-lg mb-2 flex items-center justify-center text-2xl">
+                  {item.category === "social_media" ? "📱" : "⚽"}
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground truncate">{item.gameName}</p>
+              <p className="text-sm font-bold text-primary mt-0.5">{formatNaira(item.amount)}</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5 capitalize">
+                {item.category === "social_media" ? "Social Media" : "eFootball"}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }

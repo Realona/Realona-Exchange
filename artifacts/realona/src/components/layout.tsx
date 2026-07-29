@@ -185,6 +185,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <Link href="/leaderboard">
                   <Button variant="ghost" size="sm" className="text-xs">Leaderboard</Button>
                 </Link>
+                <Link href="/faq">
+                  <Button variant="ghost" size="sm" className="text-xs">FAQ</Button>
+                </Link>
                 <Button variant="ghost" size="sm" asChild className="text-xs">
                   <Link href="/login">Login</Link>
                 </Button>
@@ -256,9 +259,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <span className="text-xs opacity-40">·</span>
             <a href="/leaderboard" className="hover:text-primary transition-colors text-xs">Leaderboard</a>
             <span className="text-xs opacity-40">·</span>
-            <a href="/kyc" className="hover:text-primary transition-colors text-xs">KYC Verification</a>
+            <a href="/reviews" className="hover:text-primary transition-colors text-xs">Reviews</a>
             <span className="text-xs opacity-40">·</span>
-            <a href="/how-it-works" className="hover:text-primary transition-colors text-xs">Fees & Charges</a>
+            <a href="/faq" className="hover:text-primary transition-colors text-xs">FAQ</a>
+            <span className="text-xs opacity-40">·</span>
+            <a href="/kyc" className="hover:text-primary transition-colors text-xs">KYC Verification</a>
           </div>
           <p>© {new Date().getFullYear()} Realona Exchange. Secure Escrow Trading.</p>
           <p className="text-xs">Nigeria's premier eFootball & social media account marketplace.</p>

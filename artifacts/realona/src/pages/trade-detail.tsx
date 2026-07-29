@@ -69,6 +69,8 @@ export default function TradeDetail() {
   const queryClient = useQueryClient();
   const [message, setMessage] = useState("");
   const [disputeReason, setDisputeReason] = useState("");
+  const [disputeType, setDisputeType] = useState("");
+  const [disputeOutcome, setDisputeOutcome] = useState("");
   const [disputeOpen, setDisputeOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [ratingValue, setRatingValue] = useState(0);
@@ -193,8 +195,9 @@ export default function TradeDetail() {
   };
 
   const handleDispute = () => {
-    if (!disputeReason.trim()) return;
-    openDispute.mutate({ id: tradeId, data: { reason: disputeReason.trim() } }, {
+    if (!disputeType || !disputeReason.trim()) return;
+    const fullReason = `[${disputeType}] ${disputeOutcome ? `Desired outcome: ${disputeOutcome}. ` : ""}${disputeReason.trim()}`;
+    openDispute.mutate({ id: tradeId, data: { reason: fullReason } }, {
       onSuccess: () => { toast({ title: "Dispute opened", description: "Admin will review shortly." }); setDisputeOpen(false); invalidate(); },
       onError: (err: any) => toast({ title: "Failed", description: err?.data?.error ?? err?.message, variant: "destructive" }),
     });
@@ -550,25 +553,77 @@ export default function TradeDetail() {
 
       {/* Dispute Dialog */}
       <Dialog open={disputeOpen} onOpenChange={setDisputeOpen}>
-        <DialogContent className="bg-card border-border">
+        <DialogContent className="bg-card border-border max-w-md">
           <DialogHeader>
             <DialogTitle className="text-red-500">Open a Dispute</DialogTitle>
           </DialogHeader>
-          <div className="space-y-3">
-            <p className="text-sm text-muted-foreground">Explain the issue. An admin will review the trade and make a decision.</p>
-            <Textarea
-              placeholder="Describe what went wrong..."
-              value={disputeReason}
-              onChange={e => setDisputeReason(e.target.value)}
-              className="bg-background min-h-[120px]"
-            />
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">An admin will review all chat history and credentials. Be honest and specific.</p>
+
+            {/* Dispute type */}
+            <div>
+              <label className="text-sm font-medium mb-1.5 block">Reason for dispute *</label>
+              <div className="grid grid-cols-1 gap-1.5">
+                {[
+                  "Account credentials don't work",
+                  "OTP not provided / not working",
+                  "Account email cannot be changed",
+                  "Account was misrepresented",
+                  "Seller is unresponsive",
+                  "Other",
+                ].map(reason => (
+                  <button
+                    key={reason}
+                    onClick={() => setDisputeType(reason)}
+                    className={`text-left text-sm px-3 py-2 rounded-lg border transition-colors ${
+                      disputeType === reason
+                        ? "border-red-500 bg-red-500/10 text-red-500"
+                        : "border-border hover:border-muted-foreground/50"
+                    }`}
+                  >
+                    {reason}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Description */}
+            <div>
+              <label className="text-sm font-medium mb-1.5 block">Describe what went wrong *</label>
+              <Textarea
+                placeholder="Be specific. Include what you tried, any error messages, and steps you've already taken..."
+                value={disputeReason}
+                onChange={e => setDisputeReason(e.target.value)}
+                className="bg-background min-h-[100px] text-sm"
+              />
+            </div>
+
+            {/* Desired outcome */}
+            <div>
+              <label className="text-sm font-medium mb-1.5 block">Desired outcome</label>
+              <div className="grid grid-cols-1 gap-1.5">
+                {["Full refund", "Partial refund", "Seller fixes the issue", "Admin review & decision"].map(outcome => (
+                  <button
+                    key={outcome}
+                    onClick={() => setDisputeOutcome(o => o === outcome ? "" : outcome)}
+                    className={`text-left text-sm px-3 py-2 rounded-lg border transition-colors ${
+                      disputeOutcome === outcome
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border hover:border-muted-foreground/50"
+                    }`}
+                  >
+                    {outcome}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDisputeOpen(false)}>Cancel</Button>
             <Button
               variant="destructive"
               onClick={handleDispute}
-              disabled={openDispute.isPending || !disputeReason.trim()}
+              disabled={openDispute.isPending || !disputeType || !disputeReason.trim()}
             >
               {openDispute.isPending ? "Submitting..." : "Submit Dispute"}
             </Button>

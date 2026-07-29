@@ -21,6 +21,7 @@ import type {
 
 import type {
   AdminInput,
+  AdminReviewResponse,
   AdminStats,
   AdminUser,
   Announcement,
@@ -57,6 +58,9 @@ import type {
   OfferResponse,
   PlatformFee,
   PlatformFeeUpdate,
+  PlatformReview,
+  PlatformReviewInput,
+  PlatformReviewsResponse,
   Purchase,
   RegisterInput,
   RejectInput,
@@ -70,6 +74,7 @@ import type {
   SuspendInput,
   Trade,
   TradeCredentials,
+  TradeFeedItem,
   TradeInput,
   TradeMessage,
   TradeRatingInput,
@@ -2016,6 +2021,301 @@ export const useSendTradeMessage = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getSendTradeMessageMutationOptions(options));
+    }
+
+export const getGetTradeFeedUrl = () => {
+
+
+
+
+  return `/api/trades/feed`
+}
+
+/**
+ * @summary Public anonymous feed of recent completed trades
+ */
+export const getTradeFeed = async ( options?: RequestInit): Promise<TradeFeedItem[]> => {
+
+  return customFetch<TradeFeedItem[]>(getGetTradeFeedUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetTradeFeedQueryKey = () => {
+    return [
+    `/api/trades/feed`
+    ] as const;
+    }
+
+
+export const getGetTradeFeedQueryOptions = <TData = Awaited<ReturnType<typeof getTradeFeed>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getTradeFeed>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetTradeFeedQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getTradeFeed>>> = ({ signal }) => getTradeFeed({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getTradeFeed>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetTradeFeedQueryResult = NonNullable<Awaited<ReturnType<typeof getTradeFeed>>>
+export type GetTradeFeedQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Public anonymous feed of recent completed trades
+ */
+
+export function useGetTradeFeed<TData = Awaited<ReturnType<typeof getTradeFeed>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getTradeFeed>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetTradeFeedQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetPlatformReviewsUrl = () => {
+
+
+
+
+  return `/api/reviews`
+}
+
+/**
+ * @summary Get all platform reviews
+ */
+export const getPlatformReviews = async ( options?: RequestInit): Promise<PlatformReviewsResponse> => {
+
+  return customFetch<PlatformReviewsResponse>(getGetPlatformReviewsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetPlatformReviewsQueryKey = () => {
+    return [
+    `/api/reviews`
+    ] as const;
+    }
+
+
+export const getGetPlatformReviewsQueryOptions = <TData = Awaited<ReturnType<typeof getPlatformReviews>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPlatformReviews>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPlatformReviewsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPlatformReviews>>> = ({ signal }) => getPlatformReviews({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPlatformReviews>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetPlatformReviewsQueryResult = NonNullable<Awaited<ReturnType<typeof getPlatformReviews>>>
+export type GetPlatformReviewsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get all platform reviews
+ */
+
+export function useGetPlatformReviews<TData = Awaited<ReturnType<typeof getPlatformReviews>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPlatformReviews>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetPlatformReviewsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreatePlatformReviewUrl = () => {
+
+
+
+
+  return `/api/reviews`
+}
+
+/**
+ * @summary Submit or update a platform review
+ */
+export const createPlatformReview = async (platformReviewInput: PlatformReviewInput, options?: RequestInit): Promise<PlatformReview> => {
+
+  return customFetch<PlatformReview>(getCreatePlatformReviewUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(platformReviewInput)
+  }
+);}
+
+
+
+
+export const getCreatePlatformReviewMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPlatformReview>>, TError,{data: BodyType<PlatformReviewInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createPlatformReview>>, TError,{data: BodyType<PlatformReviewInput>}, TContext> => {
+
+const mutationKey = ['createPlatformReview'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createPlatformReview>>, {data: BodyType<PlatformReviewInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createPlatformReview(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreatePlatformReviewMutationResult = NonNullable<Awaited<ReturnType<typeof createPlatformReview>>>
+    export type CreatePlatformReviewMutationBody = BodyType<PlatformReviewInput>
+    export type CreatePlatformReviewMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Submit or update a platform review
+ */
+export const useCreatePlatformReview = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPlatformReview>>, TError,{data: BodyType<PlatformReviewInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createPlatformReview>>,
+        TError,
+        {data: BodyType<PlatformReviewInput>},
+        TContext
+      > => {
+      return useMutation(getCreatePlatformReviewMutationOptions(options));
+    }
+
+export const getAdminRespondToReviewUrl = (id: number,) => {
+
+
+
+
+  return `/api/reviews/${id}/respond`
+}
+
+/**
+ * @summary Admin responds to a review
+ */
+export const adminRespondToReview = async (id: number,
+    adminReviewResponse: AdminReviewResponse, options?: RequestInit): Promise<PlatformReview> => {
+
+  return customFetch<PlatformReview>(getAdminRespondToReviewUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(adminReviewResponse)
+  }
+);}
+
+
+
+
+export const getAdminRespondToReviewMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminRespondToReview>>, TError,{id: number;data: BodyType<AdminReviewResponse>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminRespondToReview>>, TError,{id: number;data: BodyType<AdminReviewResponse>}, TContext> => {
+
+const mutationKey = ['adminRespondToReview'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminRespondToReview>>, {id: number;data: BodyType<AdminReviewResponse>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  adminRespondToReview(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AdminRespondToReviewMutationResult = NonNullable<Awaited<ReturnType<typeof adminRespondToReview>>>
+    export type AdminRespondToReviewMutationBody = BodyType<AdminReviewResponse>
+    export type AdminRespondToReviewMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Admin responds to a review
+ */
+export const useAdminRespondToReview = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminRespondToReview>>, TError,{id: number;data: BodyType<AdminReviewResponse>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof adminRespondToReview>>,
+        TError,
+        {id: number;data: BodyType<AdminReviewResponse>},
+        TContext
+      > => {
+      return useMutation(getAdminRespondToReviewMutationOptions(options));
     }
 
 export const getGetWishlistUrl = () => {
