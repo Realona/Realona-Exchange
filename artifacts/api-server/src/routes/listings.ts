@@ -1,8 +1,9 @@
 import { Router, type IRouter } from "express";
-import { db, listingsTable, usersTable } from "@workspace/db";
+import { db, listingsTable, usersTable, wishlistTable } from "@workspace/db";
 import { eq, and, gte, lte, ilike, or, sql } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
 import { CreateListingBody, UpdateListingBody, GetListingParams, UpdateListingParams, DeleteListingParams, GetListingsQueryParams } from "@workspace/api-zod";
+import { createNotification } from "../lib/notifier";
 
 const router: IRouter = Router();
 
@@ -170,6 +171,26 @@ router.patch("/listings/:id", requireAuth, async (req, res): Promise<void> => {
 
   const [updated] = await db.update(listingsTable).set(updateData).where(eq(listingsTable.id, params.data.id)).returning();
   const [seller] = await db.select({ username: usersTable.username }).from(usersTable).where(eq(usersTable.id, updated.sellerId));
+
+  // Price drop notification → all wishlist users
+  if (parsed.data.price !== undefined && Number(parsed.data.price) < Number(existing.price)) {
+    const newPrice = Number(parsed.data.price);
+    const oldPrice = Number(existing.price);
+    const wishers = await db.select({ userId: wishlistTable.userId }).from(wishlistTable).where(eq(wishlistTable.listingId, params.data.id));
+    await Promise.all(
+      wishers
+        .filter(w => w.userId !== req.userId)
+        .map(w =>
+          createNotification(
+            w.userId,
+            "trade_update",
+            "💰 Price Drop on Wishlisted Account!",
+            `"${existing.gameName}" dropped from ₦${oldPrice.toLocaleString()} to ₦${newPrice.toLocaleString()}. Grab it before it's gone!`,
+            { listingId: params.data.id }
+          )
+        )
+    );
+  }
 
   res.json(formatListing(updated, seller?.username));
 });

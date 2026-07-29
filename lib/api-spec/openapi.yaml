@@ -565,6 +565,32 @@ paths:
                 items:
                   $ref: "#/components/schemas/WishlistItem"
 
+  /wishlist/public/{username}:
+    get:
+      operationId: getPublicWishlist
+      tags: [wishlist]
+      summary: Get a user's public wishlist (no auth required)
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [username, items]
+                properties:
+                  username: { type: string }
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/WishlistItem"
+
   /wishlist/{listingId}:
     post:
       operationId: addToWishlist

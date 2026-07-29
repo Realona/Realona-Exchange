@@ -7,13 +7,21 @@ import { useGetWishlist, useRemoveFromWishlist } from "@workspace/api-client-rea
 import { formatNaira } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { Heart, HeartOff, ShoppingCart, ShieldCheck, Users, Gamepad2 } from "lucide-react";
+import { Heart, HeartOff, ShoppingCart, Users, Gamepad2, Share2, Copy } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function WishlistPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const { data: items, isLoading } = useGetWishlist({ query: { queryKey: ["getWishlist"] } });
   const remove = useRemoveFromWishlist();
+
+  const handleShare = () => {
+    const url = `${window.location.origin}/wishlist/${user?.username}`;
+    navigator.clipboard.writeText(url);
+    toast({ title: "Wishlist link copied!", description: "Share it with anyone to show what you're looking for." });
+  };
 
   const handleRemove = (listingId: number) => {
     remove.mutate({ listingId }, {
@@ -40,12 +48,20 @@ export default function WishlistPage() {
   return (
     <Layout>
       <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <div className="flex items-center gap-3 mb-6">
-          <Heart className="w-6 h-6 text-red-500 fill-red-500" />
-          <div>
-            <h1 className="text-2xl font-bold">My Wishlist</h1>
-            <p className="text-sm text-muted-foreground">{items?.length ?? 0} saved {items?.length === 1 ? "listing" : "listings"}</p>
+        <div className="flex items-center justify-between gap-3 mb-6">
+          <div className="flex items-center gap-3">
+            <Heart className="w-6 h-6 text-red-500 fill-red-500" />
+            <div>
+              <h1 className="text-2xl font-bold">My Wishlist</h1>
+              <p className="text-sm text-muted-foreground">{items?.length ?? 0} saved {items?.length === 1 ? "listing" : "listings"}</p>
+            </div>
           </div>
+          {(items?.length ?? 0) > 0 && (
+            <Button variant="outline" size="sm" onClick={handleShare} className="gap-2 shrink-0">
+              <Share2 className="w-4 h-4" />
+              Share Wishlist
+            </Button>
+          )}
         </div>
 
         {!items || items.length === 0 ? (

@@ -691,6 +691,11 @@ export type RequestEmailOtp200 = {
   success?: boolean;
 };
 
+export type GetPublicWishlist200 = {
+  username: string;
+  items: WishlistItem[];
+};
+
 export type RemoveFromWishlist200 = {
   success?: boolean;
 };

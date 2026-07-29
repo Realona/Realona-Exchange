@@ -16,6 +16,50 @@ function formatItem(item: typeof wishlistTable.$inferSelect, listing?: any) {
   };
 }
 
+// Public wishlist by username (no auth)
+router.get("/wishlist/public/:username", async (req, res): Promise<void> => {
+  const username = req.params.username as string;
+  const [user] = await db.select({ id: usersTable.id, username: usersTable.username })
+    .from(usersTable).where(eq(usersTable.username, username));
+  if (!user) { res.status(404).json({ error: "User not found" }); return; }
+
+  const rows = await db
+    .select({
+      item: wishlistTable,
+      listing: listingsTable,
+      sellerUsername: usersTable.username,
+    })
+    .from(wishlistTable)
+    .leftJoin(listingsTable, eq(wishlistTable.listingId, listingsTable.id))
+    .leftJoin(usersTable, eq(listingsTable.sellerId, usersTable.id))
+    .where(eq(wishlistTable.userId, user.id))
+    .orderBy(sql`${wishlistTable.createdAt} DESC`);
+
+  res.json({
+    username: user.username,
+    items: rows.map(r => ({
+      id: r.item.id,
+      userId: r.item.userId,
+      listingId: r.item.listingId,
+      createdAt: r.item.createdAt,
+      listing: r.listing ? {
+        id: r.listing.id,
+        gameName: r.listing.gameName,
+        description: r.listing.description,
+        price: Number(r.listing.price),
+        pictureUrl: r.listing.pictureUrl ?? null,
+        status: r.listing.status,
+        category: (r.listing as any).category ?? "efootball",
+        platform: (r.listing as any).platform ?? null,
+        followerCount: (r.listing as any).followerCount ?? null,
+        divisionRank: r.listing.divisionRank ?? null,
+        squadRating: r.listing.squadRating ?? null,
+        sellerUsername: r.sellerUsername ?? null,
+      } : null,
+    })),
+  });
+});
+
 // Get wishlist
 router.get("/wishlist", requireAuth, async (req, res): Promise<void> => {
   const rows = await db

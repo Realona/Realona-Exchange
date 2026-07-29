@@ -675,6 +675,38 @@ export const GetWishlistResponse = zod.array(GetWishlistResponseItem)
 
 
 /**
+ * @summary Get a user's public wishlist (no auth required)
+ */
+export const GetPublicWishlistParams = zod.object({
+  "username": zod.coerce.string()
+})
+
+export const GetPublicWishlistResponse = zod.object({
+  "username": zod.string(),
+  "items": zod.array(zod.object({
+  "id": zod.number(),
+  "userId": zod.number(),
+  "listingId": zod.number(),
+  "createdAt": zod.coerce.date(),
+  "listing": zod.object({
+  "id": zod.number().optional(),
+  "gameName": zod.string().optional(),
+  "description": zod.string().optional(),
+  "price": zod.number().optional(),
+  "pictureUrl": zod.string().nullish(),
+  "status": zod.string().optional(),
+  "category": zod.string().optional(),
+  "platform": zod.string().nullish(),
+  "followerCount": zod.number().nullish(),
+  "divisionRank": zod.string().nullish(),
+  "squadRating": zod.number().nullish(),
+  "sellerUsername": zod.string().nullish()
+}).nullish()
+}))
+})
+
+
+/**
  * @summary Add a listing to wishlist
  */
 export const AddToWishlistParams = zod.object({

@@ -26,6 +26,7 @@ export * from './getAdminTradesParams';
 export * from './getAdminUsersParams';
 export * from './getAdminWithdrawalsParams';
 export * from './getListingsParams';
+export * from './getPublicWishlist200';
 export * from './giveaway';
 export * from './giveawayInput';
 export * from './giveawayInputTaskType';

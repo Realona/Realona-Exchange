@@ -30,6 +30,7 @@ import AdminAnnouncements from "@/pages/admin/announcements";
 import AdminGiveaways from "@/pages/admin/giveaways";
 import WishlistPage from "@/pages/wishlist";
 import PurchasesPage from "@/pages/purchases";
+import PublicWishlistPage from "@/pages/public-wishlist";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -154,6 +155,7 @@ function Router() {
       <Route path="/purchases">
         <ProtectedRoute component={PurchasesPage} />
       </Route>
+      <Route path="/wishlist/:username" component={PublicWishlistPage} />
       <Route component={NotFound} />
     </Switch>
   );

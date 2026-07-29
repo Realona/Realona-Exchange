@@ -1,0 +1,4 @@
+- [Notification types](notification-types.md) — NotificationType union in notifier.ts must be updated whenever a new type is added; codegen does not catch this.
+- [Wishlist architecture](wishlist-arch.md) — wishlist_items table + public share URL pattern + price-drop trigger location.
+- [DB schema additions](db-schema-additions.md) — columns added via raw psql ALTER TABLE; must also add to Drizzle schema file or ORM won't select them.
+- [Listings formatListing](format-listing.md) — highlightedPlayers stored as JSON string in TEXT column; parsed back to array in formatListing helper.

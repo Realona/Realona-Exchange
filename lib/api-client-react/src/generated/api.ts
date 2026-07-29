@@ -37,6 +37,7 @@ import type {
   GetAdminUsersParams,
   GetAdminWithdrawalsParams,
   GetListingsParams,
+  GetPublicWishlist200,
   Giveaway,
   GiveawayInput,
   HealthStatus,
@@ -2082,6 +2083,83 @@ export function useGetWishlist<TData = Awaited<ReturnType<typeof getWishlist>>, 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetWishlistQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetPublicWishlistUrl = (username: string,) => {
+
+
+
+
+  return `/api/wishlist/public/${username}`
+}
+
+/**
+ * @summary Get a user's public wishlist (no auth required)
+ */
+export const getPublicWishlist = async (username: string, options?: RequestInit): Promise<GetPublicWishlist200> => {
+
+  return customFetch<GetPublicWishlist200>(getGetPublicWishlistUrl(username),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetPublicWishlistQueryKey = (username: string,) => {
+    return [
+    `/api/wishlist/public/${username}`
+    ] as const;
+    }
+
+
+export const getGetPublicWishlistQueryOptions = <TData = Awaited<ReturnType<typeof getPublicWishlist>>, TError = ErrorType<unknown>>(username: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPublicWishlist>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPublicWishlistQueryKey(username);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPublicWishlist>>> = ({ signal }) => getPublicWishlist(username, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: username !== null && username !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPublicWishlist>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetPublicWishlistQueryResult = NonNullable<Awaited<ReturnType<typeof getPublicWishlist>>>
+export type GetPublicWishlistQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get a user's public wishlist (no auth required)
+ */
+
+export function useGetPublicWishlist<TData = Awaited<ReturnType<typeof getPublicWishlist>>, TError = ErrorType<unknown>>(
+ username: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPublicWishlist>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetPublicWishlistQueryOptions(username,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
