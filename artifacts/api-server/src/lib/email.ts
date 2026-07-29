@@ -71,6 +71,31 @@ async function send(to: string, subject: string, html: string) {
 
 // ─── Trade emails ────────────────────────────────────────────────────────────
 
+export async function emailBuyerPaid(opts: {
+  adminEmail: string;
+  buyerUsername: string; sellerUsername: string;
+  gameName: string; amount: number; tradeId: number;
+}) {
+  const url = `${APP_URL}/admin/trades`;
+  await send(
+    opts.adminEmail,
+    `💰 Payment notification — Trade #${opts.tradeId} needs confirmation`,
+    base(
+      "A buyer has made payment",
+      p(`<strong>${opts.buyerUsername}</strong> has notified you that they have sent payment for Trade #${opts.tradeId}. Please verify the transfer on your Moniepoint account and confirm.`) +
+      table(
+        badge("Trade ID", `#${opts.tradeId}`) +
+        badge("Listing", opts.gameName) +
+        badge("Amount", `₦${opts.amount.toLocaleString()}`) +
+        badge("Buyer", opts.buyerUsername) +
+        badge("Seller", opts.sellerUsername)
+      ) +
+      p("Once you have verified the bank transfer, go to the Trades panel and click <strong>Confirm Payment</strong> to release funds from escrow.") +
+      btn("Review Trade", url)
+    )
+  );
+}
+
 export async function emailTradeCreated(opts: {
   sellerEmail: string; sellerUsername: string;
   buyerUsername: string; gameName: string;

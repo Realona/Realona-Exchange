@@ -11,6 +11,7 @@ type NotificationType =
   | "trade_rated"
   | "announcement"
   | "giveaway"
+  | "giveaway_reward"
   | "wishlist_sold"
   | "wishlist_price_drop"
   | "deposit_pending";

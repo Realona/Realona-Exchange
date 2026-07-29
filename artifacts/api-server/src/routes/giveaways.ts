@@ -90,7 +90,7 @@ router.post("/giveaways/:id/claim", requireAuth, async (req, res): Promise<void>
       .where(eq(giveawaysTable.id, giveawayId));
   });
 
-  await createNotification(userId, "giveaway_reward", `You earned ₦${Number(giveaway.rewardAmount).toLocaleString()} from "${giveaway.title}"! It has been added to your wallet.`);
+  await createNotification(userId, "giveaway_reward", "Giveaway Reward Credited", `You earned ₦${Number(giveaway.rewardAmount).toLocaleString()} from "${giveaway.title}"! It has been added to your wallet.`);
 
   res.json({ success: true, amountCredited: Number(giveaway.rewardAmount) });
 });

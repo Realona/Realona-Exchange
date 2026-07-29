@@ -4,7 +4,7 @@ import { eq, and, sql, or } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
 import {
   emailTradeCreated, emailPaymentConfirmed, emailSellerTransferred,
-  emailTradeCompleted, emailDisputeOpened,
+  emailTradeCompleted, emailDisputeOpened, emailBuyerPaid,
 } from "../lib/email";
 import {
   CreateTradeBody,
@@ -199,8 +199,41 @@ router.post("/trades/:id/buyer-paid", requireAuth, async (req, res): Promise<voi
   await db.update(tradesTable).set({ buyerPaidNotified: true }).where(eq(tradesTable.id, tradeId));
   await addSystemMsg(tradeId, "💰 Buyer has notified admin of payment. Waiting for admin to confirm.", req.userId!);
 
-  const [buyer] = await db.select({ username: usersTable.username }).from(usersTable).where(eq(usersTable.id, req.userId!));
-  await createNotification(trade.sellerId, "trade_update", "Buyer Paid", `${buyer?.username ?? "Buyer"} has notified admin of payment for Trade #${tradeId}. Waiting for admin confirmation.`, { tradeId });
+  // Fetch buyer, seller, listing info and all admins in parallel
+  const [
+    [buyer],
+    [seller],
+    listing,
+    admins,
+  ] = await Promise.all([
+    db.select({ username: usersTable.username }).from(usersTable).where(eq(usersTable.id, req.userId!)),
+    db.select({ username: usersTable.username, email: usersTable.email }).from(usersTable).where(eq(usersTable.id, trade.sellerId)),
+    db.select({ gameName: listingsTable.gameName }).from(listingsTable).where(eq(listingsTable.id, trade.listingId)),
+    db.select({ id: usersTable.id, email: usersTable.email }).from(usersTable).where(or(eq(usersTable.isAdmin, true), eq(usersTable.isSuperAdmin, true))),
+  ]);
+
+  const buyerUsername = buyer?.username ?? "Buyer";
+  const sellerUsername = seller?.username ?? "Seller";
+  const gameName = listing[0]?.gameName ?? "Account";
+  const adminEmail = process.env.EMAIL_FROM ?? "realonabusinessexchange@gmail.com";
+
+  // Notify seller
+  await createNotification(trade.sellerId, "trade_update", "Buyer Paid", `${buyerUsername} has notified admin of payment for Trade #${tradeId}. Waiting for admin confirmation.`, { tradeId });
+
+  // Notify all admin users (in-app + email)
+  await Promise.all([
+    ...admins.map(admin =>
+      createNotification(admin.id, "trade_update", "Payment Confirmation Needed", `${buyerUsername} has notified payment for Trade #${tradeId} (${gameName}, ₦${Number(trade.amount).toLocaleString()}). Please verify and confirm.`, { tradeId })
+    ),
+    emailBuyerPaid({
+      adminEmail,
+      buyerUsername,
+      sellerUsername,
+      gameName,
+      amount: Number(trade.amount),
+      tradeId,
+    }),
+  ]);
 
   res.json({ success: true });
 });
