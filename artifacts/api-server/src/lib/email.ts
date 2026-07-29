@@ -284,6 +284,15 @@ export async function emailWithdrawalRejected(opts: {
 // ─── Auth emails ─────────────────────────────────────────────────────────────
 
 export async function emailOtp(opts: { email: string; username: string; otp: string }) {
+  // Always log to console in non-production so registration can be tested
+  // even when Gmail credentials are not yet configured
+  if (process.env.NODE_ENV !== "production") {
+    console.log(`\n╔══════════════════════════════════════╗`);
+    console.log(`║  OTP VERIFICATION CODE (DEV MODE)    ║`);
+    console.log(`║  Email : ${opts.email.padEnd(28)}║`);
+    console.log(`║  Code  : ${opts.otp.padEnd(28)}║`);
+    console.log(`╚══════════════════════════════════════╝\n`);
+  }
   await send(
     opts.email,
     "Your Realona verification code",
