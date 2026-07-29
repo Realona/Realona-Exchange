@@ -33,6 +33,8 @@ import type {
   BulkListingSettings,
   BulkListingSettingsUpdate,
   ClaimGiveaway400,
+  CreateDemoAccountInput,
+  DeleteDemoAccount200,
   Deposit,
   DepositRequest,
   DisputeInput,
@@ -46,6 +48,7 @@ import type {
   GetPublicWishlist200,
   GetPurchasesParams,
   Giveaway,
+  GiveawayClaimEntry,
   GiveawayClaimResult,
   GiveawayInput,
   HealthStatus,
@@ -3506,6 +3509,223 @@ export const useResolveReport = <TError = ErrorType<unknown>,
       return useMutation(getResolveReportMutationOptions(options));
     }
 
+export const getGetDemoAccountsUrl = () => {
+
+
+
+
+  return `/api/admin/demo-accounts`
+}
+
+/**
+ * @summary List all demo/test accounts (admin only)
+ */
+export const getDemoAccounts = async ( options?: RequestInit): Promise<AdminUser[]> => {
+
+  return customFetch<AdminUser[]>(getGetDemoAccountsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetDemoAccountsQueryKey = () => {
+    return [
+    `/api/admin/demo-accounts`
+    ] as const;
+    }
+
+
+export const getGetDemoAccountsQueryOptions = <TData = Awaited<ReturnType<typeof getDemoAccounts>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getDemoAccounts>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetDemoAccountsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getDemoAccounts>>> = ({ signal }) => getDemoAccounts({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getDemoAccounts>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetDemoAccountsQueryResult = NonNullable<Awaited<ReturnType<typeof getDemoAccounts>>>
+export type GetDemoAccountsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List all demo/test accounts (admin only)
+ */
+
+export function useGetDemoAccounts<TData = Awaited<ReturnType<typeof getDemoAccounts>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getDemoAccounts>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetDemoAccountsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateDemoAccountUrl = () => {
+
+
+
+
+  return `/api/admin/demo-accounts`
+}
+
+/**
+ * @summary Create a demo/test account (admin only)
+ */
+export const createDemoAccount = async (createDemoAccountInput: CreateDemoAccountInput, options?: RequestInit): Promise<AdminUser> => {
+
+  return customFetch<AdminUser>(getCreateDemoAccountUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(createDemoAccountInput)
+  }
+);}
+
+
+
+
+export const getCreateDemoAccountMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createDemoAccount>>, TError,{data: BodyType<CreateDemoAccountInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createDemoAccount>>, TError,{data: BodyType<CreateDemoAccountInput>}, TContext> => {
+
+const mutationKey = ['createDemoAccount'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createDemoAccount>>, {data: BodyType<CreateDemoAccountInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createDemoAccount(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateDemoAccountMutationResult = NonNullable<Awaited<ReturnType<typeof createDemoAccount>>>
+    export type CreateDemoAccountMutationBody = BodyType<CreateDemoAccountInput>
+    export type CreateDemoAccountMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Create a demo/test account (admin only)
+ */
+export const useCreateDemoAccount = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createDemoAccount>>, TError,{data: BodyType<CreateDemoAccountInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createDemoAccount>>,
+        TError,
+        {data: BodyType<CreateDemoAccountInput>},
+        TContext
+      > => {
+      return useMutation(getCreateDemoAccountMutationOptions(options));
+    }
+
+export const getDeleteDemoAccountUrl = (id: number,) => {
+
+
+
+
+  return `/api/admin/demo-accounts/${id}`
+}
+
+/**
+ * @summary Delete a demo/test account (admin only)
+ */
+export const deleteDemoAccount = async (id: number, options?: RequestInit): Promise<DeleteDemoAccount200> => {
+
+  return customFetch<DeleteDemoAccount200>(getDeleteDemoAccountUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeleteDemoAccountMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteDemoAccount>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteDemoAccount>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['deleteDemoAccount'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteDemoAccount>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteDemoAccount(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteDemoAccountMutationResult = NonNullable<Awaited<ReturnType<typeof deleteDemoAccount>>>
+
+    export type DeleteDemoAccountMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Delete a demo/test account (admin only)
+ */
+export const useDeleteDemoAccount = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteDemoAccount>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteDemoAccount>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getDeleteDemoAccountMutationOptions(options));
+    }
+
 export const getGetAdminsUrl = () => {
 
 
@@ -5777,6 +5997,83 @@ export const useCreateGiveaway = <TError = ErrorType<unknown>,
       > => {
       return useMutation(getCreateGiveawayMutationOptions(options));
     }
+
+export const getGetGiveawayClaimsUrl = (id: number,) => {
+
+
+
+
+  return `/api/admin/giveaways/${id}/claims`
+}
+
+/**
+ * @summary List all claims for a giveaway (admin only)
+ */
+export const getGiveawayClaims = async (id: number, options?: RequestInit): Promise<GiveawayClaimEntry[]> => {
+
+  return customFetch<GiveawayClaimEntry[]>(getGetGiveawayClaimsUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetGiveawayClaimsQueryKey = (id: number,) => {
+    return [
+    `/api/admin/giveaways/${id}/claims`
+    ] as const;
+    }
+
+
+export const getGetGiveawayClaimsQueryOptions = <TData = Awaited<ReturnType<typeof getGiveawayClaims>>, TError = ErrorType<unknown>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getGiveawayClaims>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetGiveawayClaimsQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getGiveawayClaims>>> = ({ signal }) => getGiveawayClaims(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getGiveawayClaims>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetGiveawayClaimsQueryResult = NonNullable<Awaited<ReturnType<typeof getGiveawayClaims>>>
+export type GetGiveawayClaimsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List all claims for a giveaway (admin only)
+ */
+
+export function useGetGiveawayClaims<TData = Awaited<ReturnType<typeof getGiveawayClaims>>, TError = ErrorType<unknown>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getGiveawayClaims>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetGiveawayClaimsQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getUpdateGiveawayUrl = (id: number,) => {
 

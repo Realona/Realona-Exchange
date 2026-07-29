@@ -6,11 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useGetAdminGiveaways, useCreateGiveaway, useUpdateGiveaway } from "@workspace/api-client-react";
+import { useGetAdminGiveaways, useCreateGiveaway, useUpdateGiveaway, useGetGiveawayClaims } from "@workspace/api-client-react";
 import { formatNaira } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { Gift, Plus, ToggleLeft, ToggleRight, Users } from "lucide-react";
+import { Gift, Plus, ToggleLeft, ToggleRight, Users, ChevronDown, ChevronUp } from "lucide-react";
 import { Link } from "wouter";
 
 const TASK_TYPES = [
@@ -20,12 +20,33 @@ const TASK_TYPES = [
   { value: "referral", label: "Referral" },
 ];
 
+function ClaimsPanel({ giveawayId }: { giveawayId: number }) {
+  const { data: claims, isLoading } = useGetGiveawayClaims(giveawayId);
+  if (isLoading) return <div className="px-4 pb-3 text-xs text-muted-foreground animate-pulse">Loading claims…</div>;
+  if (!claims?.length) return <div className="px-4 pb-3 text-xs text-muted-foreground italic">No claims yet.</div>;
+  return (
+    <div className="border-t border-border mt-1">
+      <div className="px-4 py-2 grid grid-cols-3 gap-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+        <span>User</span><span>Email</span><span>Claimed At</span>
+      </div>
+      {(claims as any[]).map((c: any) => (
+        <div key={c.id} className="px-4 py-1.5 grid grid-cols-3 gap-2 text-xs border-t border-border/50 hover:bg-muted/30">
+          <span className="font-medium truncate">{c.username}</span>
+          <span className="text-muted-foreground truncate">{c.email}</span>
+          <span className="text-muted-foreground">{new Date(c.claimedAt).toLocaleString("en-NG", { dateStyle: "medium", timeStyle: "short" })}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function AdminGiveaways() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [form, setForm] = useState({
     title: "", description: "", rewardAmount: "", maxUsers: "", taskType: "registration", expiresAt: "",
   });
+  const [expandedId, setExpandedId] = useState<number | null>(null);
 
   const { data: giveaways, isLoading } = useGetAdminGiveaways();
   const create = useCreateGiveaway();
@@ -132,18 +153,27 @@ export default function AdminGiveaways() {
               <Card key={g.id} className={`border-border bg-card ${!g.isActive ? "opacity-60" : ""}`}>
                 <CardContent className="p-4 flex items-start gap-4">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <span className="font-semibold">{g.title}</span>
                       <Badge variant="outline" className="text-xs">{taskLabel(g.taskType)}</Badge>
                       <Badge variant="outline" className={g.isActive ? "bg-green-500/10 text-green-500 border-green-500/20" : "bg-gray-500/10 text-gray-400 border-gray-500/20"}>
-                        {g.isActive ? "Active" : "Paused"}
+                        {g.isActive ? "Active" : g.claimedCount >= g.maxUsers ? "Exhausted" : "Paused"}
                       </Badge>
                     </div>
                     {g.description && <p className="text-xs text-muted-foreground mb-2">{g.description}</p>}
-                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
                       <span className="font-semibold text-primary">{formatNaira(g.rewardAmount)} reward</span>
                       <span className="flex items-center gap-1"><Users className="w-3 h-3" />{g.claimedCount}/{g.maxUsers} claimed</span>
                       {g.expiresAt && <span>Expires: {new Date(g.expiresAt).toLocaleDateString("en-NG")}</span>}
+                      {g.claimedCount > 0 && (
+                        <button
+                          className="flex items-center gap-1 text-primary hover:underline"
+                          onClick={() => setExpandedId(expandedId === g.id ? null : g.id)}
+                        >
+                          {expandedId === g.id ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                          {expandedId === g.id ? "Hide claims" : `View ${g.claimedCount} claim${g.claimedCount !== 1 ? "s" : ""}`}
+                        </button>
+                      )}
                     </div>
                   </div>
                   <Button
@@ -152,6 +182,7 @@ export default function AdminGiveaways() {
                     className="shrink-0"
                     onClick={() => handleToggle(g.id, g.isActive)}
                     disabled={update.isPending}
+                    title={g.isActive ? "Pause giveaway" : "Reactivate giveaway"}
                   >
                     {g.isActive
                       ? <ToggleRight className="w-5 h-5 text-green-500" />
@@ -159,6 +190,7 @@ export default function AdminGiveaways() {
                     }
                   </Button>
                 </CardContent>
+                {expandedId === g.id && <ClaimsPanel giveawayId={g.id} />}
               </Card>
             ))}
           </div>

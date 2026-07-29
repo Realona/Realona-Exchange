@@ -451,10 +451,17 @@ export interface AdminUser {
   isAdmin: boolean;
   isSuperAdmin: boolean;
   isSuspended: boolean;
+  isDemo: boolean;
   totalDeposits?: number;
   totalWithdrawals?: number;
   totalTrades?: number;
   createdAt: string;
+}
+
+export interface CreateDemoAccountInput {
+  username: string;
+  email: string;
+  password: string;
 }
 
 export interface SuspendInput {
@@ -666,6 +673,14 @@ export interface GiveawayClaimResult {
   amountCredited: number;
 }
 
+export interface GiveawayClaimEntry {
+  id: number;
+  claimedAt: string;
+  userId: number;
+  username: string;
+  email: string;
+}
+
 export type GiveawayInputTaskType = typeof GiveawayInputTaskType[keyof typeof GiveawayInputTaskType];
 
 
@@ -829,6 +844,10 @@ status?: string;
 
 export type GetAdminWithdrawalsParams = {
 status?: string;
+};
+
+export type DeleteDemoAccount200 = {
+  success?: boolean;
 };
 
 export type ClaimGiveaway400 = {

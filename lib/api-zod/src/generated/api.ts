@@ -883,6 +883,7 @@ export const GetAdminUsersResponseItem = zod.object({
   "isAdmin": zod.boolean(),
   "isSuperAdmin": zod.boolean(),
   "isSuspended": zod.boolean(),
+  "isDemo": zod.boolean(),
   "totalDeposits": zod.number().optional(),
   "totalWithdrawals": zod.number().optional(),
   "totalTrades": zod.number().optional(),
@@ -911,6 +912,7 @@ export const SuspendUserResponse = zod.object({
   "isAdmin": zod.boolean(),
   "isSuperAdmin": zod.boolean(),
   "isSuspended": zod.boolean(),
+  "isDemo": zod.boolean(),
   "totalDeposits": zod.number().optional(),
   "totalWithdrawals": zod.number().optional(),
   "totalTrades": zod.number().optional(),
@@ -938,6 +940,7 @@ export const AdjustUserBalanceResponse = zod.object({
   "isAdmin": zod.boolean(),
   "isSuperAdmin": zod.boolean(),
   "isSuspended": zod.boolean(),
+  "isDemo": zod.boolean(),
   "totalDeposits": zod.number().optional(),
   "totalWithdrawals": zod.number().optional(),
   "totalTrades": zod.number().optional(),
@@ -1151,6 +1154,63 @@ export const ResolveReportResponse = zod.object({
 
 
 /**
+ * @summary List all demo/test accounts (admin only)
+ */
+export const GetDemoAccountsResponseItem = zod.object({
+  "id": zod.number(),
+  "email": zod.string(),
+  "username": zod.string(),
+  "walletBalance": zod.number(),
+  "isAdmin": zod.boolean(),
+  "isSuperAdmin": zod.boolean(),
+  "isSuspended": zod.boolean(),
+  "isDemo": zod.boolean(),
+  "totalDeposits": zod.number().optional(),
+  "totalWithdrawals": zod.number().optional(),
+  "totalTrades": zod.number().optional(),
+  "createdAt": zod.coerce.date()
+})
+export const GetDemoAccountsResponse = zod.array(GetDemoAccountsResponseItem)
+
+
+/**
+ * @summary Create a demo/test account (admin only)
+ */
+export const CreateDemoAccountBody = zod.object({
+  "username": zod.string(),
+  "email": zod.string().email(),
+  "password": zod.string()
+})
+
+export const CreateDemoAccountResponse = zod.object({
+  "id": zod.number(),
+  "email": zod.string(),
+  "username": zod.string(),
+  "walletBalance": zod.number(),
+  "isAdmin": zod.boolean(),
+  "isSuperAdmin": zod.boolean(),
+  "isSuspended": zod.boolean(),
+  "isDemo": zod.boolean(),
+  "totalDeposits": zod.number().optional(),
+  "totalWithdrawals": zod.number().optional(),
+  "totalTrades": zod.number().optional(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Delete a demo/test account (admin only)
+ */
+export const DeleteDemoAccountParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeleteDemoAccountResponse = zod.object({
+  "success": zod.boolean().optional()
+})
+
+
+/**
  * @summary Get all admin users (super admin only)
  */
 export const GetAdminsResponseItem = zod.object({
@@ -1161,6 +1221,7 @@ export const GetAdminsResponseItem = zod.object({
   "isAdmin": zod.boolean(),
   "isSuperAdmin": zod.boolean(),
   "isSuspended": zod.boolean(),
+  "isDemo": zod.boolean(),
   "totalDeposits": zod.number().optional(),
   "totalWithdrawals": zod.number().optional(),
   "totalTrades": zod.number().optional(),
@@ -1185,6 +1246,7 @@ export const CreateAdminResponse = zod.object({
   "isAdmin": zod.boolean(),
   "isSuperAdmin": zod.boolean(),
   "isSuspended": zod.boolean(),
+  "isDemo": zod.boolean(),
   "totalDeposits": zod.number().optional(),
   "totalWithdrawals": zod.number().optional(),
   "totalTrades": zod.number().optional(),
@@ -1683,6 +1745,23 @@ export const CreateGiveawayResponse = zod.object({
   "expiresAt": zod.coerce.date().nullish(),
   "createdAt": zod.coerce.date()
 })
+
+
+/**
+ * @summary List all claims for a giveaway (admin only)
+ */
+export const GetGiveawayClaimsParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetGiveawayClaimsResponseItem = zod.object({
+  "id": zod.number(),
+  "claimedAt": zod.coerce.date(),
+  "userId": zod.number(),
+  "username": zod.string(),
+  "email": zod.string()
+})
+export const GetGiveawayClaimsResponse = zod.array(GetGiveawayClaimsResponseItem)
 
 
 /**

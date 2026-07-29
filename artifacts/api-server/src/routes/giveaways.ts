@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { db, giveawaysTable, giveawayClaimsTable, usersTable, listingsTable, tradesTable } from "@workspace/db";
-import { eq, and, sql, count } from "drizzle-orm";
-import { requireAuth } from "../lib/auth";
+import { eq, and, sql, count, desc } from "drizzle-orm";
+import { requireAuth, requireAdmin } from "../lib/auth";
 import { createNotification } from "../lib/notifier";
 
 const router: IRouter = Router();
@@ -75,19 +75,45 @@ router.post("/giveaways/:id/claim", requireAuth, async (req, res): Promise<void>
   // registration task always passes; referral handled separately
 
   // Credit wallet, create claim, increment count — all in a transaction
+  // Auto-deactivate when the last slot is filled
+  const newCount = giveaway.claimedCount + 1;
   await db.transaction(async (tx) => {
     await tx.insert(giveawayClaimsTable).values({ giveawayId, userId });
     await tx.update(usersTable)
       .set({ walletBalance: sql`${usersTable.walletBalance} + ${giveaway.rewardAmount}` })
       .where(eq(usersTable.id, userId));
     await tx.update(giveawaysTable)
-      .set({ claimedCount: sql`${giveawaysTable.claimedCount} + 1` })
+      .set({
+        claimedCount: newCount,
+        isActive: newCount < giveaway.maxUsers,
+      })
       .where(eq(giveawaysTable.id, giveawayId));
   });
 
   await createNotification(userId, "giveaway_reward", `You earned ₦${Number(giveaway.rewardAmount).toLocaleString()} from "${giveaway.title}"! It has been added to your wallet.`);
 
   res.json({ success: true, amountCredited: Number(giveaway.rewardAmount) });
+});
+
+// Admin: list claims for a giveaway
+router.get("/admin/giveaways/:id/claims", requireAdmin, async (req, res): Promise<void> => {
+  const giveawayId = Number(req.params.id);
+  if (isNaN(giveawayId)) { res.status(400).json({ error: "Invalid giveaway ID" }); return; }
+
+  const claims = await db
+    .select({
+      id: giveawayClaimsTable.id,
+      claimedAt: giveawayClaimsTable.claimedAt,
+      userId: usersTable.id,
+      username: usersTable.username,
+      email: usersTable.email,
+    })
+    .from(giveawayClaimsTable)
+    .innerJoin(usersTable, eq(giveawayClaimsTable.userId, usersTable.id))
+    .where(eq(giveawayClaimsTable.giveawayId, giveawayId))
+    .orderBy(desc(giveawayClaimsTable.claimedAt));
+
+  res.json(claims);
 });
 
 export default router;

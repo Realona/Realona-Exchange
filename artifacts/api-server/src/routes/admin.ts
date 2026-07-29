@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { db, usersTable, tradesTable, depositsTable, withdrawalsTable, reportsTable, listingsTable, tradeMessagesTable, platformConfigTable, kycSubmissionsTable, announcementsTable, giveawaysTable, giveawayClaimsTable } from "@workspace/db";
 import { eq, sql, and, ilike, or } from "drizzle-orm";
-import { requireAdmin, requireSuperAdmin } from "../lib/auth";
+import { requireAdmin, requireSuperAdmin, hashPassword } from "../lib/auth";
 import { emailWithdrawalApproved, emailWithdrawalRejected } from "../lib/email";
 import {
   SuspendUserParams, SuspendUserBody,
@@ -24,6 +24,7 @@ function formatAdminUser(user: typeof usersTable.$inferSelect, extras?: { totalD
     isAdmin: user.isAdmin,
     isSuperAdmin: user.isSuperAdmin,
     isSuspended: user.isSuspended,
+    isDemo: user.isDemo,
     totalDeposits: extras?.totalDeposits ?? 0,
     totalWithdrawals: extras?.totalWithdrawals ?? 0,
     totalTrades: extras?.totalTrades ?? 0,
@@ -435,6 +436,44 @@ router.post("/admin/reports/:id/resolve", requireAdmin, async (req, res): Promis
     resolution: updated.resolution ?? null,
     createdAt: updated.createdAt,
   });
+});
+
+// ── Demo Accounts ───────────────────────────────────────────────────────────
+router.get("/admin/demo-accounts", requireAdmin, async (req, res): Promise<void> => {
+  const accounts = await db.select().from(usersTable).where(eq(usersTable.isDemo, true));
+  res.json(accounts.map(u => formatAdminUser(u)));
+});
+
+router.post("/admin/demo-accounts", requireAdmin, async (req, res): Promise<void> => {
+  const { username, email, password } = req.body as { username?: string; email?: string; password?: string };
+  if (!username || username.length < 3) { res.status(400).json({ error: "Username must be at least 3 characters" }); return; }
+  if (!email || !email.includes("@")) { res.status(400).json({ error: "Valid email required" }); return; }
+  if (!password || password.length < 6) { res.status(400).json({ error: "Password must be at least 6 characters" }); return; }
+
+  const existing = await db.select({ id: usersTable.id }).from(usersTable)
+    .where(or(eq(usersTable.email, email), eq(usersTable.username, username)));
+  if (existing.length > 0) { res.status(400).json({ error: "Email or username already taken" }); return; }
+
+  const passwordHash = await hashPassword(password);
+  const [user] = await db.insert(usersTable).values({
+    email,
+    username,
+    passwordHash,
+    isDemo: true,
+  }).returning();
+
+  res.status(201).json(formatAdminUser(user));
+});
+
+router.delete("/admin/demo-accounts/:id", requireAdmin, async (req, res): Promise<void> => {
+  const id = Number(req.params.id);
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid ID" }); return; }
+
+  const [user] = await db.select().from(usersTable).where(and(eq(usersTable.id, id), eq(usersTable.isDemo, true)));
+  if (!user) { res.status(404).json({ error: "Demo account not found" }); return; }
+
+  await db.delete(usersTable).where(eq(usersTable.id, id));
+  res.json({ success: true });
 });
 
 // Admin management (super admin only)

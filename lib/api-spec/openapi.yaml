@@ -955,6 +955,58 @@ paths:
               schema:
                 $ref: "#/components/schemas/Report"
 
+  /admin/demo-accounts:
+    get:
+      operationId: getDemoAccounts
+      tags: [admin]
+      summary: List all demo/test accounts (admin only)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AdminUser"
+    post:
+      operationId: createDemoAccount
+      tags: [admin]
+      summary: Create a demo/test account (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDemoAccountInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUser"
+
+  /admin/demo-accounts/{id}:
+    delete:
+      operationId: deleteDemoAccount
+      tags: [admin]
+      summary: Delete a demo/test account (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+
   /admin/admins:
     get:
       operationId: getAdmins
@@ -1442,6 +1494,22 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Giveaway" }
+
+  /admin/giveaways/{id}/claims:
+    get:
+      operationId: getGiveawayClaims
+      tags: [admin]
+      summary: List all claims for a giveaway (admin only)
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        "200":
+          description: Claims list
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/GiveawayClaimEntry" }
 
   /admin/giveaways/{id}:
     patch:
@@ -2355,7 +2423,7 @@ components:
 
     AdminUser:
       type: object
-      required: [id, email, username, walletBalance, isAdmin, isSuperAdmin, isSuspended, createdAt]
+      required: [id, email, username, walletBalance, isAdmin, isSuperAdmin, isSuspended, isDemo, createdAt]
       properties:
         id:
           type: integer
@@ -2371,6 +2439,8 @@ components:
           type: boolean
         isSuspended:
           type: boolean
+        isDemo:
+          type: boolean
         totalDeposits:
           type: number
         totalWithdrawals:
@@ -2380,6 +2450,18 @@ components:
         createdAt:
           type: string
           format: date-time
+
+    CreateDemoAccountInput:
+      type: object
+      required: [username, email, password]
+      properties:
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
 
     SuspendInput:
       type: object
@@ -2658,6 +2740,22 @@ components:
           type: boolean
         amountCredited:
           type: number
+
+    GiveawayClaimEntry:
+      type: object
+      required: [id, claimedAt, userId, username, email]
+      properties:
+        id:
+          type: integer
+        claimedAt:
+          type: string
+          format: date-time
+        userId:
+          type: integer
+        username:
+          type: string
+        email:
+          type: string
 
     GiveawayInput:
       type: object

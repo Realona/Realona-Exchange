@@ -14,6 +14,7 @@ export interface AdminUser {
   isAdmin: boolean;
   isSuperAdmin: boolean;
   isSuspended: boolean;
+  isDemo: boolean;
   totalDeposits?: number;
   totalWithdrawals?: number;
   totalTrades?: number;
