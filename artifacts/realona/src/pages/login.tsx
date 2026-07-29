@@ -57,7 +57,7 @@ export default function Login() {
       <div className="container mx-auto px-4 py-16 flex justify-center items-center">
         <Card className="w-full max-w-md border-border bg-card shadow-lg">
           <CardHeader className="space-y-1 text-center">
-            <CardTitle className="text-2xl font-bold tracking-tight">Login to Realona</CardTitle>
+            <CardTitle className="text-2xl font-bold tracking-tight">Login to Realona Exchange</CardTitle>
             <CardDescription className="text-muted-foreground">
               Enter your email and password to access your account
             </CardDescription>

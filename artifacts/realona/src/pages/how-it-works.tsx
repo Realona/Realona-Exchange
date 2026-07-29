@@ -83,7 +83,7 @@ export default function HowItWorks() {
             <Step num={2} title="Wait for a Buyer" desc="Your listing goes live immediately. Interested buyers can contact you through the trade chat." />
             <Step num={3} title="Buyer Confirms Payment" desc="When a buyer locks funds into escrow, you'll receive an email notification. Funds are safely held — not yet released." />
             <Step num={4} title="Transfer the Account" desc="Transfer your eFootball account login credentials to the buyer via the secure trade chat. Then click 'Mark as Transferred'." />
-            <Step num={5} title="Get Paid" desc="Once the buyer confirms receipt, funds (minus the 4% platform fee) are instantly credited to your Realona wallet." />
+            <Step num={5} title="Get Paid" desc="Once the buyer confirms receipt, funds (minus the platform fee) are instantly credited to your Realona Exchange wallet." />
             <Step num={6} title="Withdraw" desc="Withdraw your wallet balance to any Nigerian bank account at any time." />
           </div>
         </section>

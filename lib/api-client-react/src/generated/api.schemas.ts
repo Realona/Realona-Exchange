@@ -628,10 +628,6 @@ export interface PlatformReview {
   isVerified?: boolean | null;
 }
 
-export interface AdminReviewResponse {
-  response: string;
-}
-
 export interface PlatformReviewInput {
   /**
      * @minimum 1
@@ -643,6 +639,10 @@ export interface PlatformReviewInput {
      * @maxLength 1000
      */
   review: string;
+}
+
+export interface AdminReviewResponse {
+  response: string;
 }
 
 export interface PlatformReviewsResponse {
@@ -717,10 +717,7 @@ export type MarkOtpSent200 = {
 export type RequestEmailOtp200 = {
   success?: boolean;
 };
-export type GetPublicWishlist200 = {
-  username: string;
-  items: WishlistItem[];
-};
+
 export type GetAdminUsersParams = {
 search?: string;
 suspended?: boolean;
@@ -741,8 +738,15 @@ status?: string;
 export type GetAdminDepositsParams = {
 status?: string;
 };
+
+export type GetPublicWishlist200 = {
+  username: string;
+  items: WishlistItem[];
+};
+
 export type GetPurchasesParams = {
 search?: string;
 from?: string;
 to?: string;
 };
+

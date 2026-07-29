@@ -2,7 +2,7 @@ import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "wouter";
-import { useGetListings, useAddToWishlist, useRemoveFromWishlist, useGetWishlist, useGetTradeFeed } from "@workspace/api-client-react";
+import { useGetListings, useAddToWishlist, useRemoveFromWishlist, useGetWishlistIds, useGetTradeFeed } from "@workspace/api-client-react";
 import { formatNaira } from "@/lib/utils";
 import { Search, ShieldCheck, Zap, MessageSquare, SlidersHorizontal, X, Users, Star, Heart, TrendingUp } from "lucide-react";
 import { useState } from "react";
@@ -13,8 +13,6 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { EFOOTBALL_DIVISIONS } from "./new-listing";
-import { useGetListings } from "@workspace/api-client-react";
-import { useGetWishlistIds, useAddToWishlist, useRemoveFromWishlist } from "@workspace/api-client-react";
 
 export default function Home() {
   const [search, setSearch] = useState("");
@@ -90,11 +88,11 @@ export default function Home() {
         <div className="container mx-auto px-4 py-20 relative z-10">
           <div className="max-w-3xl">
             <Badge className="mb-4 bg-primary/10 text-primary border-primary/20">Secure Escrow Platform</Badge>
-            <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight mb-6">
-              Trade eFootball Accounts <br/> <span className="text-primary">Without Risk.</span>
+            <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight mb-6 text-foreground">
+              Trade Accounts <br/> <span className="text-primary">Without Risk.</span>
             </h1>
             <p className="text-lg text-muted-foreground mb-8 max-w-2xl leading-relaxed">
-              Realona is Nigeria's most trusted marketplace for buying and selling premium eFootball accounts. Our strict escrow system guarantees that sellers get paid and buyers get what they paid for.
+              Realona Exchange is Nigeria's most trusted marketplace for buying and selling premium eFootball and social media accounts. Our strict escrow system guarantees that sellers get paid and buyers get what they paid for.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Button size="lg" asChild className="text-base h-12 px-8">

@@ -1,9 +1,8 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { LogOut, Wallet, Settings, Bell, HandshakeIcon, Trophy, X, ShieldCheck, MessageCircle, Phone } from "lucide-react";
+import { LogOut, Wallet, Settings, Bell, HandshakeIcon, Trophy, X, ShieldCheck, MessageCircle } from "lucide-react";
 import { useGetWalletBalance, useGetNotifications, useMarkAllNotificationsRead } from "@workspace/api-client-react";
 import { formatNaira } from "@/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
@@ -34,7 +33,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const unreadCount = notifications?.filter((n: any) => !n.isRead).length ?? 0;
   const recentNotes = notifications?.slice(0, 10) ?? [];
 
-  // Close bell when clicking outside
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (bellRef.current && !bellRef.current.contains(e.target as Node)) {
@@ -45,9 +43,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const handleBellOpen = () => {
-    setBellOpen(v => !v);
-  };
+  const handleBellOpen = () => setBellOpen(v => !v);
 
   const handleMarkRead = () => {
     markRead.mutate(undefined, {
@@ -60,56 +56,57 @@ export function Layout({ children }: { children: React.ReactNode }) {
     queryClient.clear();
   };
 
+  const navLink = (path: string) =>
+    `text-xs font-medium transition-colors ${location.startsWith(path) ? "text-white" : "text-white/70 hover:text-white"}`;
+
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
-      <header className="border-b border-border bg-card sticky top-0 z-50">
+      {/* ── Blue header ── */}
+      <header className="sticky top-0 z-50 shadow-md" style={{ background: "hsl(221,70%,48%)" }}>
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/" className="text-xl font-bold text-primary flex items-center gap-2">
-            <span className="bg-primary text-primary-foreground px-2 py-1 rounded font-black">R</span>
-            Realona
+
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-2 shrink-0">
+            <span className="bg-white/20 text-white px-2 py-1 rounded font-black text-sm tracking-wide">RE</span>
+            <span className="text-white font-bold text-base hidden sm:inline">
+              Realona <span style={{ color: "hsl(38,92%,65%)" }}>Exchange</span>
+            </span>
           </Link>
 
-          <nav className="flex items-center gap-1">
+          <nav className="flex items-center gap-0.5">
             {user ? (
               <>
                 <Link href="/dashboard">
-                  <Button variant="ghost" size="sm" className={`text-xs ${location.startsWith("/dashboard") ? "text-primary" : "text-muted-foreground"}`}>
-                    Dashboard
-                  </Button>
+                  <button className={`px-2.5 py-1.5 rounded-md ${navLink("/dashboard")}`}>Dashboard</button>
                 </Link>
                 <Link href="/trades">
-                  <Button variant="ghost" size="sm" className={`text-xs ${location.startsWith("/trades") ? "text-primary" : "text-muted-foreground"}`}>
-                    Trades
-                  </Button>
+                  <button className={`px-2.5 py-1.5 rounded-md ${navLink("/trades")}`}>Trades</button>
                 </Link>
                 <Link href="/offers">
-                  <Button variant="ghost" size="sm" className={`text-xs flex items-center gap-1 ${location.startsWith("/offers") ? "text-primary" : "text-muted-foreground"}`}>
-                    <HandshakeIcon className="w-3.5 h-3.5" />
-                    Offers
-                  </Button>
+                  <button className={`px-2.5 py-1.5 rounded-md flex items-center gap-1 ${navLink("/offers")}`}>
+                    <HandshakeIcon className="w-3.5 h-3.5" /> Offers
+                  </button>
                 </Link>
                 <Link href="/leaderboard">
-                  <Button variant="ghost" size="sm" className={`text-xs flex items-center gap-1 ${location.startsWith("/leaderboard") ? "text-primary" : "text-muted-foreground"}`}>
-                    <Trophy className="w-3.5 h-3.5" />
-                    Leaderboard
-                  </Button>
+                  <button className={`px-2.5 py-1.5 rounded-md flex items-center gap-1 ${navLink("/leaderboard")}`}>
+                    <Trophy className="w-3.5 h-3.5" /> Leaderboard
+                  </button>
                 </Link>
 
-                <div className="h-4 w-px bg-border mx-1" />
+                <div className="h-4 w-px bg-white/20 mx-1" />
 
+                {/* Wallet balance — gold */}
                 <Link href="/wallet">
-                  <Button variant="ghost" size="sm" className="text-xs flex items-center gap-1.5">
-                    <Wallet className="w-3.5 h-3.5 text-primary" />
-                    <span className="font-semibold text-primary">{walletData ? formatNaira(walletData.balance) : "—"}</span>
-                  </Button>
+                  <button className="px-2.5 py-1.5 rounded-md flex items-center gap-1.5 text-xs font-semibold text-white/90 hover:text-white transition-colors">
+                    <Wallet className="w-3.5 h-3.5" style={{ color: "hsl(38,92%,65%)" }} />
+                    <span style={{ color: "hsl(38,92%,65%)" }}>{walletData ? formatNaira(walletData.balance) : "—"}</span>
+                  </button>
                 </Link>
 
-                {/* Notification Bell */}
+                {/* Notification bell */}
                 <div className="relative" ref={bellRef}>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="w-8 h-8 relative"
+                  <button
+                    className="relative w-8 h-8 flex items-center justify-center rounded-md text-white/80 hover:text-white hover:bg-white/10 transition-colors"
                     onClick={handleBellOpen}
                   >
                     <Bell className="w-4 h-4" />
@@ -118,12 +115,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
                         {unreadCount > 9 ? "9+" : unreadCount}
                       </span>
                     )}
-                  </Button>
+                  </button>
 
                   {bellOpen && (
                     <div className="absolute right-0 top-full mt-2 w-80 bg-card border border-border rounded-xl shadow-xl overflow-hidden z-50">
                       <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-                        <span className="font-semibold text-sm">Notifications</span>
+                        <span className="font-semibold text-sm text-foreground">Notifications</span>
                         <div className="flex items-center gap-1">
                           {unreadCount > 0 && (
                             <Button variant="ghost" size="sm" className="h-6 text-xs text-primary px-2" onClick={handleMarkRead}>
@@ -143,14 +140,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
                           </div>
                         ) : (
                           recentNotes.map((n: any) => (
-                            <div
-                              key={n.id}
-                              className={`px-4 py-3 text-sm ${!n.isRead ? "bg-primary/5" : ""}`}
-                            >
+                            <div key={n.id} className={`px-4 py-3 text-sm ${!n.isRead ? "bg-primary/5" : ""}`}>
                               <div className="flex items-start gap-2">
                                 {!n.isRead && <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />}
                                 <div className="flex-1 min-w-0">
-                                  <p className="font-medium text-xs">{n.title}</p>
+                                  <p className="font-medium text-xs text-foreground">{n.title}</p>
                                   <p className="text-xs text-muted-foreground mt-0.5 leading-snug">{n.message}</p>
                                   <p className="text-[10px] text-muted-foreground/60 mt-1">
                                     {new Date(n.createdAt).toLocaleDateString("en-NG", { dateStyle: "short" })}
@@ -165,35 +159,46 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   )}
                 </div>
 
+                {/* Admin + Logout */}
                 <div className="flex items-center gap-1 ml-1">
-                  {user.isAdmin || user.isSuperAdmin ? (
-                    <Button variant="outline" size="sm" className="h-7 text-xs" asChild>
-                      <Link href="/admin">
-                        <Settings className="w-3.5 h-3.5 mr-1" />
-                        Admin
-                      </Link>
-                    </Button>
-                  ) : null}
-                  <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={handleLogout}>
-                    <LogOut className="w-3.5 h-3.5 mr-1" />
-                    Logout
-                  </Button>
+                  {(user.isAdmin || user.isSuperAdmin) && (
+                    <Link href="/admin">
+                      <button className="h-7 px-2.5 rounded-md border border-white/30 text-white text-xs flex items-center gap-1 hover:bg-white/10 transition-colors">
+                        <Settings className="w-3.5 h-3.5" /> Admin
+                      </button>
+                    </Link>
+                  )}
+                  <button
+                    className="h-7 px-2.5 rounded-md text-white/70 text-xs flex items-center gap-1 hover:text-white hover:bg-white/10 transition-colors"
+                    onClick={handleLogout}
+                  >
+                    <LogOut className="w-3.5 h-3.5" /> Logout
+                  </button>
                 </div>
               </>
             ) : (
               <>
                 <Link href="/leaderboard">
-                  <Button variant="ghost" size="sm" className="text-xs">Leaderboard</Button>
+                  <button className={`px-2.5 py-1.5 rounded-md ${navLink("/leaderboard")}`}>Leaderboard</button>
                 </Link>
                 <Link href="/faq">
-                  <Button variant="ghost" size="sm" className="text-xs">FAQ</Button>
+                  <button className={`px-2.5 py-1.5 rounded-md ${navLink("/faq")}`}>FAQ</button>
                 </Link>
-                <Button variant="ghost" size="sm" asChild className="text-xs">
-                  <Link href="/login">Login</Link>
-                </Button>
-                <Button size="sm" asChild className="text-xs">
-                  <Link href="/register">Register</Link>
-                </Button>
+                <Link href="/login">
+                  <button className="h-8 px-3 rounded-md border border-white/40 text-white text-xs font-medium hover:bg-white/10 transition-colors">
+                    Login
+                  </button>
+                </Link>
+                <Link href="/register">
+                  <button
+                    className="h-8 px-3 rounded-md text-xs font-semibold transition-colors ml-1"
+                    style={{ background: "hsl(38,92%,50%)", color: "hsl(38,100%,15%)" }}
+                    onMouseEnter={e => (e.currentTarget.style.background = "hsl(38,92%,45%)")}
+                    onMouseLeave={e => (e.currentTarget.style.background = "hsl(38,92%,50%)")}
+                  >
+                    Register
+                  </button>
+                </Link>
               </>
             )}
           </nav>
@@ -204,10 +209,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {children}
       </main>
 
-      {/* Floating Chat Admin button */}
+      {/* Floating Chat Admin */}
       <button
         onClick={() => setChatOpen(true)}
-        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-primary text-primary-foreground rounded-full px-4 py-3 shadow-lg hover:bg-primary/90 transition-colors text-sm font-semibold"
+        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-full px-4 py-3 shadow-lg text-sm font-semibold transition-colors"
+        style={{ background: "hsl(38,92%,50%)", color: "hsl(38,100%,15%)" }}
+        onMouseEnter={e => (e.currentTarget.style.background = "hsl(38,92%,44%)")}
+        onMouseLeave={e => (e.currentTarget.style.background = "hsl(38,92%,50%)")}
         aria-label="Chat with Admin"
       >
         <MessageCircle className="w-4 h-4" />
@@ -236,7 +244,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               >
                 <span className="text-2xl">📱</span>
                 <div>
-                  <p className="font-semibold text-sm text-green-600 dark:text-green-400">WhatsApp</p>
+                  <p className="font-semibold text-sm text-green-700">WhatsApp</p>
                   <p className="text-xs text-muted-foreground">+234 916 038 5331</p>
                 </div>
               </a>
@@ -245,28 +253,33 @@ export function Layout({ children }: { children: React.ReactNode }) {
               </div>
               <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted rounded-lg p-3">
                 <ShieldCheck className="w-4 h-4 shrink-0 text-primary" />
-                <span>Admin will <strong>never</strong> ask you to send money outside Realona.</span>
+                <span>Admin will <strong>never</strong> ask you to send money outside Realona Exchange.</span>
               </div>
             </div>
           </div>
         </DialogContent>
       </Dialog>
 
+      {/* Footer */}
       <footer className="border-t border-border bg-card py-8 mt-12">
-        <div className="container mx-auto px-4 text-center text-muted-foreground text-sm flex flex-col gap-2">
-          <div className="flex items-center justify-center gap-6 mb-2 flex-wrap">
-            <a href="/how-it-works" className="hover:text-primary transition-colors text-xs">How It Works</a>
-            <span className="text-xs opacity-40">·</span>
-            <a href="/leaderboard" className="hover:text-primary transition-colors text-xs">Leaderboard</a>
-            <span className="text-xs opacity-40">·</span>
-            <a href="/reviews" className="hover:text-primary transition-colors text-xs">Reviews</a>
-            <span className="text-xs opacity-40">·</span>
-            <a href="/faq" className="hover:text-primary transition-colors text-xs">FAQ</a>
-            <span className="text-xs opacity-40">·</span>
-            <a href="/kyc" className="hover:text-primary transition-colors text-xs">KYC Verification</a>
+        <div className="container mx-auto px-4 text-center text-sm flex flex-col gap-2">
+          <div className="flex items-center justify-center gap-4 mb-3 flex-wrap">
+            <a href="/how-it-works" className="text-xs text-muted-foreground hover:text-primary transition-colors">How It Works</a>
+            <span className="text-xs text-border">·</span>
+            <a href="/leaderboard" className="text-xs text-muted-foreground hover:text-primary transition-colors">Leaderboard</a>
+            <span className="text-xs text-border">·</span>
+            <a href="/reviews" className="text-xs text-muted-foreground hover:text-primary transition-colors">Reviews</a>
+            <span className="text-xs text-border">·</span>
+            <a href="/faq" className="text-xs text-muted-foreground hover:text-primary transition-colors">FAQ</a>
+            <span className="text-xs text-border">·</span>
+            <a href="/kyc" className="text-xs text-muted-foreground hover:text-primary transition-colors">KYC Verification</a>
           </div>
-          <p>© {new Date().getFullYear()} Realona Exchange. Secure Escrow Trading.</p>
-          <p className="text-xs">Nigeria's premier eFootball & social media account marketplace.</p>
+          <div className="flex items-center justify-center gap-1.5 mb-1">
+            <span className="font-bold text-foreground text-sm">Realona</span>
+            <span className="font-bold text-sm" style={{ color: "hsl(38,92%,44%)" }}>Exchange</span>
+          </div>
+          <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} Realona Exchange. Secure Escrow Trading Platform.</p>
+          <p className="text-xs text-muted-foreground">Nigeria's premier eFootball & social media account marketplace.</p>
         </div>
       </footer>
     </div>

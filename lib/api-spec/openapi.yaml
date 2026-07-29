@@ -1495,6 +1495,77 @@ paths:
                 items:
                   $ref: "#/components/schemas/Purchase"
 
+  # ─── TRADE FEED ────────────────────────────────────────────────────────────
+  /trades/feed:
+    get:
+      operationId: getTradeFeed
+      tags: [trades]
+      summary: Public anonymous feed of recent completed trades
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TradeFeedItem"
+
+  # ─── PLATFORM REVIEWS ──────────────────────────────────────────────────────
+  /reviews:
+    get:
+      operationId: getPlatformReviews
+      tags: [users]
+      summary: Get all platform reviews
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlatformReviewsResponse"
+    post:
+      operationId: createPlatformReview
+      tags: [users]
+      summary: Submit or update a platform review
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlatformReviewInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlatformReview"
+
+  /reviews/{id}/respond:
+    post:
+      operationId: adminRespondToReview
+      tags: [admin]
+      summary: Admin responds to a review
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminReviewResponse"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlatformReview"
+
   # ─── STORAGE ───────────────────────────────────────────────────────────────
   /storage/uploads/request-url:
     post:
@@ -2371,6 +2442,54 @@ components:
         mostTrusted:
           type: array
           items: { $ref: "#/components/schemas/LeaderboardEntry" }
+
+    TradeFeedItem:
+      type: object
+      required: [id, amount, createdAt, gameName, category]
+      properties:
+        id: { type: integer }
+        amount: { type: number }
+        createdAt: { type: string, format: date-time }
+        gameName: { type: string }
+        category: { type: string }
+        pictureUrl: { type: ["string", "null"] }
+        platform: { type: ["string", "null"] }
+
+    PlatformReview:
+      type: object
+      required: [id, userId, rating, review, createdAt]
+      properties:
+        id: { type: integer }
+        userId: { type: integer }
+        rating: { type: integer }
+        review: { type: string }
+        adminResponse: { type: ["string", "null"] }
+        createdAt: { type: string, format: date-time }
+        username: { type: ["string", "null"] }
+        isVerified: { type: ["boolean", "null"] }
+
+    PlatformReviewInput:
+      type: object
+      required: [rating, review]
+      properties:
+        rating: { type: integer, minimum: 1, maximum: 5 }
+        review: { type: string, minLength: 10, maxLength: 1000 }
+
+    AdminReviewResponse:
+      type: object
+      required: [response]
+      properties:
+        response: { type: string }
+
+    PlatformReviewsResponse:
+      type: object
+      required: [reviews, averageRating, totalCount]
+      properties:
+        reviews:
+          type: array
+          items: { $ref: "#/components/schemas/PlatformReview" }
+        averageRating: { type: number }
+        totalCount: { type: integer }
 
     WishlistItem:
       type: object

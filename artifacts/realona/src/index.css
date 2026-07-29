@@ -66,67 +66,74 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-:root, .dark {
-  --button-outline: rgba(255,255,255, .10);
-  --badge-outline: rgba(255,255,255, .05);
-
+:root {
+  /* ─── Realona Exchange — Blue & Gold Light Theme ─── */
+  --button-outline: rgba(0,0,0, .10);
+  --badge-outline: rgba(0,0,0, .06);
   --opaque-button-border-intensity: 9;
+  --elevate-1: rgba(0,0,0, .03);
+  --elevate-2: rgba(0,0,0, .06);
 
-  --elevate-1: rgba(255,255,255, .04);
-  --elevate-2: rgba(255,255,255, .09);
+  /* Page background #f8fafc */
+  --background: 210 40% 98%;
+  /* Main text #1e293b */
+  --foreground: 217 33% 17%;
 
-  /* Deep navy / charcoal vibe */
-  --background: 222 47% 11%;
-  --foreground: 210 40% 98%;
+  /* Cards #ffffff */
+  --card: 0 0% 100%;
+  --card-foreground: 217 33% 17%;
+  --card-border: 213 27% 90%;
 
-  --card: 222 47% 13%;
-  --card-foreground: 210 40% 98%;
-  --card-border: 217 32% 17%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 217 33% 17%;
+  --popover-border: 213 27% 90%;
 
-  --popover: 222 47% 13%;
-  --popover-foreground: 210 40% 98%;
-  --popover-border: 217 32% 17%;
+  /* Primary blue #1a56db → hsl(221, 70%, 48%) */
+  --primary: 221 70% 48%;
+  --primary-foreground: 0 0% 100%;
 
-  /* Bright green accent #22c55e -> HSL: 142 71% 45% */
-  --primary: 142 71% 45%;
-  --primary-foreground: 144 100% 11%;
+  /* Secondary — very light blue-gray */
+  --secondary: 210 40% 93%;
+  --secondary-foreground: 217 33% 17%;
 
-  --secondary: 217 32% 17%;
-  --secondary-foreground: 210 40% 98%;
+  --muted: 210 40% 96%;
+  --muted-foreground: 215 16% 47%;
 
-  --muted: 217 32% 17%;
-  --muted-foreground: 215 20.2% 65.1%;
+  /* Accent gold #f59e0b → hsl(38, 92%, 50%) */
+  --accent: 38 92% 50%;
+  --accent-foreground: 38 100% 15%;
 
-  --accent: 217 32% 17%;
-  --accent-foreground: 210 40% 98%;
+  /* Destructive */
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
 
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 210 40% 98%;
+  /* Borders */
+  --border: 213 27% 88%;
+  --input: 213 27% 88%;
+  --ring: 221 70% 48%;
 
-  --border: 217 32% 17%;
-  --input: 217 32% 17%;
-  --ring: 142 71% 45%;
+  /* Sidebar — blue header colour */
+  --sidebar: 221 70% 48%;
+  --sidebar-foreground: 0 0% 100%;
+  --sidebar-border: 221 60% 40%;
+  --sidebar-primary: 38 92% 50%;
+  --sidebar-primary-foreground: 38 100% 15%;
+  --sidebar-accent: 221 60% 55%;
+  --sidebar-accent-foreground: 0 0% 100%;
+  --sidebar-ring: 38 92% 50%;
 
-  --sidebar: 222 47% 11%;
-  --sidebar-foreground: 210 40% 98%;
-  --sidebar-border: 217 32% 17%;
-  --sidebar-primary: 142 71% 45%;
-  --sidebar-primary-foreground: 144 100% 11%;
-  --sidebar-accent: 217 32% 17%;
-  --sidebar-accent-foreground: 210 40% 98%;
-  --sidebar-ring: 142 71% 45%;
-
-  --chart-1: 142 71% 45%;
-  --chart-2: 217 32% 17%;
-  --chart-3: 0 62.8% 30.6%;
-  --chart-4: 210 40% 98%;
-  --chart-5: 215 20.2% 65.1%;
+  /* Charts */
+  --chart-1: 221 70% 48%;   /* blue */
+  --chart-2: 38 92% 50%;    /* gold */
+  --chart-3: 161 94% 30%;   /* green #059669 */
+  --chart-4: 0 84% 60%;     /* red */
+  --chart-5: 215 16% 47%;   /* muted */
 
   --app-font-sans: 'Inter', sans-serif;
   --app-font-serif: Georgia, serif;
   --app-font-mono: 'Space Mono', monospace;
-  
-  --radius: 0.25rem;
+
+  --radius: 0.375rem;
 }
 
 @layer base {
