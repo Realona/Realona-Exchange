@@ -21,6 +21,13 @@ import AdminWithdrawals from "@/pages/admin/withdrawals";
 import AdminReports from "@/pages/admin/reports";
 import AdminSettings from "@/pages/admin/settings";
 import HowItWorks from "@/pages/how-it-works";
+import Offers from "@/pages/offers";
+import Leaderboard from "@/pages/leaderboard";
+import KYCPage from "@/pages/kyc";
+import AdminDeposits from "@/pages/admin/deposits";
+import AdminKycReview from "@/pages/admin/kyc-review";
+import AdminAnnouncements from "@/pages/admin/announcements";
+import AdminGiveaways from "@/pages/admin/giveaways";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -119,6 +126,25 @@ function Router() {
       </Route>
       <Route path="/admin/settings">
         <AdminRoute component={AdminSettings} />
+      </Route>
+      <Route path="/admin/deposits">
+        <AdminRoute component={AdminDeposits} />
+      </Route>
+      <Route path="/admin/kyc-review">
+        <AdminRoute component={AdminKycReview} />
+      </Route>
+      <Route path="/admin/announcements">
+        <AdminRoute component={AdminAnnouncements} />
+      </Route>
+      <Route path="/admin/giveaways">
+        <AdminRoute component={AdminGiveaways} />
+      </Route>
+      <Route path="/offers">
+        <ProtectedRoute component={Offers} />
+      </Route>
+      <Route path="/leaderboard" component={Leaderboard} />
+      <Route path="/kyc">
+        <ProtectedRoute component={KYCPage} />
       </Route>
       <Route component={NotFound} />
     </Switch>

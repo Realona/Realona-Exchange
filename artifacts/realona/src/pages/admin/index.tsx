@@ -44,6 +44,10 @@ export default function AdminDashboard() {
     { href: "/admin/users", label: "Users" },
     { href: "/admin/trades", label: "Trades" },
     { href: "/admin/withdrawals", label: "Withdrawals" },
+    { href: "/admin/deposits", label: "Deposits" },
+    { href: "/admin/kyc-review", label: "KYC Review" },
+    { href: "/admin/announcements", label: "Announcements" },
+    { href: "/admin/giveaways", label: "Giveaways" },
     { href: "/admin/reports", label: "Reports" },
   ];
   if (user.isSuperAdmin) navLinks.push({ href: "/admin/settings", label: "Settings" });

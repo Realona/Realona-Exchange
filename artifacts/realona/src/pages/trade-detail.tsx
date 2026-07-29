@@ -11,11 +11,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import {
   useGetTrade, useGetTradeMessages, useSendTradeMessage,
   useConfirmTradePayment, useSellerTransferred, useConfirmReceipt, useOpenDispute,
+  useCancelTrade, useConfirmTradeAccess, useRateTradePartner, useGetTradeCredentials,
 } from "@workspace/api-client-react";
 import { formatNaira } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { ShieldCheck, Send, AlertTriangle, CheckCircle, ArrowRight, Copy, Eye, EyeOff } from "lucide-react";
+import { ShieldCheck, Send, AlertTriangle, CheckCircle, ArrowRight, Copy, Eye, EyeOff, Star, XCircle, Key } from "lucide-react";
 
 function StatusStep({ label, done, active }: { label: string; done: boolean; active: boolean }) {
   return (
@@ -69,6 +70,9 @@ export default function TradeDetail() {
   const [disputeReason, setDisputeReason] = useState("");
   const [disputeOpen, setDisputeOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [ratingValue, setRatingValue] = useState(0);
+  const [ratingComment, setRatingComment] = useState("");
+  const [credRevealed, setCredRevealed] = useState(false);
   const chatBottomRef = useRef<HTMLDivElement>(null);
 
   const { data: trade, isLoading: tradeLoading } = useGetTrade(
@@ -85,6 +89,14 @@ export default function TradeDetail() {
   const sellerTransfer = useSellerTransferred();
   const confirmReceipt = useConfirmReceipt();
   const openDispute = useOpenDispute();
+  const cancelTrade = useCancelTrade();
+  const confirmAccess = useConfirmTradeAccess();
+  const rateTrade = useRateTradePartner();
+
+  const canShowCredentials = (user?.id === trade?.buyerId) && ["payment_confirmed", "seller_transferred", "completed"].includes(trade?.status ?? "");
+  const { data: credentials } = useGetTradeCredentials(tradeId, {
+    query: { enabled: canShowCredentials && credRevealed, queryKey: ["getTradeCredentials", tradeId] }
+  });
 
   useEffect(() => {
     chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -133,6 +145,28 @@ export default function TradeDetail() {
     });
   };
 
+  const handleCancel = () => {
+    cancelTrade.mutate({ id: tradeId }, {
+      onSuccess: () => { toast({ title: "Trade cancelled.", description: "The listing is now available again." }); invalidate(); },
+      onError: (err: any) => toast({ title: "Failed", description: err?.data?.error ?? err?.message, variant: "destructive" }),
+    });
+  };
+
+  const handleConfirmAccess = () => {
+    confirmAccess.mutate({ id: tradeId }, {
+      onSuccess: () => { toast({ title: "Access confirmed! Trade complete.", description: "Funds released to seller." }); invalidate(); },
+      onError: (err: any) => toast({ title: "Failed", description: err?.data?.error ?? err?.message, variant: "destructive" }),
+    });
+  };
+
+  const handleRate = () => {
+    if (!ratingValue) return;
+    rateTrade.mutate({ id: tradeId, data: { rating: ratingValue, comment: ratingComment || undefined } }, {
+      onSuccess: () => { toast({ title: "Rating submitted!" }); invalidate(); },
+      onError: (err: any) => toast({ title: "Failed", description: err?.data?.error ?? err?.message, variant: "destructive" }),
+    });
+  };
+
   const handleDispute = () => {
     if (!disputeReason.trim()) return;
     openDispute.mutate({ id: tradeId, data: { reason: disputeReason.trim() } }, {
@@ -169,7 +203,7 @@ export default function TradeDetail() {
   const isSeller = user?.id === trade.sellerId;
   const currentStep = STATUS_INDEX[trade.status] ?? 0;
   const sellerAmount = trade.amount - (trade.fee ?? 0);
-  const isActive = !["completed", "refunded"].includes(trade.status);
+  const isActive = !["completed", "refunded", "cancelled"].includes(trade.status);
 
   return (
     <Layout>
@@ -295,19 +329,111 @@ export default function TradeDetail() {
                   {isSeller && trade.status === "seller_transferred" && (
                     <p className="text-xs text-muted-foreground text-center">Waiting for buyer to confirm receipt.</p>
                   )}
+
+                  {/* Cancel button */}
+                  {trade.status === "pending" && (
+                    <Button variant="outline" className="w-full text-muted-foreground border-border" onClick={handleCancel} disabled={cancelTrade.isPending}>
+                      <XCircle className="w-4 h-4 mr-2" />
+                      {cancelTrade.isPending ? "Cancelling..." : "Cancel Trade"}
+                    </Button>
+                  )}
+
+                  {/* Confirm Access button (buyer, after payment confirmed) */}
+                  {isBuyer && ["payment_confirmed", "seller_transferred"].includes(trade.status) && (
+                    <Button className="w-full bg-emerald-600 hover:bg-emerald-700" onClick={handleConfirmAccess} disabled={confirmAccess.isPending}>
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      {confirmAccess.isPending ? "Confirming..." : "I Have Accessed the Account"}
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
             )}
 
-            {/* Credentials (visible to buyer after payment confirmed) */}
-            {isBuyer && ["payment_confirmed", "seller_transferred", "completed"].includes(trade.status) && (
-              <Card className="border-green-500/30 bg-green-500/5">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm text-green-500 uppercase tracking-wider">Account Credentials</CardTitle>
+            {/* Credentials panel */}
+            {canShowCredentials && (
+              <Card className="border-emerald-500/30 bg-emerald-500/5">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm text-emerald-600 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-2">
+                    <Key className="w-4 h-4" />
+                    Account Credentials
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm">
-                  <p className="text-xs text-muted-foreground">These credentials are provided by the seller. Verify access before confirming receipt.</p>
-                  <p className="text-xs text-muted-foreground italic">Contact seller via chat for credentials if not listed in the trade description.</p>
+                  {!credRevealed ? (
+                    <div className="text-center py-2">
+                      <p className="text-xs text-muted-foreground mb-3">Credentials are hidden for security. Click to reveal.</p>
+                      <Button size="sm" variant="outline" onClick={() => setCredRevealed(true)}>
+                        <Eye className="w-3.5 h-3.5 mr-1.5" />
+                        Reveal Credentials
+                      </Button>
+                    </div>
+                  ) : credentials ? (
+                    <div className="space-y-2">
+                      {[
+                        { label: "Konami ID", value: (credentials as any).konamiId },
+                        { label: "Konami Password", value: (credentials as any).konamiPassword },
+                        { label: "Access Code", value: (credentials as any).accessCode },
+                        { label: "Account Email", value: (credentials as any).accountEmail },
+                        { label: "Account Password", value: (credentials as any).accountPassword },
+                      ].filter(f => f.value).map(({ label, value }) => (
+                        <div key={label} className="flex items-center justify-between gap-2 bg-background rounded-lg px-3 py-2 border border-border">
+                          <div className="min-w-0">
+                            <p className="text-xs text-muted-foreground">{label}</p>
+                            <p className="font-mono text-sm font-semibold truncate">{value}</p>
+                          </div>
+                          <Button size="icon" variant="ghost" className="w-7 h-7 shrink-0" onClick={() => { navigator.clipboard.writeText(value); toast({ title: "Copied!" }); }}>
+                            <Copy className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                      ))}
+                      {!Object.values(credentials as any).some(Boolean) && (
+                        <p className="text-xs text-muted-foreground italic text-center py-2">No credentials stored. Contact seller via chat.</p>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground text-center py-2">Loading credentials...</p>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Rate partner (after completion) */}
+            {trade.status === "completed" && (
+              <Card className="border-border bg-card">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm uppercase tracking-wider flex items-center gap-2">
+                    <Star className="w-4 h-4 text-yellow-500" />
+                    Rate Your Trade Partner
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4, 5].map(n => (
+                      <button
+                        key={n}
+                        onClick={() => setRatingValue(n)}
+                        className="transition-transform hover:scale-110"
+                      >
+                        <Star className={`w-7 h-7 ${n <= ratingValue ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground"}`} />
+                      </button>
+                    ))}
+                  </div>
+                  {ratingValue > 0 && (
+                    <>
+                      <Input
+                        placeholder="Leave a comment (optional)"
+                        value={ratingComment}
+                        onChange={(e) => setRatingComment(e.target.value)}
+                        className="text-sm"
+                      />
+                      <Button size="sm" className="w-full" onClick={handleRate} disabled={rateTrade.isPending}>
+                        {rateTrade.isPending ? "Submitting..." : "Submit Rating"}
+                      </Button>
+                    </>
+                  )}
+                  {rateTrade.isSuccess && (
+                    <p className="text-xs text-green-500 text-center">Rating submitted!</p>
+                  )}
                 </CardContent>
               </Card>
             )}

@@ -1,12 +1,19 @@
+import { useState } from "react";
 import { Layout } from "@/components/layout";
 import { useAuth } from "@/hooks/use-auth";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useGetTrades, useGetMyListings, useGetWalletBalance } from "@workspace/api-client-react";
+import {
+  useGetTrades, useGetMyListings, useGetWalletBalance,
+  useGetAnnouncements, useGetActiveGiveaways
+} from "@workspace/api-client-react";
 import { formatNaira } from "@/lib/utils";
-import { Wallet, ShoppingBag, ArrowRightLeft, Plus, TrendingUp } from "lucide-react";
+import {
+  Wallet, ShoppingBag, ArrowRightLeft, Plus, TrendingUp,
+  Megaphone, Gift, X, HandshakeIcon, Trophy, ShieldCheck, AlertTriangle, Zap, Info
+} from "lucide-react";
 
 function tradeStatusBadge(status: string) {
   const map: Record<string, string> = {
@@ -16,20 +23,26 @@ function tradeStatusBadge(status: string) {
     completed: "bg-green-500/10 text-green-500 border-green-500/20",
     disputed: "bg-red-500/10 text-red-500 border-red-500/20",
     refunded: "bg-gray-500/10 text-gray-500 border-gray-500/20",
+    cancelled: "bg-gray-500/10 text-gray-500 border-gray-500/20",
   };
   const label: Record<string, string> = {
-    pending: "Pending",
-    payment_confirmed: "Payment Confirmed",
-    seller_transferred: "Account Sent",
-    completed: "Completed",
-    disputed: "Disputed",
-    refunded: "Refunded",
+    pending: "Pending", payment_confirmed: "Payment Confirmed",
+    seller_transferred: "Account Sent", completed: "Completed",
+    disputed: "Disputed", refunded: "Refunded", cancelled: "Cancelled",
   };
-  return (
-    <Badge variant="outline" className={map[status] ?? ""}>
-      {label[status] ?? status}
-    </Badge>
-  );
+  return <Badge variant="outline" className={map[status] ?? ""}>{label[status] ?? status}</Badge>;
+}
+
+function priorityIcon(priority: string) {
+  if (priority === "urgent") return <Zap className="w-4 h-4 text-red-500 shrink-0" />;
+  if (priority === "important") return <AlertTriangle className="w-4 h-4 text-yellow-500 shrink-0" />;
+  return <Info className="w-4 h-4 text-blue-500 shrink-0" />;
+}
+
+function priorityClass(priority: string) {
+  if (priority === "urgent") return "border-red-500/30 bg-red-500/5";
+  if (priority === "important") return "border-yellow-500/30 bg-yellow-500/5";
+  return "border-blue-500/30 bg-blue-500/5";
 }
 
 export default function Dashboard() {
@@ -37,15 +50,36 @@ export default function Dashboard() {
   const { data: trades } = useGetTrades();
   const { data: myListings } = useGetMyListings();
   const { data: walletData } = useGetWalletBalance();
+  const { data: announcements } = useGetAnnouncements();
+  const { data: giveaways } = useGetActiveGiveaways();
+  const [dismissedAnnouncement, setDismissedAnnouncement] = useState<number | null>(null);
 
   const recentTrades = trades?.slice(0, 5) ?? [];
   const activeListings = myListings?.filter((l: any) => l.status === "active") ?? [];
   const completedTrades = trades?.filter((t: any) => t.status === "completed").length ?? 0;
-  const activeTrades = trades?.filter((t: any) => !["completed", "refunded"].includes(t.status)).length ?? 0;
+  const activeTrades = trades?.filter((t: any) => !["completed", "refunded", "cancelled"].includes(t.status)).length ?? 0;
+
+  const activeAnnouncement = announcements?.find((a: any) => a.id !== dismissedAnnouncement);
+  const featuredGiveaway = giveaways?.find((g: any) => !g.hasUserClaimed);
 
   return (
     <Layout>
       <div className="container mx-auto px-4 py-8">
+        {/* Announcement Banner */}
+        {activeAnnouncement && (
+          <div className={`flex items-start gap-3 rounded-xl border p-4 mb-6 ${priorityClass(activeAnnouncement.priority)}`}>
+            {priorityIcon(activeAnnouncement.priority)}
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-sm">{activeAnnouncement.title}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{activeAnnouncement.description}</p>
+            </div>
+            <Button variant="ghost" size="icon" className="w-6 h-6 shrink-0"
+              onClick={() => setDismissedAnnouncement(activeAnnouncement.id)}>
+              <X className="w-3.5 h-3.5" />
+            </Button>
+          </div>
+        )}
+
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-1">Welcome back, {user?.username}!</h1>
           <p className="text-muted-foreground">Manage your trades, listings and wallet from here.</p>
@@ -104,20 +138,76 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        {/* Quick Actions */}
-        <div className="flex flex-wrap gap-3 mb-8">
-          <Button asChild>
-            <Link href="/listings/new">
-              <Plus className="w-4 h-4 mr-2" />
-              New Listing
-            </Link>
-          </Button>
-          <Button variant="outline" asChild>
-            <Link href="/">Browse Marketplace</Link>
-          </Button>
-          <Button variant="outline" asChild>
-            <Link href="/wallet">Deposit / Withdraw</Link>
-          </Button>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          {/* Quick Actions */}
+          <div className="lg:col-span-2">
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Quick Actions</h2>
+            <div className="flex flex-wrap gap-2">
+              <Button asChild>
+                <Link href="/listings/new">
+                  <Plus className="w-4 h-4 mr-2" />
+                  New Listing
+                </Link>
+              </Button>
+              <Button variant="outline" asChild>
+                <Link href="/">Browse Marketplace</Link>
+              </Button>
+              <Button variant="outline" asChild>
+                <Link href="/wallet">Deposit / Withdraw</Link>
+              </Button>
+              <Button variant="outline" asChild>
+                <Link href="/offers">
+                  <HandshakeIcon className="w-4 h-4 mr-2" />
+                  My Offers
+                </Link>
+              </Button>
+              <Button variant="outline" asChild>
+                <Link href="/leaderboard">
+                  <Trophy className="w-4 h-4 mr-2" />
+                  Leaderboard
+                </Link>
+              </Button>
+              {user?.kycLevel === 0 && (
+                <Button variant="outline" asChild>
+                  <Link href="/kyc">
+                    <ShieldCheck className="w-4 h-4 mr-2" />
+                    Get Verified
+                  </Link>
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* Giveaway widget */}
+          {featuredGiveaway && (
+            <div>
+              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Active Giveaway</h2>
+              <Card className="border-primary/30 bg-primary/5">
+                <CardContent className="p-4">
+                  <div className="flex items-start gap-3">
+                    <Gift className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+                    <div className="flex-1">
+                      <p className="font-semibold text-sm">{featuredGiveaway.title}</p>
+                      {featuredGiveaway.description && (
+                        <p className="text-xs text-muted-foreground mt-0.5">{featuredGiveaway.description}</p>
+                      )}
+                      <p className="text-lg font-bold text-primary mt-2">{formatNaira(featuredGiveaway.rewardAmount)}</p>
+                      <div className="flex items-center gap-2 mt-2">
+                        <div className="flex-1 bg-background rounded-full h-1.5">
+                          <div
+                            className="bg-primary h-1.5 rounded-full transition-all"
+                            style={{ width: `${Math.min(100, (featuredGiveaway.claimedCount / featuredGiveaway.maxUsers) * 100)}%` }}
+                          />
+                        </div>
+                        <span className="text-xs text-muted-foreground">{featuredGiveaway.claimedCount}/{featuredGiveaway.maxUsers}</span>
+                      </div>
+                      <Badge variant="outline" className="mt-2 text-xs capitalize">{featuredGiveaway.taskType.replace("_", " ")}</Badge>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </div>
 
         {/* Recent Trades */}
@@ -139,7 +229,7 @@ export default function Dashboard() {
               </div>
             ) : (
               <div className="divide-y divide-border">
-                {recentTrades.map(trade => (
+                {recentTrades.map((trade: any) => (
                   <div key={trade.id} className="py-3 flex items-center justify-between gap-4">
                     <div className="min-w-0 flex-1">
                       <p className="font-medium truncate">{trade.gameName ?? `Trade #${trade.id}`}</p>

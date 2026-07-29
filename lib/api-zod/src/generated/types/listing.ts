@@ -5,6 +5,7 @@
  * Realona Exchange API
  * OpenAPI spec version: 0.1.0
  */
+import type { ListingCategory } from './listingCategory';
 import type { ListingStatus } from './listingStatus';
 
 export interface Listing {
@@ -12,6 +13,10 @@ export interface Listing {
   sellerId: number;
   /** @nullable */
   sellerUsername?: string | null;
+  sellerIsVerified?: boolean;
+  /** @nullable */
+  sellerRating?: number | null;
+  category: ListingCategory;
   gameName: string;
   price: number;
   description: string;
@@ -25,6 +30,19 @@ export interface Listing {
   divisionRank?: string | null;
   /** @nullable */
   squadRating?: number | null;
+  /** @nullable */
+  platform?: string | null;
+  /** @nullable */
+  accountHandle?: string | null;
+  /** @nullable */
+  followerCount?: number | null;
+  /** @nullable */
+  following?: number | null;
+  /** @nullable */
+  accountAge?: string | null;
+  /** @nullable */
+  engagementRate?: string | null;
+  viewCount?: number;
   status: ListingStatus;
   createdAt: Date;
 }

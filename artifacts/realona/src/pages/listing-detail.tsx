@@ -1,14 +1,26 @@
+import { useState } from "react";
 import { useParams, useLocation } from "wouter";
 import { Layout } from "@/components/layout";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { useGetListing, useCreateTrade } from "@workspace/api-client-react";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { useGetListing, useCreateTrade, useMakeOffer } from "@workspace/api-client-react";
 import { formatNaira } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { ShieldCheck, User, ArrowRightLeft, AlertTriangle } from "lucide-react";
+import { ShieldCheck, User, ArrowRightLeft, AlertTriangle, HandshakeIcon, Users, Clock, Star, Instagram, Gamepad2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
+
+const SOCIAL_PLATFORM_ICONS: Record<string, string> = {
+  instagram: "IG",
+  "twitter/x": "X",
+  tiktok: "TT",
+  youtube: "YT",
+  facebook: "FB",
+};
 
 export default function ListingDetail() {
   const { id } = useParams<{ id: string }>();
@@ -16,25 +28,48 @@ export default function ListingDetail() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [offerOpen, setOfferOpen] = useState(false);
+  const [offerAmount, setOfferAmount] = useState("");
+  const [offerMessage, setOfferMessage] = useState("");
 
   const { data: listing, isLoading, isError } = useGetListing(Number(id));
   const createTrade = useCreateTrade();
+  const makeOffer = useMakeOffer();
 
   const handleBuy = () => {
-    if (!user) {
-      setLocation("/login");
-      return;
-    }
+    if (!user) { setLocation("/login"); return; }
     createTrade.mutate(
       { data: { listingId: Number(id) } },
       {
-        onSuccess: (trade) => {
+        onSuccess: (trade: any) => {
           toast({ title: "Trade initiated!", description: "Go to your trade to confirm payment." });
           queryClient.invalidateQueries({ queryKey: ["getTrades"] });
           setLocation(`/trades/${trade.id}`);
         },
         onError: (err: any) => {
           toast({ title: "Failed to start trade", description: err?.data?.error ?? err?.message ?? "Something went wrong.", variant: "destructive" });
+        },
+      }
+    );
+  };
+
+  const handleMakeOffer = () => {
+    if (!user) { setLocation("/login"); return; }
+    if (!offerAmount || Number(offerAmount) <= 0) {
+      toast({ title: "Enter a valid offer amount", variant: "destructive" }); return;
+    }
+    makeOffer.mutate(
+      { id: Number(id), data: { amount: Number(offerAmount), message: offerMessage || undefined } },
+      {
+        onSuccess: () => {
+          toast({ title: "Offer sent!", description: "The seller will respond within 24 hours." });
+          setOfferOpen(false);
+          setOfferAmount("");
+          setOfferMessage("");
+          queryClient.invalidateQueries({ queryKey: ["getMyOffers"] });
+        },
+        onError: (err: any) => {
+          toast({ title: "Failed to send offer", description: err?.data?.error ?? err?.message, variant: "destructive" });
         },
       }
     );
@@ -69,20 +104,69 @@ export default function ListingDetail() {
 
   const isMine = user?.id === listing.sellerId;
   const isAvailable = listing.status === "active";
+  const isSocial = (listing as any).category === "social_media";
 
   return (
     <Layout>
       <div className="container mx-auto px-4 py-8 max-w-5xl">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Image */}
+          {/* Image / Social Info */}
           <div className="space-y-4">
             <div className="aspect-[4/3] rounded-xl overflow-hidden bg-muted border border-border">
               {listing.pictureUrl ? (
                 <img src={listing.pictureUrl} alt={listing.gameName} className="w-full h-full object-cover" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-muted-foreground text-lg">No Image</div>
+                <div className="w-full h-full flex items-center justify-center text-muted-foreground text-lg">
+                  {isSocial ? <Users className="w-12 h-12 opacity-30" /> : <Gamepad2 className="w-12 h-12 opacity-30" />}
+                </div>
               )}
             </div>
+
+            {/* Social media stats */}
+            {isSocial && (
+              <Card className="border-border bg-card">
+                <CardContent className="p-4 space-y-2">
+                  <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground mb-3">Account Details</h3>
+                  {(listing as any).platform && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Platform</span>
+                      <span className="font-medium capitalize">{(listing as any).platform}</span>
+                    </div>
+                  )}
+                  {(listing as any).accountHandle && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Handle</span>
+                      <span className="font-medium">@{(listing as any).accountHandle}</span>
+                    </div>
+                  )}
+                  {(listing as any).followerCount != null && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Followers</span>
+                      <span className="font-medium">{Number((listing as any).followerCount).toLocaleString()}</span>
+                    </div>
+                  )}
+                  {(listing as any).following != null && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Following</span>
+                      <span className="font-medium">{Number((listing as any).following).toLocaleString()}</span>
+                    </div>
+                  )}
+                  {(listing as any).accountAge && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Account Age</span>
+                      <span className="font-medium">{(listing as any).accountAge}</span>
+                    </div>
+                  )}
+                  {(listing as any).engagementRate && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Engagement Rate</span>
+                      <span className="font-medium">{(listing as any).engagementRate}</span>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
             {/* Trust indicators */}
             <Card className="border-border bg-card">
               <CardContent className="p-4 space-y-3">
@@ -108,8 +192,11 @@ export default function ListingDetail() {
           {/* Details */}
           <div className="space-y-6">
             <div>
-              <div className="flex items-center gap-2 mb-2">
+              <div className="flex items-center gap-2 mb-2 flex-wrap">
                 <Badge className="text-xs">{listing.gameName}</Badge>
+                {isSocial && (listing as any).platform && (
+                  <Badge variant="outline" className="text-xs capitalize">{(listing as any).platform}</Badge>
+                )}
                 {listing.status !== "active" && (
                   <Badge variant="outline" className="bg-red-500/10 text-red-500 border-red-500/20 text-xs">{listing.status}</Badge>
                 )}
@@ -118,6 +205,11 @@ export default function ListingDetail() {
               <div className="flex items-center gap-2 text-muted-foreground text-sm">
                 <User className="w-4 h-4" />
                 <span>Sold by <strong>{listing.sellerUsername}</strong></span>
+                {(listing as any).sellerIsVerified && (
+                  <span title="Verified Seller" className="inline-flex items-center text-primary">
+                    <ShieldCheck className="w-4 h-4" />
+                  </span>
+                )}
               </div>
             </div>
 
@@ -126,11 +218,11 @@ export default function ListingDetail() {
               <CardContent className="p-6">
                 <p className="text-sm text-muted-foreground mb-1">Listing Price</p>
                 <p className="text-4xl font-bold text-primary">{formatNaira(listing.price)}</p>
-                <p className="text-xs text-muted-foreground mt-2">Platform fee (2.5%) deducted from seller earnings</p>
+                <p className="text-xs text-muted-foreground mt-2">Platform fee (4%) deducted from seller earnings</p>
               </CardContent>
             </Card>
 
-            {/* Action */}
+            {/* Actions */}
             {isMine ? (
               <div className="bg-muted border border-border rounded-lg p-4 text-sm text-center text-muted-foreground">
                 This is your listing.
@@ -140,14 +232,27 @@ export default function ListingDetail() {
                 This listing is no longer available.
               </div>
             ) : (
-              <Button
-                size="lg"
-                className="w-full h-14 text-lg font-semibold"
-                onClick={handleBuy}
-                disabled={createTrade.isPending}
-              >
-                {createTrade.isPending ? "Initiating Trade..." : "Buy Now — Start Escrow"}
-              </Button>
+              <div className="space-y-3">
+                <Button
+                  size="lg"
+                  className="w-full h-14 text-lg font-semibold"
+                  onClick={handleBuy}
+                  disabled={createTrade.isPending}
+                >
+                  {createTrade.isPending ? "Initiating Trade..." : "Buy Now — Start Escrow"}
+                </Button>
+                {user && (
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="w-full h-12 font-semibold"
+                    onClick={() => setOfferOpen(true)}
+                  >
+                    <HandshakeIcon className="w-4 h-4 mr-2" />
+                    Make an Offer
+                  </Button>
+                )}
+              </div>
             )}
 
             {!user && (
@@ -158,6 +263,52 @@ export default function ListingDetail() {
           </div>
         </div>
       </div>
+
+      {/* Make Offer Dialog */}
+      <Dialog open={offerOpen} onOpenChange={setOfferOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <HandshakeIcon className="w-5 h-5 text-primary" />
+              Make an Offer
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <p className="text-sm text-muted-foreground mb-1">
+                Listed price: <span className="font-semibold text-foreground">{formatNaira(listing?.price ?? 0)}</span>
+              </p>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">Your offer amount (₦)</label>
+              <Input
+                type="number"
+                value={offerAmount}
+                onChange={(e) => setOfferAmount(e.target.value)}
+                placeholder="Enter your offer"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">Message <span className="text-muted-foreground text-xs">(optional)</span></label>
+              <Textarea
+                value={offerMessage}
+                onChange={(e) => setOfferMessage(e.target.value)}
+                placeholder="Explain your offer..."
+                rows={2}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Your offer expires in 24 hours. The seller can accept, reject, or counter.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOfferOpen(false)}>Cancel</Button>
+            <Button onClick={handleMakeOffer} disabled={makeOffer.isPending}>
+              {makeOffer.isPending ? "Sending..." : "Send Offer"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 }

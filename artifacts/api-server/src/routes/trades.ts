@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { db, tradesTable, listingsTable, usersTable, tradeMessagesTable, platformConfigTable } from "@workspace/db";
+import { db, tradesTable, listingsTable, usersTable, tradeMessagesTable, platformConfigTable, tradeRatingsTable, notificationsTable } from "@workspace/db";
 import { eq, and, sql, or } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
 import {
@@ -15,6 +15,7 @@ import {
   OpenDisputeParams,
   OpenDisputeBody,
 } from "@workspace/api-zod";
+import { createNotification } from "../lib/notifier";
 
 const router: IRouter = Router();
 
@@ -372,6 +373,132 @@ router.post("/trades/:id/dispute", requireAuth, async (req, res): Promise<void> 
   }
 
   res.json(formatTrade(row.trade, { buyerUsername: row.buyerUsername, sellerUsername: row.sellerUsername, gameName: row.gameName, pictureUrl: row.pictureUrl }));
+});
+
+// Cancel a pending trade (buyer or seller)
+router.post("/trades/:id/cancel", requireAuth, async (req, res): Promise<void> => {
+  const tradeId = parseInt(req.params.id as string);
+  if (isNaN(tradeId)) { res.status(400).json({ error: "Invalid trade ID" }); return; }
+
+  const [trade] = await db.select().from(tradesTable).where(eq(tradesTable.id, tradeId));
+  if (!trade) { res.status(404).json({ error: "Trade not found" }); return; }
+
+  if (trade.buyerId !== req.userId && trade.sellerId !== req.userId) {
+    res.status(403).json({ error: "Not authorized" }); return;
+  }
+  if (trade.status !== "pending") {
+    res.status(400).json({ error: "Only pending trades can be cancelled" }); return;
+  }
+
+  await db.update(tradesTable).set({ status: "cancelled" }).where(eq(tradesTable.id, tradeId));
+  // Restore listing to active
+  await db.update(listingsTable).set({ status: "active" }).where(eq(listingsTable.id, trade.listingId));
+  await addSystemMsg(tradeId, "Trade has been cancelled. The listing is now available again.", req.userId!);
+
+  // Notify the other party
+  const otherId = trade.buyerId === req.userId ? trade.sellerId : trade.buyerId;
+  const [me] = await db.select({ username: usersTable.username }).from(usersTable).where(eq(usersTable.id, req.userId!));
+  await createNotification(otherId, "trade_update", "Trade Cancelled", `Trade #${tradeId} was cancelled by ${me?.username ?? "the other party"}.`, { tradeId });
+
+  res.json({ success: true });
+});
+
+// Get revealed credentials (buyer only, after payment_confirmed)
+router.get("/trades/:id/credentials", requireAuth, async (req, res): Promise<void> => {
+  const tradeId = parseInt(req.params.id as string);
+  if (isNaN(tradeId)) { res.status(400).json({ error: "Invalid trade ID" }); return; }
+
+  const row = await getTradeWithDetails(tradeId);
+  if (!row) { res.status(404).json({ error: "Trade not found" }); return; }
+  if (row.trade.buyerId !== req.userId && !req.user?.isAdmin && !req.user?.isSuperAdmin) {
+    res.status(403).json({ error: "Only the buyer or admin can view credentials" }); return;
+  }
+  const allowedStatuses = ["payment_confirmed", "seller_transferred", "completed"];
+  if (!allowedStatuses.includes(row.trade.status)) {
+    res.status(403).json({ error: "Credentials are only revealed after payment is confirmed" }); return;
+  }
+
+  const [listing] = await db.select().from(listingsTable).where(eq(listingsTable.id, row.trade.listingId));
+  if (!listing) { res.status(404).json({ error: "Listing not found" }); return; }
+
+  res.json({
+    konamiId: listing.konamiId ?? null,
+    konamiPassword: listing.konamiPassword ?? null,
+    accessCode: listing.accessCode ?? null,
+    accountEmail: listing.accountEmail ?? null,
+    accountPassword: listing.accountPassword ?? null,
+  });
+});
+
+// Buyer confirms they have accessed the account
+router.post("/trades/:id/confirm-access", requireAuth, async (req, res): Promise<void> => {
+  const tradeId = parseInt(req.params.id as string);
+  if (isNaN(tradeId)) { res.status(400).json({ error: "Invalid trade ID" }); return; }
+
+  const [trade] = await db.select().from(tradesTable).where(eq(tradesTable.id, tradeId));
+  if (!trade) { res.status(404).json({ error: "Trade not found" }); return; }
+  if (trade.buyerId !== req.userId) { res.status(403).json({ error: "Only the buyer can confirm access" }); return; }
+
+  const allowedStatuses = ["payment_confirmed", "seller_transferred"];
+  if (!allowedStatuses.includes(trade.status)) {
+    res.status(400).json({ error: "Cannot confirm access at this trade stage" }); return;
+  }
+
+  // Release funds to seller
+  const sellerAmount = Number(trade.amount) - Number(trade.fee);
+  await db.update(usersTable).set({
+    walletBalance: sql`${usersTable.walletBalance} + ${sellerAmount}`,
+  }).where(eq(usersTable.id, trade.sellerId));
+
+  await db.update(listingsTable).set({ status: "sold" }).where(eq(listingsTable.id, trade.listingId));
+  await db.update(tradesTable).set({ status: "completed", accessConfirmed: true }).where(eq(tradesTable.id, tradeId));
+  await addSystemMsg(tradeId, `Buyer confirmed account access! Trade #${tradeId} is now complete. Seller received ₦${sellerAmount.toLocaleString()}.`, req.userId!);
+
+  // Notify seller
+  const [buyer] = await db.select({ username: usersTable.username }).from(usersTable).where(eq(usersTable.id, req.userId!));
+  await createNotification(trade.sellerId, "trade_update", "Trade Completed!", `${buyer?.username ?? "Buyer"} confirmed account access. ₦${sellerAmount.toLocaleString()} has been released to your wallet.`, { tradeId });
+
+  res.json({ success: true });
+});
+
+// Submit a rating for the trade partner
+router.post("/trades/:id/rate", requireAuth, async (req, res): Promise<void> => {
+  const tradeId = parseInt(req.params.id as string);
+  if (isNaN(tradeId)) { res.status(400).json({ error: "Invalid trade ID" }); return; }
+
+  const { rating, comment } = req.body;
+  if (!rating || typeof rating !== "number" || rating < 1 || rating > 5) {
+    res.status(400).json({ error: "Rating must be between 1 and 5" }); return;
+  }
+
+  const [trade] = await db.select().from(tradesTable).where(eq(tradesTable.id, tradeId));
+  if (!trade) { res.status(404).json({ error: "Trade not found" }); return; }
+  if (trade.status !== "completed") { res.status(400).json({ error: "Can only rate completed trades" }); return; }
+
+  const isBuyer = trade.buyerId === req.userId;
+  const isSeller = trade.sellerId === req.userId;
+  if (!isBuyer && !isSeller) { res.status(403).json({ error: "Not a participant in this trade" }); return; }
+
+  const rateeId = isBuyer ? trade.sellerId : trade.buyerId;
+
+  // Check duplicate
+  const [existing] = await db.select().from(tradeRatingsTable)
+    .where(and(eq(tradeRatingsTable.tradeId, tradeId), eq(tradeRatingsTable.raterId, req.userId!)));
+  if (existing) { res.status(400).json({ error: "You have already rated this trade" }); return; }
+
+  await db.insert(tradeRatingsTable).values({
+    tradeId,
+    raterId: req.userId!,
+    rateeId,
+    rating,
+    comment: comment ?? null,
+  });
+
+  // Notify ratee
+  const [rater] = await db.select({ username: usersTable.username }).from(usersTable).where(eq(usersTable.id, req.userId!));
+  await createNotification(rateeId, "trade_rated", "New Rating Received", `${rater?.username ?? "A user"} gave you ${rating} star${rating !== 1 ? "s" : ""} on Trade #${tradeId}.`, { tradeId, rating });
+
+  res.json({ success: true });
 });
 
 export default router;

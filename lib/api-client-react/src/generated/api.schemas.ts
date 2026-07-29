@@ -43,6 +43,10 @@ export interface User {
   isAdmin: boolean;
   isSuperAdmin: boolean;
   isSuspended: boolean;
+  isVerified: boolean;
+  kycLevel: number;
+  /** @nullable */
+  referralCode?: string | null;
   createdAt: string;
 }
 
@@ -72,6 +76,14 @@ export interface VirtualAccount {
   reference?: string | null;
 }
 
+export type ListingCategory = typeof ListingCategory[keyof typeof ListingCategory];
+
+
+export const ListingCategory = {
+  efootball: 'efootball',
+  social_media: 'social_media',
+} as const;
+
 export type ListingStatus = typeof ListingStatus[keyof typeof ListingStatus];
 
 
@@ -86,6 +98,10 @@ export interface Listing {
   sellerId: number;
   /** @nullable */
   sellerUsername?: string | null;
+  sellerIsVerified?: boolean;
+  /** @nullable */
+  sellerRating?: number | null;
+  category: ListingCategory;
   gameName: string;
   price: number;
   description: string;
@@ -99,23 +115,54 @@ export interface Listing {
   divisionRank?: string | null;
   /** @nullable */
   squadRating?: number | null;
+  /** @nullable */
+  platform?: string | null;
+  /** @nullable */
+  accountHandle?: string | null;
+  /** @nullable */
+  followerCount?: number | null;
+  /** @nullable */
+  following?: number | null;
+  /** @nullable */
+  accountAge?: string | null;
+  /** @nullable */
+  engagementRate?: string | null;
+  viewCount?: number;
   status: ListingStatus;
   createdAt: string;
 }
 
+export type ListingInputCategory = typeof ListingInputCategory[keyof typeof ListingInputCategory];
+
+
+export const ListingInputCategory = {
+  efootball: 'efootball',
+  social_media: 'social_media',
+} as const;
+
 export interface ListingInput {
+  category?: ListingInputCategory;
   gameName: string;
   price: number;
   description: string;
   pictureUrl?: string;
   accountEmail?: string;
   accountPassword?: string;
+  konamiId?: string;
+  konamiPassword?: string;
+  accessCode?: string;
   divisionRank?: string;
   /**
      * @minimum 2000
      * @maximum 5000
      */
   squadRating?: number;
+  platform?: string;
+  accountHandle?: string;
+  followerCount?: number;
+  following?: number;
+  accountAge?: string;
+  engagementRate?: string;
 }
 
 export interface ListingUpdate {
@@ -152,12 +199,21 @@ export interface Trade {
   gameName?: string | null;
   /** @nullable */
   pictureUrl?: string | null;
+  /** @nullable */
+  listingCategory?: string | null;
   amount: number;
+  /** @nullable */
+  agreedAmount?: number | null;
   /** @nullable */
   fee?: number | null;
   status: TradeStatus;
+  accessConfirmed: boolean;
   /** @nullable */
   disputeReason?: string | null;
+  /** @nullable */
+  buyerRating?: number | null;
+  /** @nullable */
+  sellerRating?: number | null;
   createdAt: string;
   updatedAt?: string;
 }
@@ -330,6 +386,214 @@ export interface PlatformFeeUpdate {
   feePercent: number;
 }
 
+export interface TradeCredentials {
+  /** @nullable */
+  konamiId?: string | null;
+  /** @nullable */
+  konamiPassword?: string | null;
+  /** @nullable */
+  accessCode?: string | null;
+  /** @nullable */
+  accountEmail?: string | null;
+  /** @nullable */
+  accountPassword?: string | null;
+}
+
+export interface TradeRatingInput {
+  /**
+     * @minimum 1
+     * @maximum 5
+     */
+  rating: number;
+  comment?: string;
+}
+
+export type OfferStatus = typeof OfferStatus[keyof typeof OfferStatus];
+
+
+export const OfferStatus = {
+  pending: 'pending',
+  accepted: 'accepted',
+  rejected: 'rejected',
+  countered: 'countered',
+  expired: 'expired',
+} as const;
+
+export interface Offer {
+  id: number;
+  listingId: number;
+  buyerId: number;
+  sellerId: number;
+  /** @nullable */
+  buyerUsername?: string | null;
+  /** @nullable */
+  sellerUsername?: string | null;
+  /** @nullable */
+  listingTitle?: string | null;
+  amount: number;
+  /** @nullable */
+  counterAmount?: number | null;
+  /** @nullable */
+  message?: string | null;
+  status: OfferStatus;
+  expiresAt: string;
+  createdAt: string;
+}
+
+export interface OfferInput {
+  amount: number;
+  message?: string;
+}
+
+export type OfferResponseAction = typeof OfferResponseAction[keyof typeof OfferResponseAction];
+
+
+export const OfferResponseAction = {
+  accept: 'accept',
+  reject: 'reject',
+  counter: 'counter',
+} as const;
+
+export interface OfferResponse {
+  action: OfferResponseAction;
+  counterAmount?: number;
+}
+
+export type KycSubmissionStatus = typeof KycSubmissionStatus[keyof typeof KycSubmissionStatus];
+
+
+export const KycSubmissionStatus = {
+  pending: 'pending',
+  approved: 'approved',
+  rejected: 'rejected',
+} as const;
+
+export interface KycSubmission {
+  id: number;
+  userId: number;
+  /** @nullable */
+  username?: string | null;
+  documentType: string;
+  documentUrl: string;
+  /** @nullable */
+  selfieUrl?: string | null;
+  status: KycSubmissionStatus;
+  level: number;
+  /** @nullable */
+  adminNote?: string | null;
+  createdAt: string;
+}
+
+export interface KycInput {
+  documentType: string;
+  documentUrl: string;
+  selfieUrl?: string;
+}
+
+export interface KycStatus {
+  kycLevel: number;
+  hasSubmission: boolean;
+  submission?: KycSubmission;
+}
+
+export type NotificationMetadata = { [key: string]: unknown } | null;
+
+export interface Notification {
+  id: number;
+  userId: number;
+  type: string;
+  title: string;
+  message: string;
+  isRead: boolean;
+  metadata?: NotificationMetadata;
+  createdAt: string;
+}
+
+export type AnnouncementPriority = typeof AnnouncementPriority[keyof typeof AnnouncementPriority];
+
+
+export const AnnouncementPriority = {
+  normal: 'normal',
+  important: 'important',
+  urgent: 'urgent',
+} as const;
+
+export interface Announcement {
+  id: number;
+  title: string;
+  description: string;
+  priority: AnnouncementPriority;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export type AnnouncementInputPriority = typeof AnnouncementInputPriority[keyof typeof AnnouncementInputPriority];
+
+
+export const AnnouncementInputPriority = {
+  normal: 'normal',
+  important: 'important',
+  urgent: 'urgent',
+} as const;
+
+export interface AnnouncementInput {
+  title: string;
+  description: string;
+  priority?: AnnouncementInputPriority;
+}
+
+export interface Giveaway {
+  id: number;
+  title: string;
+  /** @nullable */
+  description?: string | null;
+  rewardAmount: number;
+  maxUsers: number;
+  claimedCount: number;
+  taskType: string;
+  isActive: boolean;
+  hasUserClaimed?: boolean;
+  /** @nullable */
+  expiresAt?: string | null;
+  createdAt: string;
+}
+
+export type GiveawayInputTaskType = typeof GiveawayInputTaskType[keyof typeof GiveawayInputTaskType];
+
+
+export const GiveawayInputTaskType = {
+  registration: 'registration',
+  first_trade: 'first_trade',
+  first_listing: 'first_listing',
+  referral: 'referral',
+} as const;
+
+export interface GiveawayInput {
+  title: string;
+  description?: string;
+  rewardAmount: number;
+  maxUsers: number;
+  taskType: GiveawayInputTaskType;
+  isActive?: boolean;
+  expiresAt?: string;
+}
+
+export interface LeaderboardEntry {
+  rank: number;
+  userId: number;
+  username: string;
+  isVerified?: boolean;
+  count: number;
+  /** @nullable */
+  rating?: number | null;
+}
+
+export interface Leaderboard {
+  topSellers: LeaderboardEntry[];
+  topBuyers: LeaderboardEntry[];
+  mostTrusted: LeaderboardEntry[];
+}
+
 export interface UploadUrlRequest {
   /** @minLength 1 */
   name: string;
@@ -364,6 +628,14 @@ status?: string;
 };
 
 export type GetAdminWithdrawalsParams = {
+status?: string;
+};
+
+export type GetAdminKycSubmissionsParams = {
+status?: string;
+};
+
+export type GetAdminDepositsParams = {
 status?: string;
 };
 

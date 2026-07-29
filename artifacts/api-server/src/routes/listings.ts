@@ -11,6 +11,7 @@ function formatListing(listing: typeof listingsTable.$inferSelect, sellerUsernam
     id: listing.id,
     sellerId: listing.sellerId,
     sellerUsername: sellerUsername ?? null,
+    category: listing.category ?? "efootball",
     gameName: listing.gameName,
     price: Number(listing.price),
     description: listing.description,
@@ -19,6 +20,13 @@ function formatListing(listing: typeof listingsTable.$inferSelect, sellerUsernam
     accountPassword: listing.accountPassword ?? null,
     divisionRank: listing.divisionRank ?? null,
     squadRating: listing.squadRating ?? null,
+    platform: listing.platform ?? null,
+    accountHandle: listing.accountHandle ?? null,
+    followerCount: listing.followerCount ?? null,
+    following: listing.following ?? null,
+    accountAge: listing.accountAge ?? null,
+    engagementRate: listing.engagementRate ?? null,
+    viewCount: listing.viewCount ?? 0,
     status: listing.status,
     createdAt: listing.createdAt,
   };
@@ -58,18 +66,29 @@ router.post("/listings", requireAuth, async (req, res): Promise<void> => {
     return;
   }
 
+  const d = parsed.data;
   const [listing] = await db
     .insert(listingsTable)
     .values({
       sellerId: req.userId!,
-      gameName: parsed.data.gameName,
-      price: String(parsed.data.price),
-      description: parsed.data.description,
-      pictureUrl: parsed.data.pictureUrl ?? null,
-      accountEmail: parsed.data.accountEmail ?? null,
-      accountPassword: parsed.data.accountPassword ?? null,
-      divisionRank: parsed.data.divisionRank ?? null,
-      squadRating: parsed.data.squadRating ?? null,
+      category: d.category ?? "efootball",
+      gameName: d.gameName,
+      price: String(d.price),
+      description: d.description,
+      pictureUrl: d.pictureUrl ?? null,
+      accountEmail: d.accountEmail ?? null,
+      accountPassword: d.accountPassword ?? null,
+      konamiId: d.konamiId ?? null,
+      konamiPassword: d.konamiPassword ?? null,
+      accessCode: d.accessCode ?? null,
+      divisionRank: d.divisionRank ?? null,
+      squadRating: d.squadRating ?? null,
+      platform: d.platform ?? null,
+      accountHandle: d.accountHandle ?? null,
+      followerCount: d.followerCount ?? null,
+      following: d.following ?? null,
+      accountAge: d.accountAge ?? null,
+      engagementRate: d.engagementRate ?? null,
     })
     .returning();
 

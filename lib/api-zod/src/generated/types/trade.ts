@@ -20,12 +20,21 @@ export interface Trade {
   gameName?: string | null;
   /** @nullable */
   pictureUrl?: string | null;
+  /** @nullable */
+  listingCategory?: string | null;
   amount: number;
+  /** @nullable */
+  agreedAmount?: number | null;
   /** @nullable */
   fee?: number | null;
   status: TradeStatus;
+  accessConfirmed: boolean;
   /** @nullable */
   disputeReason?: string | null;
+  /** @nullable */
+  buyerRating?: number | null;
+  /** @nullable */
+  sellerRating?: number | null;
   createdAt: Date;
   updatedAt?: Date;
 }

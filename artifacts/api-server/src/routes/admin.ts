@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { db, usersTable, tradesTable, depositsTable, withdrawalsTable, reportsTable, listingsTable, tradeMessagesTable, platformConfigTable } from "@workspace/db";
+import { db, usersTable, tradesTable, depositsTable, withdrawalsTable, reportsTable, listingsTable, tradeMessagesTable, platformConfigTable, kycSubmissionsTable, announcementsTable, giveawaysTable, giveawayClaimsTable } from "@workspace/db";
 import { eq, sql, and, ilike, or } from "drizzle-orm";
 import { requireAdmin, requireSuperAdmin } from "../lib/auth";
 import { emailWithdrawalApproved, emailWithdrawalRejected } from "../lib/email";
@@ -461,6 +461,173 @@ router.post("/admin/admins", requireSuperAdmin, async (req, res): Promise<void> 
   }
 
   res.status(201).json(formatAdminUser(user));
+});
+
+// ── Admin Deposits ──────────────────────────────────────────────────────────
+router.get("/admin/deposits", requireAdmin, async (req, res): Promise<void> => {
+  const { status } = req.query as { status?: string };
+  let query = db.select({
+    deposit: depositsTable,
+    username: usersTable.username,
+  }).from(depositsTable)
+    .leftJoin(usersTable, eq(depositsTable.userId, usersTable.id))
+    .$dynamic();
+  if (status) query = query.where(eq(depositsTable.status, String(status))) as typeof query;
+  const rows = await query.orderBy(sql`${depositsTable.createdAt} DESC`);
+  res.json(rows.map(r => ({
+    id: r.deposit.id,
+    userId: r.deposit.userId,
+    username: r.username,
+    amount: Number(r.deposit.amount),
+    reference: r.deposit.reference,
+    status: r.deposit.status,
+    createdAt: r.deposit.createdAt,
+  })));
+});
+
+router.post("/admin/deposits/:id/confirm", requireAdmin, async (req, res): Promise<void> => {
+  const depositId = parseInt(req.params.id as string);
+  if (isNaN(depositId)) { res.status(400).json({ error: "Invalid deposit ID" }); return; }
+
+  const [deposit] = await db.select().from(depositsTable).where(eq(depositsTable.id, depositId));
+  if (!deposit) { res.status(404).json({ error: "Deposit not found" }); return; }
+  if (deposit.status !== "pending") { res.status(400).json({ error: "Deposit is not pending" }); return; }
+
+  const commission = 50;
+  const credited = Number(deposit.amount) - commission;
+
+  // Credit user
+  await db.update(usersTable).set({
+    walletBalance: sql`${usersTable.walletBalance} + ${credited}`,
+  }).where(eq(usersTable.id, deposit.userId));
+
+  // Credit admin commission
+  const [admin] = await db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.email, "realonabusinessexchange@gmail.com"));
+  if (admin) {
+    await db.update(usersTable).set({
+      walletBalance: sql`${usersTable.walletBalance} + ${commission}`,
+    }).where(eq(usersTable.id, admin.id));
+  }
+
+  await db.update(depositsTable).set({ status: "completed" }).where(eq(depositsTable.id, depositId));
+  res.json({ success: true });
+});
+
+// ── Admin KYC ────────────────────────────────────────────────────────────────
+router.get("/admin/kyc", requireAdmin, async (req, res): Promise<void> => {
+  const { status } = req.query as { status?: string };
+  let query = db.select({
+    kyc: kycSubmissionsTable,
+    username: usersTable.username,
+  }).from(kycSubmissionsTable)
+    .leftJoin(usersTable, eq(kycSubmissionsTable.userId, usersTable.id))
+    .$dynamic();
+  if (status) query = query.where(eq(kycSubmissionsTable.status, String(status))) as typeof query;
+  const rows = await query.orderBy(sql`${kycSubmissionsTable.createdAt} DESC`);
+  res.json(rows.map(r => ({
+    id: r.kyc.id,
+    userId: r.kyc.userId,
+    username: r.username,
+    documentType: r.kyc.documentType,
+    documentUrl: r.kyc.documentUrl,
+    selfieUrl: r.kyc.selfieUrl ?? null,
+    status: r.kyc.status,
+    level: r.kyc.level,
+    adminNote: r.kyc.adminNote ?? null,
+    createdAt: r.kyc.createdAt,
+  })));
+});
+
+router.post("/admin/kyc/:id/approve", requireAdmin, async (req, res): Promise<void> => {
+  const id = parseInt(req.params.id as string);
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid ID" }); return; }
+  const [kyc] = await db.select().from(kycSubmissionsTable).where(eq(kycSubmissionsTable.id, id));
+  if (!kyc) { res.status(404).json({ error: "KYC submission not found" }); return; }
+  await db.update(kycSubmissionsTable).set({ status: "approved" }).where(eq(kycSubmissionsTable.id, id));
+  await db.update(usersTable).set({ kycLevel: kyc.level }).where(eq(usersTable.id, kyc.userId));
+  res.json({ success: true });
+});
+
+router.post("/admin/kyc/:id/reject", requireAdmin, async (req, res): Promise<void> => {
+  const id = parseInt(req.params.id as string);
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid ID" }); return; }
+  const { note } = req.body;
+  const [kyc] = await db.select().from(kycSubmissionsTable).where(eq(kycSubmissionsTable.id, id));
+  if (!kyc) { res.status(404).json({ error: "KYC submission not found" }); return; }
+  await db.update(kycSubmissionsTable).set({ status: "rejected", adminNote: note ?? null }).where(eq(kycSubmissionsTable.id, id));
+  res.json({ success: true });
+});
+
+// ── Admin Announcements ──────────────────────────────────────────────────────
+router.get("/admin/announcements", requireAdmin, async (req, res): Promise<void> => {
+  const items = await db.select().from(announcementsTable).orderBy(sql`${announcementsTable.createdAt} DESC`);
+  res.json(items.map(a => ({ id: a.id, title: a.title, description: a.description, priority: a.priority, isActive: a.isActive, createdAt: a.createdAt })));
+});
+
+router.post("/admin/announcements", requireAdmin, async (req, res): Promise<void> => {
+  const { title, description, priority } = req.body;
+  if (!title || !description) { res.status(400).json({ error: "title and description are required" }); return; }
+  const [item] = await db.insert(announcementsTable).values({ title, description, priority: priority ?? "normal" }).returning();
+  res.status(201).json({ id: item.id, title: item.title, description: item.description, priority: item.priority, isActive: item.isActive, createdAt: item.createdAt });
+});
+
+router.delete("/admin/announcements/:id", requireAdmin, async (req, res): Promise<void> => {
+  const id = parseInt(req.params.id as string);
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid ID" }); return; }
+  await db.update(announcementsTable).set({ isActive: false }).where(eq(announcementsTable.id, id));
+  res.json({ success: true });
+});
+
+// ── Admin Giveaways ──────────────────────────────────────────────────────────
+router.get("/admin/giveaways", requireAdmin, async (req, res): Promise<void> => {
+  const items = await db.select().from(giveawaysTable).orderBy(sql`${giveawaysTable.createdAt} DESC`);
+  res.json(items.map(g => ({
+    id: g.id, title: g.title, description: g.description ?? null,
+    rewardAmount: Number(g.rewardAmount), maxUsers: g.maxUsers,
+    claimedCount: g.claimedCount, taskType: g.taskType, isActive: g.isActive,
+    expiresAt: g.expiresAt ?? null, createdAt: g.createdAt, hasUserClaimed: false,
+  })));
+});
+
+router.post("/admin/giveaways", requireAdmin, async (req, res): Promise<void> => {
+  const { title, description, rewardAmount, maxUsers, taskType, isActive, expiresAt } = req.body;
+  if (!title || !rewardAmount || !maxUsers || !taskType) {
+    res.status(400).json({ error: "title, rewardAmount, maxUsers, taskType are required" }); return;
+  }
+  const [item] = await db.insert(giveawaysTable).values({
+    title, description: description ?? null,
+    rewardAmount: String(rewardAmount), maxUsers, taskType,
+    isActive: isActive ?? true,
+    expiresAt: expiresAt ? new Date(expiresAt) : null,
+  }).returning();
+  res.status(201).json({
+    id: item.id, title: item.title, description: item.description ?? null,
+    rewardAmount: Number(item.rewardAmount), maxUsers: item.maxUsers,
+    claimedCount: item.claimedCount, taskType: item.taskType, isActive: item.isActive,
+    expiresAt: item.expiresAt ?? null, createdAt: item.createdAt, hasUserClaimed: false,
+  });
+});
+
+router.patch("/admin/giveaways/:id", requireAdmin, async (req, res): Promise<void> => {
+  const id = parseInt(req.params.id as string);
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid ID" }); return; }
+  const { isActive, title, description, rewardAmount, maxUsers, taskType, expiresAt } = req.body;
+  const update: Record<string, unknown> = {};
+  if (isActive !== undefined) update.isActive = isActive;
+  if (title) update.title = title;
+  if (description !== undefined) update.description = description;
+  if (rewardAmount !== undefined) update.rewardAmount = String(rewardAmount);
+  if (maxUsers !== undefined) update.maxUsers = maxUsers;
+  if (taskType) update.taskType = taskType;
+  if (expiresAt !== undefined) update.expiresAt = expiresAt ? new Date(expiresAt) : null;
+  const [item] = await db.update(giveawaysTable).set(update).where(eq(giveawaysTable.id, id)).returning();
+  if (!item) { res.status(404).json({ error: "Giveaway not found" }); return; }
+  res.json({
+    id: item.id, title: item.title, description: item.description ?? null,
+    rewardAmount: Number(item.rewardAmount), maxUsers: item.maxUsers,
+    claimedCount: item.claimedCount, taskType: item.taskType, isActive: item.isActive,
+    expiresAt: item.expiresAt ?? null, createdAt: item.createdAt, hasUserClaimed: false,
+  });
 });
 
 // Platform fee

@@ -42,6 +42,9 @@ export const RegisterResponse = zod.object({
   "isAdmin": zod.boolean(),
   "isSuperAdmin": zod.boolean(),
   "isSuspended": zod.boolean(),
+  "isVerified": zod.boolean(),
+  "kycLevel": zod.number(),
+  "referralCode": zod.string().nullish(),
   "createdAt": zod.coerce.date()
 }),
   "token": zod.string()
@@ -65,6 +68,9 @@ export const LoginResponse = zod.object({
   "isAdmin": zod.boolean(),
   "isSuperAdmin": zod.boolean(),
   "isSuspended": zod.boolean(),
+  "isVerified": zod.boolean(),
+  "kycLevel": zod.number(),
+  "referralCode": zod.string().nullish(),
   "createdAt": zod.coerce.date()
 }),
   "token": zod.string()
@@ -91,6 +97,9 @@ export const GetMeResponse = zod.object({
   "isAdmin": zod.boolean(),
   "isSuperAdmin": zod.boolean(),
   "isSuspended": zod.boolean(),
+  "isVerified": zod.boolean(),
+  "kycLevel": zod.number(),
+  "referralCode": zod.string().nullish(),
   "createdAt": zod.coerce.date()
 })
 
@@ -147,6 +156,9 @@ export const GetListingsResponseItem = zod.object({
   "id": zod.number(),
   "sellerId": zod.number(),
   "sellerUsername": zod.string().nullish(),
+  "sellerIsVerified": zod.boolean().optional(),
+  "sellerRating": zod.number().nullish(),
+  "category": zod.enum(['efootball', 'social_media']),
   "gameName": zod.string(),
   "price": zod.number(),
   "description": zod.string(),
@@ -155,6 +167,13 @@ export const GetListingsResponseItem = zod.object({
   "accountPassword": zod.string().nullish(),
   "divisionRank": zod.string().nullish(),
   "squadRating": zod.number().nullish(),
+  "platform": zod.string().nullish(),
+  "accountHandle": zod.string().nullish(),
+  "followerCount": zod.number().nullish(),
+  "following": zod.number().nullish(),
+  "accountAge": zod.string().nullish(),
+  "engagementRate": zod.string().nullish(),
+  "viewCount": zod.number().optional(),
   "status": zod.enum(['active', 'sold', 'deleted']),
   "createdAt": zod.coerce.date()
 })
@@ -170,20 +189,33 @@ export const createListingBodySquadRatingMax = 5000;
 
 
 export const CreateListingBody = zod.object({
+  "category": zod.enum(['efootball', 'social_media']).optional(),
   "gameName": zod.string(),
   "price": zod.number(),
   "description": zod.string(),
   "pictureUrl": zod.string().optional(),
   "accountEmail": zod.string().optional(),
   "accountPassword": zod.string().optional(),
+  "konamiId": zod.string().optional(),
+  "konamiPassword": zod.string().optional(),
+  "accessCode": zod.string().optional(),
   "divisionRank": zod.string().optional(),
-  "squadRating": zod.number().min(createListingBodySquadRatingMin).max(createListingBodySquadRatingMax).optional()
+  "squadRating": zod.number().min(createListingBodySquadRatingMin).max(createListingBodySquadRatingMax).optional(),
+  "platform": zod.string().optional(),
+  "accountHandle": zod.string().optional(),
+  "followerCount": zod.number().optional(),
+  "following": zod.number().optional(),
+  "accountAge": zod.string().optional(),
+  "engagementRate": zod.string().optional()
 })
 
 export const CreateListingResponse = zod.object({
   "id": zod.number(),
   "sellerId": zod.number(),
   "sellerUsername": zod.string().nullish(),
+  "sellerIsVerified": zod.boolean().optional(),
+  "sellerRating": zod.number().nullish(),
+  "category": zod.enum(['efootball', 'social_media']),
   "gameName": zod.string(),
   "price": zod.number(),
   "description": zod.string(),
@@ -192,6 +224,13 @@ export const CreateListingResponse = zod.object({
   "accountPassword": zod.string().nullish(),
   "divisionRank": zod.string().nullish(),
   "squadRating": zod.number().nullish(),
+  "platform": zod.string().nullish(),
+  "accountHandle": zod.string().nullish(),
+  "followerCount": zod.number().nullish(),
+  "following": zod.number().nullish(),
+  "accountAge": zod.string().nullish(),
+  "engagementRate": zod.string().nullish(),
+  "viewCount": zod.number().optional(),
   "status": zod.enum(['active', 'sold', 'deleted']),
   "createdAt": zod.coerce.date()
 })
@@ -204,6 +243,9 @@ export const GetMyListingsResponseItem = zod.object({
   "id": zod.number(),
   "sellerId": zod.number(),
   "sellerUsername": zod.string().nullish(),
+  "sellerIsVerified": zod.boolean().optional(),
+  "sellerRating": zod.number().nullish(),
+  "category": zod.enum(['efootball', 'social_media']),
   "gameName": zod.string(),
   "price": zod.number(),
   "description": zod.string(),
@@ -212,6 +254,13 @@ export const GetMyListingsResponseItem = zod.object({
   "accountPassword": zod.string().nullish(),
   "divisionRank": zod.string().nullish(),
   "squadRating": zod.number().nullish(),
+  "platform": zod.string().nullish(),
+  "accountHandle": zod.string().nullish(),
+  "followerCount": zod.number().nullish(),
+  "following": zod.number().nullish(),
+  "accountAge": zod.string().nullish(),
+  "engagementRate": zod.string().nullish(),
+  "viewCount": zod.number().optional(),
   "status": zod.enum(['active', 'sold', 'deleted']),
   "createdAt": zod.coerce.date()
 })
@@ -229,6 +278,9 @@ export const GetListingResponse = zod.object({
   "id": zod.number(),
   "sellerId": zod.number(),
   "sellerUsername": zod.string().nullish(),
+  "sellerIsVerified": zod.boolean().optional(),
+  "sellerRating": zod.number().nullish(),
+  "category": zod.enum(['efootball', 'social_media']),
   "gameName": zod.string(),
   "price": zod.number(),
   "description": zod.string(),
@@ -237,6 +289,13 @@ export const GetListingResponse = zod.object({
   "accountPassword": zod.string().nullish(),
   "divisionRank": zod.string().nullish(),
   "squadRating": zod.number().nullish(),
+  "platform": zod.string().nullish(),
+  "accountHandle": zod.string().nullish(),
+  "followerCount": zod.number().nullish(),
+  "following": zod.number().nullish(),
+  "accountAge": zod.string().nullish(),
+  "engagementRate": zod.string().nullish(),
+  "viewCount": zod.number().optional(),
   "status": zod.enum(['active', 'sold', 'deleted']),
   "createdAt": zod.coerce.date()
 })
@@ -261,6 +320,9 @@ export const UpdateListingResponse = zod.object({
   "id": zod.number(),
   "sellerId": zod.number(),
   "sellerUsername": zod.string().nullish(),
+  "sellerIsVerified": zod.boolean().optional(),
+  "sellerRating": zod.number().nullish(),
+  "category": zod.enum(['efootball', 'social_media']),
   "gameName": zod.string(),
   "price": zod.number(),
   "description": zod.string(),
@@ -269,6 +331,13 @@ export const UpdateListingResponse = zod.object({
   "accountPassword": zod.string().nullish(),
   "divisionRank": zod.string().nullish(),
   "squadRating": zod.number().nullish(),
+  "platform": zod.string().nullish(),
+  "accountHandle": zod.string().nullish(),
+  "followerCount": zod.number().nullish(),
+  "following": zod.number().nullish(),
+  "accountAge": zod.string().nullish(),
+  "engagementRate": zod.string().nullish(),
+  "viewCount": zod.number().optional(),
   "status": zod.enum(['active', 'sold', 'deleted']),
   "createdAt": zod.coerce.date()
 })
@@ -299,10 +368,15 @@ export const GetTradesResponseItem = zod.object({
   "sellerUsername": zod.string().nullish(),
   "gameName": zod.string().nullish(),
   "pictureUrl": zod.string().nullish(),
+  "listingCategory": zod.string().nullish(),
   "amount": zod.number(),
+  "agreedAmount": zod.number().nullish(),
   "fee": zod.number().nullish(),
   "status": zod.enum(['pending', 'payment_confirmed', 'seller_transferred', 'completed', 'disputed', 'refunded', 'cancelled']),
+  "accessConfirmed": zod.boolean(),
   "disputeReason": zod.string().nullish(),
+  "buyerRating": zod.number().nullish(),
+  "sellerRating": zod.number().nullish(),
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date().optional()
 })
@@ -325,10 +399,15 @@ export const CreateTradeResponse = zod.object({
   "sellerUsername": zod.string().nullish(),
   "gameName": zod.string().nullish(),
   "pictureUrl": zod.string().nullish(),
+  "listingCategory": zod.string().nullish(),
   "amount": zod.number(),
+  "agreedAmount": zod.number().nullish(),
   "fee": zod.number().nullish(),
   "status": zod.enum(['pending', 'payment_confirmed', 'seller_transferred', 'completed', 'disputed', 'refunded', 'cancelled']),
+  "accessConfirmed": zod.boolean(),
   "disputeReason": zod.string().nullish(),
+  "buyerRating": zod.number().nullish(),
+  "sellerRating": zod.number().nullish(),
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date().optional()
 })
@@ -350,10 +429,15 @@ export const GetTradeResponse = zod.object({
   "sellerUsername": zod.string().nullish(),
   "gameName": zod.string().nullish(),
   "pictureUrl": zod.string().nullish(),
+  "listingCategory": zod.string().nullish(),
   "amount": zod.number(),
+  "agreedAmount": zod.number().nullish(),
   "fee": zod.number().nullish(),
   "status": zod.enum(['pending', 'payment_confirmed', 'seller_transferred', 'completed', 'disputed', 'refunded', 'cancelled']),
+  "accessConfirmed": zod.boolean(),
   "disputeReason": zod.string().nullish(),
+  "buyerRating": zod.number().nullish(),
+  "sellerRating": zod.number().nullish(),
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date().optional()
 })
@@ -375,10 +459,15 @@ export const ConfirmTradePaymentResponse = zod.object({
   "sellerUsername": zod.string().nullish(),
   "gameName": zod.string().nullish(),
   "pictureUrl": zod.string().nullish(),
+  "listingCategory": zod.string().nullish(),
   "amount": zod.number(),
+  "agreedAmount": zod.number().nullish(),
   "fee": zod.number().nullish(),
   "status": zod.enum(['pending', 'payment_confirmed', 'seller_transferred', 'completed', 'disputed', 'refunded', 'cancelled']),
+  "accessConfirmed": zod.boolean(),
   "disputeReason": zod.string().nullish(),
+  "buyerRating": zod.number().nullish(),
+  "sellerRating": zod.number().nullish(),
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date().optional()
 })
@@ -400,10 +489,15 @@ export const SellerTransferredResponse = zod.object({
   "sellerUsername": zod.string().nullish(),
   "gameName": zod.string().nullish(),
   "pictureUrl": zod.string().nullish(),
+  "listingCategory": zod.string().nullish(),
   "amount": zod.number(),
+  "agreedAmount": zod.number().nullish(),
   "fee": zod.number().nullish(),
   "status": zod.enum(['pending', 'payment_confirmed', 'seller_transferred', 'completed', 'disputed', 'refunded', 'cancelled']),
+  "accessConfirmed": zod.boolean(),
   "disputeReason": zod.string().nullish(),
+  "buyerRating": zod.number().nullish(),
+  "sellerRating": zod.number().nullish(),
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date().optional()
 })
@@ -425,10 +519,15 @@ export const ConfirmReceiptResponse = zod.object({
   "sellerUsername": zod.string().nullish(),
   "gameName": zod.string().nullish(),
   "pictureUrl": zod.string().nullish(),
+  "listingCategory": zod.string().nullish(),
   "amount": zod.number(),
+  "agreedAmount": zod.number().nullish(),
   "fee": zod.number().nullish(),
   "status": zod.enum(['pending', 'payment_confirmed', 'seller_transferred', 'completed', 'disputed', 'refunded', 'cancelled']),
+  "accessConfirmed": zod.boolean(),
   "disputeReason": zod.string().nullish(),
+  "buyerRating": zod.number().nullish(),
+  "sellerRating": zod.number().nullish(),
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date().optional()
 })
@@ -454,10 +553,15 @@ export const OpenDisputeResponse = zod.object({
   "sellerUsername": zod.string().nullish(),
   "gameName": zod.string().nullish(),
   "pictureUrl": zod.string().nullish(),
+  "listingCategory": zod.string().nullish(),
   "amount": zod.number(),
+  "agreedAmount": zod.number().nullish(),
   "fee": zod.number().nullish(),
   "status": zod.enum(['pending', 'payment_confirmed', 'seller_transferred', 'completed', 'disputed', 'refunded', 'cancelled']),
+  "accessConfirmed": zod.boolean(),
   "disputeReason": zod.string().nullish(),
+  "buyerRating": zod.number().nullish(),
+  "sellerRating": zod.number().nullish(),
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date().optional()
 })
@@ -698,10 +802,15 @@ export const GetAdminTradesResponseItem = zod.object({
   "sellerUsername": zod.string().nullish(),
   "gameName": zod.string().nullish(),
   "pictureUrl": zod.string().nullish(),
+  "listingCategory": zod.string().nullish(),
   "amount": zod.number(),
+  "agreedAmount": zod.number().nullish(),
   "fee": zod.number().nullish(),
   "status": zod.enum(['pending', 'payment_confirmed', 'seller_transferred', 'completed', 'disputed', 'refunded', 'cancelled']),
+  "accessConfirmed": zod.boolean(),
   "disputeReason": zod.string().nullish(),
+  "buyerRating": zod.number().nullish(),
+  "sellerRating": zod.number().nullish(),
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date().optional()
 })
@@ -724,10 +833,15 @@ export const ForceCompleteTradeResponse = zod.object({
   "sellerUsername": zod.string().nullish(),
   "gameName": zod.string().nullish(),
   "pictureUrl": zod.string().nullish(),
+  "listingCategory": zod.string().nullish(),
   "amount": zod.number(),
+  "agreedAmount": zod.number().nullish(),
   "fee": zod.number().nullish(),
   "status": zod.enum(['pending', 'payment_confirmed', 'seller_transferred', 'completed', 'disputed', 'refunded', 'cancelled']),
+  "accessConfirmed": zod.boolean(),
   "disputeReason": zod.string().nullish(),
+  "buyerRating": zod.number().nullish(),
+  "sellerRating": zod.number().nullish(),
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date().optional()
 })
@@ -749,10 +863,15 @@ export const RefundBuyerResponse = zod.object({
   "sellerUsername": zod.string().nullish(),
   "gameName": zod.string().nullish(),
   "pictureUrl": zod.string().nullish(),
+  "listingCategory": zod.string().nullish(),
   "amount": zod.number(),
+  "agreedAmount": zod.number().nullish(),
   "fee": zod.number().nullish(),
   "status": zod.enum(['pending', 'payment_confirmed', 'seller_transferred', 'completed', 'disputed', 'refunded', 'cancelled']),
+  "accessConfirmed": zod.boolean(),
   "disputeReason": zod.string().nullish(),
+  "buyerRating": zod.number().nullish(),
+  "sellerRating": zod.number().nullish(),
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date().optional()
 })
@@ -938,6 +1057,494 @@ export const UpdatePlatformFeeResponse = zod.object({
  * @summary Flutterwave payment webhook
  */
 export const FlutterwaveWebhookResponse = zod.object({
+  "success": zod.boolean(),
+  "message": zod.string().nullish()
+})
+
+
+/**
+ * @summary Cancel a pending trade (buyer or seller)
+ */
+export const CancelTradeParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const CancelTradeResponse = zod.object({
+  "success": zod.boolean(),
+  "message": zod.string().nullish()
+})
+
+
+/**
+ * @summary Get revealed credentials for a trade (buyer only, after payment confirmed)
+ */
+export const GetTradeCredentialsParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetTradeCredentialsResponse = zod.object({
+  "konamiId": zod.string().nullish(),
+  "konamiPassword": zod.string().nullish(),
+  "accessCode": zod.string().nullish(),
+  "accountEmail": zod.string().nullish(),
+  "accountPassword": zod.string().nullish()
+})
+
+
+/**
+ * @summary Buyer confirms they have full access to the account
+ */
+export const ConfirmTradeAccessParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const ConfirmTradeAccessResponse = zod.object({
+  "success": zod.boolean(),
+  "message": zod.string().nullish()
+})
+
+
+/**
+ * @summary Submit a star rating for the trade partner after completion
+ */
+export const RateTradePartnerParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const rateTradePartnerBodyRatingMax = 5;
+
+
+
+export const RateTradePartnerBody = zod.object({
+  "rating": zod.number().min(1).max(rateTradePartnerBodyRatingMax),
+  "comment": zod.string().optional()
+})
+
+export const RateTradePartnerResponse = zod.object({
+  "success": zod.boolean(),
+  "message": zod.string().nullish()
+})
+
+
+/**
+ * @summary Make an offer on a listing
+ */
+export const MakeOfferParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const MakeOfferBody = zod.object({
+  "amount": zod.number(),
+  "message": zod.string().optional()
+})
+
+export const MakeOfferResponse = zod.object({
+  "id": zod.number(),
+  "listingId": zod.number(),
+  "buyerId": zod.number(),
+  "sellerId": zod.number(),
+  "buyerUsername": zod.string().nullish(),
+  "sellerUsername": zod.string().nullish(),
+  "listingTitle": zod.string().nullish(),
+  "amount": zod.number(),
+  "counterAmount": zod.number().nullish(),
+  "message": zod.string().nullish(),
+  "status": zod.enum(['pending', 'accepted', 'rejected', 'countered', 'expired']),
+  "expiresAt": zod.coerce.date(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Get all offers for the current user (as buyer or seller)
+ */
+export const GetMyOffersResponseItem = zod.object({
+  "id": zod.number(),
+  "listingId": zod.number(),
+  "buyerId": zod.number(),
+  "sellerId": zod.number(),
+  "buyerUsername": zod.string().nullish(),
+  "sellerUsername": zod.string().nullish(),
+  "listingTitle": zod.string().nullish(),
+  "amount": zod.number(),
+  "counterAmount": zod.number().nullish(),
+  "message": zod.string().nullish(),
+  "status": zod.enum(['pending', 'accepted', 'rejected', 'countered', 'expired']),
+  "expiresAt": zod.coerce.date(),
+  "createdAt": zod.coerce.date()
+})
+export const GetMyOffersResponse = zod.array(GetMyOffersResponseItem)
+
+
+/**
+ * @summary Accept, reject, or counter an offer
+ */
+export const RespondToOfferParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const RespondToOfferBody = zod.object({
+  "action": zod.enum(['accept', 'reject', 'counter']),
+  "counterAmount": zod.number().optional()
+})
+
+export const RespondToOfferResponse = zod.object({
+  "success": zod.boolean(),
+  "message": zod.string().nullish()
+})
+
+
+/**
+ * @summary Submit KYC documents for verification
+ */
+export const SubmitKycBody = zod.object({
+  "documentType": zod.string(),
+  "documentUrl": zod.string(),
+  "selfieUrl": zod.string().optional()
+})
+
+export const SubmitKycResponse = zod.object({
+  "id": zod.number(),
+  "userId": zod.number(),
+  "username": zod.string().nullish(),
+  "documentType": zod.string(),
+  "documentUrl": zod.string(),
+  "selfieUrl": zod.string().nullish(),
+  "status": zod.enum(['pending', 'approved', 'rejected']),
+  "level": zod.number(),
+  "adminNote": zod.string().nullish(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Get current user's KYC status
+ */
+export const GetKycStatusResponse = zod.object({
+  "kycLevel": zod.number(),
+  "hasSubmission": zod.boolean(),
+  "submission": zod.object({
+  "id": zod.number(),
+  "userId": zod.number(),
+  "username": zod.string().nullish(),
+  "documentType": zod.string(),
+  "documentUrl": zod.string(),
+  "selfieUrl": zod.string().nullish(),
+  "status": zod.enum(['pending', 'approved', 'rejected']),
+  "level": zod.number(),
+  "adminNote": zod.string().nullish(),
+  "createdAt": zod.coerce.date()
+}).optional()
+})
+
+
+/**
+ * @summary Get current user's notifications
+ */
+export const GetNotificationsResponseItem = zod.object({
+  "id": zod.number(),
+  "userId": zod.number(),
+  "type": zod.string(),
+  "title": zod.string(),
+  "message": zod.string(),
+  "isRead": zod.boolean(),
+  "metadata": zod.object({
+
+}).passthrough().nullish(),
+  "createdAt": zod.coerce.date()
+})
+export const GetNotificationsResponse = zod.array(GetNotificationsResponseItem)
+
+
+/**
+ * @summary Mark all notifications as read
+ */
+export const MarkAllNotificationsReadResponse = zod.object({
+  "success": zod.boolean(),
+  "message": zod.string().nullish()
+})
+
+
+/**
+ * @summary Mark a single notification as read
+ */
+export const MarkNotificationReadParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const MarkNotificationReadResponse = zod.object({
+  "success": zod.boolean(),
+  "message": zod.string().nullish()
+})
+
+
+/**
+ * @summary Get active announcements
+ */
+export const GetAnnouncementsResponseItem = zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "description": zod.string(),
+  "priority": zod.enum(['normal', 'important', 'urgent']),
+  "isActive": zod.boolean(),
+  "createdAt": zod.coerce.date()
+})
+export const GetAnnouncementsResponse = zod.array(GetAnnouncementsResponseItem)
+
+
+/**
+ * @summary Get top traders leaderboard
+ */
+export const GetLeaderboardResponse = zod.object({
+  "topSellers": zod.array(zod.object({
+  "rank": zod.number(),
+  "userId": zod.number(),
+  "username": zod.string(),
+  "isVerified": zod.boolean().optional(),
+  "count": zod.number(),
+  "rating": zod.number().nullish()
+})),
+  "topBuyers": zod.array(zod.object({
+  "rank": zod.number(),
+  "userId": zod.number(),
+  "username": zod.string(),
+  "isVerified": zod.boolean().optional(),
+  "count": zod.number(),
+  "rating": zod.number().nullish()
+})),
+  "mostTrusted": zod.array(zod.object({
+  "rank": zod.number(),
+  "userId": zod.number(),
+  "username": zod.string(),
+  "isVerified": zod.boolean().optional(),
+  "count": zod.number(),
+  "rating": zod.number().nullish()
+}))
+})
+
+
+/**
+ * @summary Get active giveaways
+ */
+export const GetActiveGiveawaysResponseItem = zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "description": zod.string().nullish(),
+  "rewardAmount": zod.number(),
+  "maxUsers": zod.number(),
+  "claimedCount": zod.number(),
+  "taskType": zod.string(),
+  "isActive": zod.boolean(),
+  "hasUserClaimed": zod.boolean().optional(),
+  "expiresAt": zod.coerce.date().nullish(),
+  "createdAt": zod.coerce.date()
+})
+export const GetActiveGiveawaysResponse = zod.array(GetActiveGiveawaysResponseItem)
+
+
+/**
+ * @summary Get all KYC submissions
+ */
+export const GetAdminKycSubmissionsQueryParams = zod.object({
+  "status": zod.coerce.string().optional()
+})
+
+export const GetAdminKycSubmissionsResponseItem = zod.object({
+  "id": zod.number(),
+  "userId": zod.number(),
+  "username": zod.string().nullish(),
+  "documentType": zod.string(),
+  "documentUrl": zod.string(),
+  "selfieUrl": zod.string().nullish(),
+  "status": zod.enum(['pending', 'approved', 'rejected']),
+  "level": zod.number(),
+  "adminNote": zod.string().nullish(),
+  "createdAt": zod.coerce.date()
+})
+export const GetAdminKycSubmissionsResponse = zod.array(GetAdminKycSubmissionsResponseItem)
+
+
+/**
+ * @summary Approve a KYC submission
+ */
+export const ApproveKycParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const ApproveKycResponse = zod.object({
+  "success": zod.boolean(),
+  "message": zod.string().nullish()
+})
+
+
+/**
+ * @summary Reject a KYC submission
+ */
+export const RejectKycParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const RejectKycBody = zod.object({
+  "reason": zod.string()
+})
+
+export const RejectKycResponse = zod.object({
+  "success": zod.boolean(),
+  "message": zod.string().nullish()
+})
+
+
+/**
+ * @summary Get all announcements
+ */
+export const GetAdminAnnouncementsResponseItem = zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "description": zod.string(),
+  "priority": zod.enum(['normal', 'important', 'urgent']),
+  "isActive": zod.boolean(),
+  "createdAt": zod.coerce.date()
+})
+export const GetAdminAnnouncementsResponse = zod.array(GetAdminAnnouncementsResponseItem)
+
+
+/**
+ * @summary Create an announcement
+ */
+export const CreateAnnouncementBody = zod.object({
+  "title": zod.string(),
+  "description": zod.string(),
+  "priority": zod.enum(['normal', 'important', 'urgent']).optional()
+})
+
+export const CreateAnnouncementResponse = zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "description": zod.string(),
+  "priority": zod.enum(['normal', 'important', 'urgent']),
+  "isActive": zod.boolean(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Delete an announcement
+ */
+export const DeleteAnnouncementParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeleteAnnouncementResponse = zod.object({
+  "success": zod.boolean(),
+  "message": zod.string().nullish()
+})
+
+
+/**
+ * @summary Get all giveaways
+ */
+export const GetAdminGiveawaysResponseItem = zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "description": zod.string().nullish(),
+  "rewardAmount": zod.number(),
+  "maxUsers": zod.number(),
+  "claimedCount": zod.number(),
+  "taskType": zod.string(),
+  "isActive": zod.boolean(),
+  "hasUserClaimed": zod.boolean().optional(),
+  "expiresAt": zod.coerce.date().nullish(),
+  "createdAt": zod.coerce.date()
+})
+export const GetAdminGiveawaysResponse = zod.array(GetAdminGiveawaysResponseItem)
+
+
+/**
+ * @summary Create a giveaway
+ */
+export const CreateGiveawayBody = zod.object({
+  "title": zod.string(),
+  "description": zod.string().optional(),
+  "rewardAmount": zod.number(),
+  "maxUsers": zod.number(),
+  "taskType": zod.enum(['registration', 'first_trade', 'first_listing', 'referral']),
+  "isActive": zod.boolean().optional(),
+  "expiresAt": zod.coerce.date().optional()
+})
+
+export const CreateGiveawayResponse = zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "description": zod.string().nullish(),
+  "rewardAmount": zod.number(),
+  "maxUsers": zod.number(),
+  "claimedCount": zod.number(),
+  "taskType": zod.string(),
+  "isActive": zod.boolean(),
+  "hasUserClaimed": zod.boolean().optional(),
+  "expiresAt": zod.coerce.date().nullish(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Update or toggle a giveaway
+ */
+export const UpdateGiveawayParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdateGiveawayBody = zod.object({
+  "title": zod.string(),
+  "description": zod.string().optional(),
+  "rewardAmount": zod.number(),
+  "maxUsers": zod.number(),
+  "taskType": zod.enum(['registration', 'first_trade', 'first_listing', 'referral']),
+  "isActive": zod.boolean().optional(),
+  "expiresAt": zod.coerce.date().optional()
+})
+
+export const UpdateGiveawayResponse = zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "description": zod.string().nullish(),
+  "rewardAmount": zod.number(),
+  "maxUsers": zod.number(),
+  "claimedCount": zod.number(),
+  "taskType": zod.string(),
+  "isActive": zod.boolean(),
+  "hasUserClaimed": zod.boolean().optional(),
+  "expiresAt": zod.coerce.date().nullish(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Get all deposits (admin)
+ */
+export const GetAdminDepositsQueryParams = zod.object({
+  "status": zod.coerce.string().optional()
+})
+
+export const GetAdminDepositsResponseItem = zod.object({
+  "id": zod.number(),
+  "userId": zod.number(),
+  "amount": zod.number(),
+  "reference": zod.string(),
+  "status": zod.enum(['pending', 'completed', 'failed']),
+  "createdAt": zod.coerce.date()
+})
+export const GetAdminDepositsResponse = zod.array(GetAdminDepositsResponseItem)
+
+
+/**
+ * @summary Admin confirms a pending deposit and credits user wallet
+ */
+export const ConfirmDepositParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const ConfirmDepositResponse = zod.object({
   "success": zod.boolean(),
   "message": zod.string().nullish()
 })

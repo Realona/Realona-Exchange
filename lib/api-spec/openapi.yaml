@@ -18,6 +18,12 @@ tags:
   - name: reports
   - name: admin
   - name: webhooks
+  - name: offers
+  - name: kyc
+  - name: notifications
+  - name: announcements
+  - name: leaderboard
+  - name: giveaways
   - name: Storage
     description: Object storage upload and serving endpoints.
 
@@ -874,6 +880,412 @@ paths:
               schema:
                 $ref: "#/components/schemas/SuccessResponse"
 
+  # ─── CANCEL TRADE ──────────────────────────────────────────────────────────
+  /trades/{id}/cancel:
+    post:
+      operationId: cancelTrade
+      tags: [trades]
+      summary: Cancel a pending trade (buyer or seller)
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        "200":
+          description: Trade cancelled
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SuccessResponse" }
+
+  # ─── TRADE CREDENTIALS ─────────────────────────────────────────────────────
+  /trades/{id}/credentials:
+    get:
+      operationId: getTradeCredentials
+      tags: [trades]
+      summary: Get revealed credentials for a trade (buyer only, after payment confirmed)
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        "200":
+          description: Credentials
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TradeCredentials" }
+
+  # ─── CONFIRM ACCESS ────────────────────────────────────────────────────────
+  /trades/{id}/confirm-access:
+    post:
+      operationId: confirmTradeAccess
+      tags: [trades]
+      summary: Buyer confirms they have full access to the account
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        "200":
+          description: Access confirmed
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SuccessResponse" }
+
+  # ─── TRADE RATINGS ─────────────────────────────────────────────────────────
+  /trades/{id}/rate:
+    post:
+      operationId: rateTradePartner
+      tags: [trades]
+      summary: Submit a star rating for the trade partner after completion
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TradeRatingInput" }
+      responses:
+        "200":
+          description: Rating submitted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SuccessResponse" }
+
+  # ─── OFFERS ────────────────────────────────────────────────────────────────
+  /listings/{id}/offers:
+    post:
+      operationId: makeOffer
+      tags: [offers]
+      summary: Make an offer on a listing
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/OfferInput" }
+      responses:
+        "201":
+          description: Offer created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Offer" }
+
+  /offers:
+    get:
+      operationId: getMyOffers
+      tags: [offers]
+      summary: Get all offers for the current user (as buyer or seller)
+      responses:
+        "200":
+          description: List of offers
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Offer" }
+
+  /offers/{id}/respond:
+    post:
+      operationId: respondToOffer
+      tags: [offers]
+      summary: Accept, reject, or counter an offer
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/OfferResponse" }
+      responses:
+        "200":
+          description: Offer updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SuccessResponse" }
+
+  # ─── KYC ───────────────────────────────────────────────────────────────────
+  /kyc/submit:
+    post:
+      operationId: submitKyc
+      tags: [kyc]
+      summary: Submit KYC documents for verification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/KycInput" }
+      responses:
+        "201":
+          description: KYC submitted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KycSubmission" }
+
+  /kyc/status:
+    get:
+      operationId: getKycStatus
+      tags: [kyc]
+      summary: Get current user's KYC status
+      responses:
+        "200":
+          description: KYC status
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KycStatus" }
+
+  # ─── NOTIFICATIONS ─────────────────────────────────────────────────────────
+  /notifications:
+    get:
+      operationId: getNotifications
+      tags: [notifications]
+      summary: Get current user's notifications
+      responses:
+        "200":
+          description: Notifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Notification" }
+
+  /notifications/read-all:
+    post:
+      operationId: markAllNotificationsRead
+      tags: [notifications]
+      summary: Mark all notifications as read
+      responses:
+        "200":
+          description: All marked read
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SuccessResponse" }
+
+  /notifications/{id}/read:
+    post:
+      operationId: markNotificationRead
+      tags: [notifications]
+      summary: Mark a single notification as read
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        "200":
+          description: Marked read
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SuccessResponse" }
+
+  # ─── ANNOUNCEMENTS ─────────────────────────────────────────────────────────
+  /announcements:
+    get:
+      operationId: getAnnouncements
+      tags: [announcements]
+      summary: Get active announcements
+      responses:
+        "200":
+          description: Announcements
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Announcement" }
+
+  # ─── LEADERBOARD ───────────────────────────────────────────────────────────
+  /leaderboard:
+    get:
+      operationId: getLeaderboard
+      tags: [leaderboard]
+      summary: Get top traders leaderboard
+      responses:
+        "200":
+          description: Leaderboard
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Leaderboard" }
+
+  # ─── GIVEAWAYS ─────────────────────────────────────────────────────────────
+  /giveaways:
+    get:
+      operationId: getActiveGiveaways
+      tags: [giveaways]
+      summary: Get active giveaways
+      responses:
+        "200":
+          description: Active giveaways
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Giveaway" }
+
+  # ─── ADMIN: KYC ────────────────────────────────────────────────────────────
+  /admin/kyc:
+    get:
+      operationId: getAdminKycSubmissions
+      tags: [admin]
+      summary: Get all KYC submissions
+      parameters:
+        - { name: status, in: query, schema: { type: string } }
+      responses:
+        "200":
+          description: KYC submissions
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/KycSubmission" }
+
+  /admin/kyc/{id}/approve:
+    post:
+      operationId: approveKyc
+      tags: [admin]
+      summary: Approve a KYC submission
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        "200":
+          description: Approved
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SuccessResponse" }
+
+  /admin/kyc/{id}/reject:
+    post:
+      operationId: rejectKyc
+      tags: [admin]
+      summary: Reject a KYC submission
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RejectInput" }
+      responses:
+        "200":
+          description: Rejected
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SuccessResponse" }
+
+  # ─── ADMIN: ANNOUNCEMENTS ──────────────────────────────────────────────────
+  /admin/announcements:
+    get:
+      operationId: getAdminAnnouncements
+      tags: [admin]
+      summary: Get all announcements
+      responses:
+        "200":
+          description: Announcements
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Announcement" }
+    post:
+      operationId: createAnnouncement
+      tags: [admin]
+      summary: Create an announcement
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AnnouncementInput" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Announcement" }
+
+  /admin/announcements/{id}:
+    delete:
+      operationId: deleteAnnouncement
+      tags: [admin]
+      summary: Delete an announcement
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SuccessResponse" }
+
+  # ─── ADMIN: GIVEAWAYS ──────────────────────────────────────────────────────
+  /admin/giveaways:
+    get:
+      operationId: getAdminGiveaways
+      tags: [admin]
+      summary: Get all giveaways
+      responses:
+        "200":
+          description: Giveaways
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Giveaway" }
+    post:
+      operationId: createGiveaway
+      tags: [admin]
+      summary: Create a giveaway
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/GiveawayInput" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Giveaway" }
+
+  /admin/giveaways/{id}:
+    patch:
+      operationId: updateGiveaway
+      tags: [admin]
+      summary: Update or toggle a giveaway
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/GiveawayInput" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Giveaway" }
+
+  # ─── ADMIN: DEPOSITS (confirm) ─────────────────────────────────────────────
+  /admin/deposits:
+    get:
+      operationId: getAdminDeposits
+      tags: [admin]
+      summary: Get all deposits (admin)
+      parameters:
+        - { name: status, in: query, schema: { type: string } }
+      responses:
+        "200":
+          description: Deposits list
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Deposit" }
+
+  /admin/deposits/{id}/confirm:
+    post:
+      operationId: confirmDeposit
+      tags: [admin]
+      summary: Admin confirms a pending deposit and credits user wallet
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        "200":
+          description: Deposit confirmed and wallet credited
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SuccessResponse" }
+
   # ─── STORAGE ───────────────────────────────────────────────────────────────
   /storage/uploads/request-url:
     post:
@@ -993,7 +1405,7 @@ components:
     # ── User ──
     User:
       type: object
-      required: [id, email, username, walletBalance, isAdmin, isSuperAdmin, isSuspended, createdAt]
+      required: [id, email, username, walletBalance, isAdmin, isSuperAdmin, isSuspended, isVerified, kycLevel, createdAt]
       properties:
         id:
           type: integer
@@ -1009,6 +1421,12 @@ components:
           type: boolean
         isSuspended:
           type: boolean
+        isVerified:
+          type: boolean
+        kycLevel:
+          type: integer
+        referralCode:
+          type: ["string", "null"]
         createdAt:
           type: string
           format: date-time
@@ -1052,7 +1470,7 @@ components:
     # ── Listing ──
     Listing:
       type: object
-      required: [id, sellerId, gameName, price, description, status, createdAt]
+      required: [id, sellerId, gameName, price, description, status, category, createdAt]
       properties:
         id:
           type: integer
@@ -1060,6 +1478,13 @@ components:
           type: integer
         sellerUsername:
           type: ["string", "null"]
+        sellerIsVerified:
+          type: boolean
+        sellerRating:
+          type: ["number", "null"]
+        category:
+          type: string
+          enum: [efootball, social_media]
         gameName:
           type: string
         price:
@@ -1076,6 +1501,21 @@ components:
           type: ["string", "null"]
         squadRating:
           type: ["integer", "null"]
+        # social media fields
+        platform:
+          type: ["string", "null"]
+        accountHandle:
+          type: ["string", "null"]
+        followerCount:
+          type: ["integer", "null"]
+        following:
+          type: ["integer", "null"]
+        accountAge:
+          type: ["string", "null"]
+        engagementRate:
+          type: ["string", "null"]
+        viewCount:
+          type: integer
         status:
           type: string
           enum: [active, sold, deleted]
@@ -1087,6 +1527,9 @@ components:
       type: object
       required: [gameName, price, description]
       properties:
+        category:
+          type: string
+          enum: [efootball, social_media]
         gameName:
           type: string
         price:
@@ -1099,12 +1542,30 @@ components:
           type: string
         accountPassword:
           type: string
+        konamiId:
+          type: string
+        konamiPassword:
+          type: string
+        accessCode:
+          type: string
         divisionRank:
           type: string
         squadRating:
           type: integer
           minimum: 2000
           maximum: 5000
+        platform:
+          type: string
+        accountHandle:
+          type: string
+        followerCount:
+          type: integer
+        following:
+          type: integer
+        accountAge:
+          type: string
+        engagementRate:
+          type: string
 
     ListingUpdate:
       type: object
@@ -1123,7 +1584,7 @@ components:
     # ── Trade ──
     Trade:
       type: object
-      required: [id, listingId, buyerId, sellerId, amount, status, createdAt]
+      required: [id, listingId, buyerId, sellerId, amount, status, accessConfirmed, createdAt]
       properties:
         id:
           type: integer
@@ -1141,15 +1602,25 @@ components:
           type: ["string", "null"]
         pictureUrl:
           type: ["string", "null"]
+        listingCategory:
+          type: ["string", "null"]
         amount:
           type: number
+        agreedAmount:
+          type: ["number", "null"]
         fee:
           type: ["number", "null"]
         status:
           type: string
           enum: [pending, payment_confirmed, seller_transferred, completed, disputed, refunded, cancelled]
+        accessConfirmed:
+          type: boolean
         disputeReason:
           type: ["string", "null"]
+        buyerRating:
+          type: ["number", "null"]
+        sellerRating:
+          type: ["number", "null"]
         createdAt:
           type: string
           format: date-time
@@ -1412,6 +1883,270 @@ components:
       properties:
         feePercent:
           type: number
+
+    # ── New entity schemas ──
+
+    TradeCredentials:
+      type: object
+      properties:
+        konamiId:
+          type: ["string", "null"]
+        konamiPassword:
+          type: ["string", "null"]
+        accessCode:
+          type: ["string", "null"]
+        accountEmail:
+          type: ["string", "null"]
+        accountPassword:
+          type: ["string", "null"]
+
+    TradeRatingInput:
+      type: object
+      required: [rating]
+      properties:
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+
+    Offer:
+      type: object
+      required: [id, listingId, buyerId, sellerId, amount, status, expiresAt, createdAt]
+      properties:
+        id:
+          type: integer
+        listingId:
+          type: integer
+        buyerId:
+          type: integer
+        sellerId:
+          type: integer
+        buyerUsername:
+          type: ["string", "null"]
+        sellerUsername:
+          type: ["string", "null"]
+        listingTitle:
+          type: ["string", "null"]
+        amount:
+          type: number
+        counterAmount:
+          type: ["number", "null"]
+        message:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [pending, accepted, rejected, countered, expired]
+        expiresAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    OfferInput:
+      type: object
+      required: [amount]
+      properties:
+        amount:
+          type: number
+        message:
+          type: string
+
+    OfferResponse:
+      type: object
+      required: [action]
+      properties:
+        action:
+          type: string
+          enum: [accept, reject, counter]
+        counterAmount:
+          type: number
+
+    KycSubmission:
+      type: object
+      required: [id, userId, documentType, documentUrl, status, level, createdAt]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        username:
+          type: ["string", "null"]
+        documentType:
+          type: string
+        documentUrl:
+          type: string
+        selfieUrl:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [pending, approved, rejected]
+        level:
+          type: integer
+        adminNote:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    KycInput:
+      type: object
+      required: [documentType, documentUrl]
+      properties:
+        documentType:
+          type: string
+        documentUrl:
+          type: string
+        selfieUrl:
+          type: string
+
+    KycStatus:
+      type: object
+      required: [kycLevel, hasSubmission]
+      properties:
+        kycLevel:
+          type: integer
+        hasSubmission:
+          type: boolean
+        submission:
+          $ref: "#/components/schemas/KycSubmission"
+
+    Notification:
+      type: object
+      required: [id, userId, type, title, message, isRead, createdAt]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        type:
+          type: string
+        title:
+          type: string
+        message:
+          type: string
+        isRead:
+          type: boolean
+        metadata:
+          type: object
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    Announcement:
+      type: object
+      required: [id, title, description, priority, isActive, createdAt]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        priority:
+          type: string
+          enum: [normal, important, urgent]
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    AnnouncementInput:
+      type: object
+      required: [title, description]
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        priority:
+          type: string
+          enum: [normal, important, urgent]
+
+    Giveaway:
+      type: object
+      required: [id, title, rewardAmount, maxUsers, claimedCount, taskType, isActive, createdAt]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        rewardAmount:
+          type: number
+        maxUsers:
+          type: integer
+        claimedCount:
+          type: integer
+        taskType:
+          type: string
+        isActive:
+          type: boolean
+        hasUserClaimed:
+          type: boolean
+        expiresAt:
+          type: ["string", "null"]
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    GiveawayInput:
+      type: object
+      required: [title, rewardAmount, maxUsers, taskType]
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        rewardAmount:
+          type: number
+        maxUsers:
+          type: integer
+        taskType:
+          type: string
+          enum: [registration, first_trade, first_listing, referral]
+        isActive:
+          type: boolean
+        expiresAt:
+          type: string
+          format: date-time
+
+    LeaderboardEntry:
+      type: object
+      required: [rank, userId, username, count]
+      properties:
+        rank:
+          type: integer
+        userId:
+          type: integer
+        username:
+          type: string
+        isVerified:
+          type: boolean
+        count:
+          type: integer
+        rating:
+          type: ["number", "null"]
+
+    Leaderboard:
+      type: object
+      required: [topSellers, topBuyers, mostTrusted]
+      properties:
+        topSellers:
+          type: array
+          items: { $ref: "#/components/schemas/LeaderboardEntry" }
+        topBuyers:
+          type: array
+          items: { $ref: "#/components/schemas/LeaderboardEntry" }
+        mostTrusted:
+          type: array
+          items: { $ref: "#/components/schemas/LeaderboardEntry" }
 
     UploadUrlRequest:
       type: object

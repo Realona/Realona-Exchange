@@ -5,18 +5,29 @@
  * Realona Exchange API
  * OpenAPI spec version: 0.1.0
  */
+import type { ListingInputCategory } from './listingInputCategory';
 
 export interface ListingInput {
+  category?: ListingInputCategory;
   gameName: string;
   price: number;
   description: string;
   pictureUrl?: string;
   accountEmail?: string;
   accountPassword?: string;
+  konamiId?: string;
+  konamiPassword?: string;
+  accessCode?: string;
   divisionRank?: string;
   /**
      * @minimum 2000
      * @maximum 5000
      */
   squadRating?: number;
+  platform?: string;
+  accountHandle?: string;
+  followerCount?: number;
+  following?: number;
+  accountAge?: string;
+  engagementRate?: string;
 }

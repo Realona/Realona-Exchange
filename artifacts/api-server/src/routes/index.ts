@@ -11,6 +11,12 @@ import reportsRouter from "./reports";
 import adminRouter from "./admin";
 import webhooksRouter from "./webhooks";
 import storageRouter from "./storage";
+import offersRouter from "./offers";
+import kycRouter from "./kyc";
+import notificationsRouter from "./notifications";
+import announcementsRouter from "./announcements";
+import giveawaysRouter from "./giveaways";
+import leaderboardRouter from "./leaderboard";
 
 const router: IRouter = Router();
 
@@ -26,5 +32,11 @@ router.use(reportsRouter);
 router.use(adminRouter);
 router.use(webhooksRouter);
 router.use(storageRouter);
+router.use(offersRouter);
+router.use(kycRouter);
+router.use(notificationsRouter);
+router.use(announcementsRouter);
+router.use(giveawaysRouter);
+router.use(leaderboardRouter);
 
 export default router;

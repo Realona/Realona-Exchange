@@ -14,5 +14,9 @@ export interface User {
   isAdmin: boolean;
   isSuperAdmin: boolean;
   isSuspended: boolean;
+  isVerified: boolean;
+  kycLevel: number;
+  /** @nullable */
+  referralCode?: string | null;
   createdAt: Date;
 }

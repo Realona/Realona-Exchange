@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Link } from "wouter";
 import { useGetListings } from "@workspace/api-client-react";
 import { formatNaira } from "@/lib/utils";
-import { Search, ShieldCheck, Zap, MessageSquare, SlidersHorizontal, X } from "lucide-react";
+import { Search, ShieldCheck, Zap, MessageSquare, SlidersHorizontal, X, Users } from "lucide-react";
 import { useState } from "react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,16 +18,21 @@ export default function Home() {
   const [minRating, setMinRating] = useState("");
   const [maxRating, setMaxRating] = useState("");
   const [showFilters, setShowFilters] = useState(false);
+  const [category, setCategory] = useState<"all" | "efootball" | "social_media">("all");
   const { user } = useAuth();
 
   const hasFilters = divisionRank || minRating || maxRating;
 
-  const { data: listings, isLoading } = useGetListings({
+  const { data: allListings, isLoading } = useGetListings({
     search: search || undefined,
     divisionRank: divisionRank || undefined,
     minSquadRating: minRating ? Number(minRating) : undefined,
     maxSquadRating: maxRating ? Number(maxRating) : undefined,
   });
+
+  const listings = category === "all"
+    ? allListings
+    : allListings?.filter((l: any) => (l.category ?? "efootball") === category);
 
   const clearFilters = () => {
     setDivisionRank("");
@@ -99,10 +104,10 @@ export default function Home() {
       {/* Listings */}
       <section className="py-16 bg-background">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-8">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-6">
             <div>
-              <h2 className="text-3xl font-bold mb-2">eFootball Accounts For Sale</h2>
-              <p className="text-muted-foreground">Browse premium eFootball accounts listed by verified sellers.</p>
+              <h2 className="text-3xl font-bold mb-2">Accounts For Sale</h2>
+              <p className="text-muted-foreground">Browse premium eFootball and social media accounts.</p>
             </div>
             <Button
               variant="outline"
@@ -114,6 +119,23 @@ export default function Home() {
               Filters
               {hasFilters && <span className="ml-2 bg-primary text-primary-foreground text-xs rounded-full w-4 h-4 flex items-center justify-center">!</span>}
             </Button>
+          </div>
+
+          {/* Category tabs */}
+          <div className="flex gap-2 mb-6">
+            {(["all", "efootball", "social_media"] as const).map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setCategory(cat)}
+                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                  category === cat
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                }`}
+              >
+                {cat === "all" ? "All" : cat === "efootball" ? "eFootball" : "Social Media"}
+              </button>
+            ))}
           </div>
 
           {/* Filter panel */}
@@ -186,19 +208,32 @@ export default function Home() {
                   </div>
                   <CardContent className="p-4 flex-1">
                     {/* Division & Rating badges */}
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {listing.divisionRank && (
-                        <Badge className="bg-primary/10 text-primary border-primary/20 text-xs">
-                          {listing.divisionRank}
-                        </Badge>
-                      )}
-                      {listing.squadRating != null && (
-                        <Badge variant="outline" className="text-xs bg-yellow-500/10 text-yellow-600 border-yellow-500/30">
-                          ⭐ {listing.squadRating} OVR
-                        </Badge>
-                      )}
-                      {!listing.divisionRank && listing.squadRating == null && (
-                        <Badge variant="outline" className="bg-secondary text-xs rounded-sm">eFootball</Badge>
+                    <div className="flex flex-wrap gap-1.5 mb-3">
+                      {(listing as any).category === "social_media" ? (
+                        <>
+                          {(listing as any).platform && (
+                            <Badge className="bg-purple-500/10 text-purple-500 border-purple-500/20 text-xs capitalize">{(listing as any).platform}</Badge>
+                          )}
+                          {(listing as any).followerCount != null && (
+                            <Badge variant="outline" className="text-xs bg-blue-500/10 text-blue-500 border-blue-500/20">
+                              {Number((listing as any).followerCount).toLocaleString()} followers
+                            </Badge>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          {listing.divisionRank && (
+                            <Badge className="bg-primary/10 text-primary border-primary/20 text-xs">{listing.divisionRank}</Badge>
+                          )}
+                          {listing.squadRating != null && (
+                            <Badge variant="outline" className="text-xs bg-yellow-500/10 text-yellow-600 border-yellow-500/30">
+                              {listing.squadRating} OVR
+                            </Badge>
+                          )}
+                          {!listing.divisionRank && listing.squadRating == null && (
+                            <Badge variant="outline" className="bg-secondary text-xs rounded-sm">eFootball</Badge>
+                          )}
+                        </>
                       )}
                     </div>
                     <p className="text-sm text-foreground line-clamp-3 mb-2">{listing.description}</p>
@@ -207,6 +242,9 @@ export default function Home() {
                         {listing.sellerUsername?.[0]?.toUpperCase()}
                       </div>
                       <span className="truncate">{listing.sellerUsername}</span>
+                      {(listing as any).sellerIsVerified && (
+                        <span title="Verified" className="text-primary"><ShieldCheck className="w-3.5 h-3.5" /></span>
+                      )}
                     </div>
                   </CardContent>
                   <CardFooter className="p-4 pt-0">

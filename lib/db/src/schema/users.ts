@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, boolean, numeric } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, boolean, numeric, integer } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -11,6 +11,10 @@ export const usersTable = pgTable("users", {
   isAdmin: boolean("is_admin").notNull().default(false),
   isSuperAdmin: boolean("is_super_admin").notNull().default(false),
   isSuspended: boolean("is_suspended").notNull().default(false),
+  isVerified: boolean("is_verified").notNull().default(false),   // seller trust badge
+  kycLevel: integer("kyc_level").notNull().default(0),           // 0=unverified, 1=id uploaded, 2=fully verified
+  referralCode: text("referral_code").unique(),
+  referredBy: integer("referred_by"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });
