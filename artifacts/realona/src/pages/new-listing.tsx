@@ -98,8 +98,8 @@ function PlayerPicker({ players, onChange }: { players: PlayerEntry[]; onChange:
             <div className="w-24">
               <Input
                 type="number"
-                min="1"
-                max="99"
+                min="0"
+                max="200"
                 placeholder="Rating"
                 value={p.rating}
                 onChange={e => update(i, "rating", e.target.value)}
