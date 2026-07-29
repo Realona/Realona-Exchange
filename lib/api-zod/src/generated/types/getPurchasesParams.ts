@@ -6,6 +6,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type RemoveFromWishlist200 = {
-  success?: boolean;
+export type GetPurchasesParams = {
+search?: string;
+from?: Date;
+to?: Date;
 };

@@ -73,7 +73,7 @@ export default function PublicWishlistPage() {
               const l = item.listing;
               const isSocialMedia = l?.category === "social_media";
               return (
-                <Card key={item.id} className="border-border bg-card hover:border-primary/30 transition-colors">
+                <Card key={item.wishlistId} className="border-border bg-card hover:border-primary/30 transition-colors">
                   <CardContent className="p-4">
                     <div className="flex gap-4">
                       {/* Thumbnail */}
@@ -118,7 +118,7 @@ export default function PublicWishlistPage() {
                           )}
 
                           {l?.status === "active" && (
-                            <Link href={`/listings/${item.listingId}`} className="ml-auto">
+                            <Link href={`/listings/${item.listing?.id}`} className="ml-auto">
                               <Button size="sm" className="h-7 text-xs">
                                 <ShoppingCart className="w-3 h-3 mr-1.5" />
                                 Buy Now

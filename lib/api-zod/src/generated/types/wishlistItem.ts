@@ -5,12 +5,10 @@
  * Realona Exchange API
  * OpenAPI spec version: 0.1.0
  */
-import type { WishlistItemListing } from './wishlistItemListing';
+import type { Listing } from './listing';
 
 export interface WishlistItem {
-  id: number;
-  userId: number;
-  listingId: number;
-  createdAt: Date;
-  listing?: WishlistItemListing;
+  wishlistId: number;
+  addedAt: Date;
+  listing: Listing;
 }

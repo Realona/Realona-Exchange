@@ -28,12 +28,12 @@ import AdminDeposits from "@/pages/admin/deposits";
 import AdminKycReview from "@/pages/admin/kyc-review";
 import AdminAnnouncements from "@/pages/admin/announcements";
 import AdminGiveaways from "@/pages/admin/giveaways";
-import WishlistPage from "@/pages/wishlist";
-import PurchasesPage from "@/pages/purchases";
 import PublicWishlistPage from "@/pages/public-wishlist";
 import FAQPage from "@/pages/faq";
 import ActivityLogsPage from "@/pages/activity-logs";
 import ReviewsPage from "@/pages/reviews";
+import Wishlist from "@/pages/wishlist";
+import Purchases from "@/pages/purchases";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -153,10 +153,10 @@ function Router() {
         <ProtectedRoute component={KYCPage} />
       </Route>
       <Route path="/wishlist">
-        <ProtectedRoute component={WishlistPage} />
+        <ProtectedRoute component={Wishlist} />
       </Route>
       <Route path="/purchases">
-        <ProtectedRoute component={PurchasesPage} />
+        <ProtectedRoute component={Purchases} />
       </Route>
       <Route path="/wishlist/:username" component={PublicWishlistPage} />
       <Route path="/faq" component={FAQPage} />

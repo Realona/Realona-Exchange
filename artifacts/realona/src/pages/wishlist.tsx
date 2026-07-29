@@ -1,147 +1,163 @@
-import { Link } from "wouter";
 import { Layout } from "@/components/layout";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { useGetWishlist, useRemoveFromWishlist } from "@workspace/api-client-react";
-import { formatNaira } from "@/lib/utils";
-import { useToast } from "@/hooks/use-toast";
-import { useQueryClient } from "@tanstack/react-query";
-import { Heart, HeartOff, ShoppingCart, Users, Gamepad2, Share2, Copy } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { Link, useLocation } from "wouter";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Heart, ShieldCheck, Trash2 } from "lucide-react";
+import { formatNaira } from "@/lib/utils";
+import { useGetWishlist, useRemoveFromWishlist } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 
-export default function WishlistPage() {
+export default function Wishlist() {
+  const { user } = useAuth();
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { user } = useAuth();
-  const { data: items, isLoading } = useGetWishlist({ query: { queryKey: ["getWishlist"] } });
-  const remove = useRemoveFromWishlist();
 
-  const handleShare = () => {
-    const url = `${window.location.origin}/wishlist/${user?.username}`;
-    navigator.clipboard.writeText(url);
-    toast({ title: "Wishlist link copied!", description: "Share it with anyone to show what you're looking for." });
-  };
+  const { data: items, isLoading } = useGetWishlist();
+  const removeFromWishlist = useRemoveFromWishlist();
+
+  if (!user) {
+    setLocation("/login");
+    return null;
+  }
 
   const handleRemove = (listingId: number) => {
-    remove.mutate({ listingId }, {
-      onSuccess: () => {
-        toast({ title: "Removed from wishlist" });
-        queryClient.invalidateQueries({ queryKey: ["getWishlist"] });
-      },
-      onError: (err: any) => toast({ title: "Failed", description: err?.data?.error ?? err?.message, variant: "destructive" }),
-    });
-  };
-
-  if (isLoading) {
-    return (
-      <Layout>
-        <div className="container mx-auto px-4 py-16 max-w-4xl">
-          <div className="animate-pulse space-y-4">
-            {[1, 2, 3].map(i => <div key={i} className="h-32 bg-muted rounded-xl" />)}
-          </div>
-        </div>
-      </Layout>
+    removeFromWishlist.mutate(
+      { listingId },
+      {
+        onSuccess: () => {
+          toast({ title: "Removed from wishlist" });
+          queryClient.invalidateQueries({ queryKey: ["getWishlist"] });
+          queryClient.invalidateQueries({ queryKey: ["getWishlistIds"] });
+        },
+        onError: () => {
+          toast({ title: "Failed to remove", variant: "destructive" });
+        },
+      }
     );
-  }
+  };
 
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <div className="flex items-center justify-between gap-3 mb-6">
-          <div className="flex items-center gap-3">
+      <div className="container mx-auto px-4 py-8">
+        <div className="mb-8">
+          <div className="flex items-center gap-3 mb-2">
             <Heart className="w-6 h-6 text-red-500 fill-red-500" />
-            <div>
-              <h1 className="text-2xl font-bold">My Wishlist</h1>
-              <p className="text-sm text-muted-foreground">{items?.length ?? 0} saved {items?.length === 1 ? "listing" : "listings"}</p>
-            </div>
+            <h1 className="text-3xl font-bold">My Wishlist</h1>
           </div>
-          {(items?.length ?? 0) > 0 && (
-            <Button variant="outline" size="sm" onClick={handleShare} className="gap-2 shrink-0">
-              <Share2 className="w-4 h-4" />
-              Share Wishlist
-            </Button>
-          )}
+          <p className="text-muted-foreground">Listings you've saved. You'll be notified if any are sold.</p>
         </div>
 
-        {!items || items.length === 0 ? (
-          <Card className="border-border bg-card">
-            <CardContent className="py-16 text-center">
-              <HeartOff className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Your wishlist is empty</h3>
-              <p className="text-muted-foreground text-sm mb-6">Save listings you're interested in — you'll be notified when they change.</p>
-              <Link href="/">
-                <Button>Browse Listings</Button>
-              </Link>
-            </CardContent>
-          </Card>
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="h-80 bg-card border border-border rounded-lg animate-pulse" />
+            ))}
+          </div>
+        ) : !items || items.length === 0 ? (
+          <div className="text-center py-20 border border-dashed border-border rounded-lg bg-card/50">
+            <Heart className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-30" />
+            <h3 className="text-xl font-semibold mb-2">Your wishlist is empty</h3>
+            <p className="text-muted-foreground mb-6">Save listings by clicking the heart icon on any listing.</p>
+            <Button asChild>
+              <Link href="/">Browse Marketplace</Link>
+            </Button>
+          </div>
         ) : (
-          <div className="space-y-4">
-            {items.map(item => {
-              const l = item.listing;
-              const isSocialMedia = l?.category === "social_media";
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {items.map((item: any) => {
+              const listing = item.listing;
+              const isSocial = listing?.category === "social_media";
               return (
-                <Card key={item.id} className="border-border bg-card hover:border-primary/30 transition-colors">
-                  <CardContent className="p-4">
-                    <div className="flex gap-4">
-                      {/* Thumbnail */}
-                      <div className="w-20 h-20 rounded-lg overflow-hidden bg-muted shrink-0">
-                        {l?.pictureUrl ? (
-                          <img src={l.pictureUrl} alt={l.gameName} className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            {isSocialMedia ? <Users className="w-8 h-8 text-muted-foreground/40" /> : <Gamepad2 className="w-8 h-8 text-muted-foreground/40" />}
-                          </div>
-                        )}
+                <Card
+                  key={item.wishlistId}
+                  className="overflow-hidden bg-card border-border hover:border-primary/50 transition-colors group flex flex-col"
+                >
+                  <div className="aspect-[4/3] bg-muted relative overflow-hidden">
+                    {listing?.pictureUrl ? (
+                      <img
+                        src={listing.pictureUrl}
+                        alt={listing.gameName}
+                        className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-muted-foreground bg-secondary text-sm">
+                        No Screenshot
                       </div>
-
-                      {/* Info */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="min-w-0">
-                            <h3 className="font-semibold truncate">{l?.gameName ?? "Listing"}</h3>
-                            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{l?.description}</p>
-                          </div>
-                          <div className="text-right shrink-0">
-                            <p className="font-bold text-primary">{l?.price !== undefined ? formatNaira(l.price) : "—"}</p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-2 mt-3 flex-wrap">
-                          {l?.status === "sold" ? (
-                            <Badge variant="outline" className="text-gray-500 border-gray-500/30 text-xs">Sold</Badge>
-                          ) : l?.status === "active" ? (
-                            <Badge variant="outline" className="text-green-500 border-green-500/30 text-xs">Available</Badge>
-                          ) : null}
-
-                          {l?.sellerUsername && (
-                            <span className="text-xs text-muted-foreground">by {l.sellerUsername}</span>
-                          )}
-
-                          <div className="ml-auto flex gap-2">
-                            {l?.status === "active" && (
-                              <Link href={`/listings/${item.listingId}`}>
-                                <Button size="sm" className="h-7 text-xs">
-                                  <ShoppingCart className="w-3 h-3 mr-1.5" />
-                                  View
-                                </Button>
-                              </Link>
-                            )}
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-7 text-xs text-red-500 border-red-500/30 hover:bg-red-500/10"
-                              onClick={() => handleRemove(item.listingId)}
-                              disabled={remove.isPending}
-                            >
-                              <HeartOff className="w-3 h-3 mr-1" />
-                              Remove
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
+                    )}
+                    <div className="absolute top-2 right-2 bg-background/90 backdrop-blur text-primary font-bold px-3 py-1 rounded shadow-sm border border-border text-sm">
+                      {listing ? formatNaira(listing.price) : "—"}
                     </div>
+                    {listing?.status !== "active" && listing?.status && (
+                      <div className="absolute inset-0 bg-background/70 backdrop-blur-sm flex items-center justify-center">
+                        <Badge variant="outline" className="bg-red-500/10 text-red-500 border-red-500/20 text-sm">
+                          {listing.status === "sold" ? "Sold" : "Unavailable"}
+                        </Badge>
+                      </div>
+                    )}
+                  </div>
+
+                  <CardContent className="p-4 flex-1">
+                    <div className="flex flex-wrap gap-1.5 mb-3">
+                      {isSocial ? (
+                        <>
+                          {listing?.platform && (
+                            <Badge className="bg-purple-500/10 text-purple-500 border-purple-500/20 text-xs capitalize">{listing.platform}</Badge>
+                          )}
+                          {listing?.followerCount != null && (
+                            <Badge variant="outline" className="text-xs bg-blue-500/10 text-blue-500 border-blue-500/20">
+                              {Number(listing.followerCount).toLocaleString()} followers
+                            </Badge>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          {listing?.divisionRank && (
+                            <Badge className="bg-primary/10 text-primary border-primary/20 text-xs">{listing.divisionRank}</Badge>
+                          )}
+                          {listing?.squadRating != null && (
+                            <Badge variant="outline" className="text-xs bg-yellow-500/10 text-yellow-600 border-yellow-500/30">
+                              {listing.squadRating} OVR
+                            </Badge>
+                          )}
+                        </>
+                      )}
+                    </div>
+                    <p className="text-sm text-foreground line-clamp-3 mb-2">{listing?.description}</p>
+                    <div className="text-sm text-muted-foreground flex items-center gap-2">
+                      <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-primary text-xs font-bold">
+                        {listing?.sellerUsername?.[0]?.toUpperCase()}
+                      </div>
+                      <span className="truncate">{listing?.sellerUsername}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Saved {new Date(item.addedAt).toLocaleDateString()}
+                    </p>
                   </CardContent>
+
+                  <CardFooter className="p-4 pt-0 flex gap-2">
+                    {listing?.status === "active" ? (
+                      <Button className="flex-1" asChild>
+                        <Link href={`/listings/${listing.id}`}>View Details</Link>
+                      </Button>
+                    ) : (
+                      <Button className="flex-1" variant="outline" disabled>
+                        {listing?.status === "sold" ? "Already Sold" : "Unavailable"}
+                      </Button>
+                    )}
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="text-red-500 hover:bg-red-500/10 border-red-500/20"
+                      onClick={() => listing && handleRemove(listing.id)}
+                      disabled={removeFromWishlist.isPending}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </CardFooter>
                 </Card>
               );
             })}

@@ -1,129 +1,138 @@
 import { Router, type IRouter } from "express";
-import { db, wishlistTable, listingsTable, usersTable, tradeRatingsTable, tradesTable } from "@workspace/db";
+import { db, wishlistItemsTable, listingsTable, usersTable } from "@workspace/db";
 import { eq, and, sql } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
-import { createNotification } from "../lib/notifier";
 
 const router: IRouter = Router();
 
-function formatItem(item: typeof wishlistTable.$inferSelect, listing?: any) {
+// ────────────────────────────────────────────────────────────
+// Helpers
+// ────────────────────────────────────────────────────────────
+async function fetchWishlistRows(userId: number) {
+  return db
+    .select({
+      wishlistItem: wishlistItemsTable,
+      listing: listingsTable,
+      sellerUsername: usersTable.username,
+    })
+    .from(wishlistItemsTable)
+    .leftJoin(listingsTable, eq(wishlistItemsTable.listingId, listingsTable.id))
+    .leftJoin(usersTable, sql`${listingsTable.sellerId} = ${usersTable.id}`)
+    .where(eq(wishlistItemsTable.userId, userId))
+    .orderBy(sql`${wishlistItemsTable.createdAt} DESC`);
+}
+
+function mapWishlistRow(r: Awaited<ReturnType<typeof fetchWishlistRows>>[number]) {
+  const listing = r.listing;
+  if (!listing) return null;
+  let highlightedPlayers: string[] | null = null;
+  try {
+    highlightedPlayers = listing.highlightedPlayers
+      ? JSON.parse(listing.highlightedPlayers)
+      : null;
+  } catch { /* ignore */ }
   return {
-    id: item.id,
-    userId: item.userId,
-    listingId: item.listingId,
-    listing: listing ?? null,
-    createdAt: item.createdAt,
+    wishlistId: r.wishlistItem.id,
+    listingId: r.wishlistItem.listingId,
+    addedAt: r.wishlistItem.createdAt,
+    listing: {
+      id: listing.id,
+      sellerId: listing.sellerId,
+      sellerUsername: r.sellerUsername ?? null,
+      category: listing.category ?? "efootball",
+      gameName: listing.gameName,
+      price: Number(listing.price),
+      description: listing.description,
+      pictureUrl: listing.pictureUrl ?? null,
+      divisionRank: listing.divisionRank ?? null,
+      squadRating: listing.squadRating ?? null,
+      platform: listing.platform ?? null,
+      accountHandle: listing.accountHandle ?? null,
+      followerCount: listing.followerCount ?? null,
+      highlightedPlayers,
+      status: listing.status,
+      createdAt: listing.createdAt,
+    },
   };
 }
 
-// Public wishlist by username (no auth)
+// ────────────────────────────────────────────────────────────
+// GET /wishlist — current user's wishlist with full listing details
+// ────────────────────────────────────────────────────────────
+router.get("/wishlist", requireAuth, async (req, res): Promise<void> => {
+  const rows = await fetchWishlistRows(req.userId!);
+  res.json(rows.map(mapWishlistRow).filter(Boolean));
+});
+
+// ────────────────────────────────────────────────────────────
+// GET /wishlist/ids — listing IDs wishlisted by the current user
+// ────────────────────────────────────────────────────────────
+router.get("/wishlist/ids", requireAuth, async (req, res): Promise<void> => {
+  const rows = await db
+    .select({ listingId: wishlistItemsTable.listingId })
+    .from(wishlistItemsTable)
+    .where(eq(wishlistItemsTable.userId, req.userId!));
+  res.json(rows.map((r) => r.listingId));
+});
+
+// ────────────────────────────────────────────────────────────
+// GET /wishlist/public/:username — public view (no auth)
+// ────────────────────────────────────────────────────────────
 router.get("/wishlist/public/:username", async (req, res): Promise<void> => {
   const username = req.params.username as string;
-  const [user] = await db.select({ id: usersTable.id, username: usersTable.username })
-    .from(usersTable).where(eq(usersTable.username, username));
+  const [user] = await db
+    .select({ id: usersTable.id, username: usersTable.username })
+    .from(usersTable)
+    .where(eq(usersTable.username, username));
   if (!user) { res.status(404).json({ error: "User not found" }); return; }
 
-  const rows = await db
-    .select({
-      item: wishlistTable,
-      listing: listingsTable,
-      sellerUsername: usersTable.username,
-    })
-    .from(wishlistTable)
-    .leftJoin(listingsTable, eq(wishlistTable.listingId, listingsTable.id))
-    .leftJoin(usersTable, eq(listingsTable.sellerId, usersTable.id))
-    .where(eq(wishlistTable.userId, user.id))
-    .orderBy(sql`${wishlistTable.createdAt} DESC`);
-
+  const rows = await fetchWishlistRows(user.id);
   res.json({
     username: user.username,
-    items: rows.map(r => ({
-      id: r.item.id,
-      userId: r.item.userId,
-      listingId: r.item.listingId,
-      createdAt: r.item.createdAt,
-      listing: r.listing ? {
-        id: r.listing.id,
-        gameName: r.listing.gameName,
-        description: r.listing.description,
-        price: Number(r.listing.price),
-        pictureUrl: r.listing.pictureUrl ?? null,
-        status: r.listing.status,
-        category: (r.listing as any).category ?? "efootball",
-        platform: (r.listing as any).platform ?? null,
-        followerCount: (r.listing as any).followerCount ?? null,
-        divisionRank: r.listing.divisionRank ?? null,
-        squadRating: r.listing.squadRating ?? null,
-        sellerUsername: r.sellerUsername ?? null,
-      } : null,
-    })),
+    items: rows.map(mapWishlistRow).filter(Boolean),
   });
 });
 
-// Get wishlist
-router.get("/wishlist", requireAuth, async (req, res): Promise<void> => {
-  const rows = await db
-    .select({
-      item: wishlistTable,
-      listing: listingsTable,
-      sellerUsername: usersTable.username,
-    })
-    .from(wishlistTable)
-    .leftJoin(listingsTable, eq(wishlistTable.listingId, listingsTable.id))
-    .leftJoin(usersTable, eq(listingsTable.sellerId, usersTable.id))
-    .where(eq(wishlistTable.userId, req.userId!))
-    .orderBy(sql`${wishlistTable.createdAt} DESC`);
-
-  res.json(rows.map(r => ({
-    id: r.item.id,
-    userId: r.item.userId,
-    listingId: r.item.listingId,
-    createdAt: r.item.createdAt,
-    listing: r.listing ? {
-      id: r.listing.id,
-      gameName: r.listing.gameName,
-      description: r.listing.description,
-      price: Number(r.listing.price),
-      pictureUrl: r.listing.pictureUrl ?? null,
-      status: r.listing.status,
-      category: r.listing.category ?? "efootball",
-      platform: r.listing.platform ?? null,
-      followerCount: r.listing.followerCount ?? null,
-      divisionRank: r.listing.divisionRank ?? null,
-      squadRating: r.listing.squadRating ?? null,
-      sellerUsername: r.sellerUsername ?? null,
-    } : null,
-  })));
-});
-
-// Add to wishlist
+// ────────────────────────────────────────────────────────────
+// POST /wishlist/:listingId — add listing to wishlist
+// ────────────────────────────────────────────────────────────
 router.post("/wishlist/:listingId", requireAuth, async (req, res): Promise<void> => {
   const listingId = parseInt(req.params.listingId as string);
   if (isNaN(listingId)) { res.status(400).json({ error: "Invalid listing ID" }); return; }
 
-  const [listing] = await db.select().from(listingsTable).where(eq(listingsTable.id, listingId));
+  const [listing] = await db
+    .select({ id: listingsTable.id, sellerId: listingsTable.sellerId })
+    .from(listingsTable)
+    .where(eq(listingsTable.id, listingId));
   if (!listing) { res.status(404).json({ error: "Listing not found" }); return; }
+  if (listing.sellerId === req.userId) {
+    res.status(400).json({ error: "Cannot wishlist your own listing" });
+    return;
+  }
 
-  // Check if already wishlisted
-  const [existing] = await db.select().from(wishlistTable)
-    .where(and(eq(wishlistTable.userId, req.userId!), eq(wishlistTable.listingId, listingId)));
-  if (existing) { res.status(409).json({ error: "Already in wishlist" }); return; }
+  await db
+    .insert(wishlistItemsTable)
+    .values({ userId: req.userId!, listingId })
+    .onConflictDoNothing();
 
-  const [item] = await db.insert(wishlistTable).values({
-    userId: req.userId!,
-    listingId,
-  }).returning();
-
-  res.status(201).json(formatItem(item));
+  res.json({ success: true });
 });
 
-// Remove from wishlist
+// ────────────────────────────────────────────────────────────
+// DELETE /wishlist/:listingId — remove from wishlist
+// ────────────────────────────────────────────────────────────
 router.delete("/wishlist/:listingId", requireAuth, async (req, res): Promise<void> => {
   const listingId = parseInt(req.params.listingId as string);
   if (isNaN(listingId)) { res.status(400).json({ error: "Invalid listing ID" }); return; }
 
-  await db.delete(wishlistTable)
-    .where(and(eq(wishlistTable.userId, req.userId!), eq(wishlistTable.listingId, listingId)));
+  await db
+    .delete(wishlistItemsTable)
+    .where(
+      and(
+        eq(wishlistItemsTable.userId, req.userId!),
+        eq(wishlistItemsTable.listingId, listingId)
+      )
+    );
 
   res.json({ success: true });
 });

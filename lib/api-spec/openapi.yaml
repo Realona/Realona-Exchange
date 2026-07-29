@@ -24,7 +24,6 @@ tags:
   - name: announcements
   - name: leaderboard
   - name: giveaways
-  - name: wishlist
   - name: Storage
     description: Object storage upload and serving endpoints.
 
@@ -548,172 +547,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TradeMessage"
-
-  # ─── TRADE FEED ────────────────────────────────────────────────────────────
-  /trades/feed:
-    get:
-      operationId: getTradeFeed
-      tags: [trades]
-      summary: Public anonymous feed of recent completed trades
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/TradeFeedItem"
-
-  # ─── PLATFORM REVIEWS ──────────────────────────────────────────────────────
-  /reviews:
-    get:
-      operationId: getPlatformReviews
-      tags: [users]
-      summary: Get all platform reviews
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/PlatformReviewsResponse"
-    post:
-      operationId: createPlatformReview
-      tags: [users]
-      summary: Submit or update a platform review
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/PlatformReviewInput"
-      responses:
-        "201":
-          description: Created
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/PlatformReview"
-
-  /reviews/{id}/respond:
-    post:
-      operationId: adminRespondToReview
-      tags: [admin]
-      summary: Admin responds to a review
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema: { type: integer }
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/AdminReviewResponse"
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/PlatformReview"
-
-  # ─── WISHLIST ──────────────────────────────────────────────────────────────
-  /wishlist:
-    get:
-      operationId: getWishlist
-      tags: [wishlist]
-      summary: Get current user's wishlist
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/WishlistItem"
-
-  /wishlist/public/{username}:
-    get:
-      operationId: getPublicWishlist
-      tags: [wishlist]
-      summary: Get a user's public wishlist (no auth required)
-      parameters:
-        - name: username
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: object
-                required: [username, items]
-                properties:
-                  username: { type: string }
-                  items:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/WishlistItem"
-
-  /wishlist/{listingId}:
-    post:
-      operationId: addToWishlist
-      tags: [wishlist]
-      summary: Add a listing to wishlist
-      parameters:
-        - name: listingId
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        "201":
-          description: Added
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/WishlistItem"
-    delete:
-      operationId: removeFromWishlist
-      tags: [wishlist]
-      summary: Remove a listing from wishlist
-      parameters:
-        - name: listingId
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        "200":
-          description: Removed
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success: { type: boolean }
-
-  /purchases:
-    get:
-      operationId: getPurchaseHistory
-      tags: [trades]
-      summary: Get completed purchase history for current buyer
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Purchase"
 
   # ─── DEPOSITS ──────────────────────────────────────────────────────────────
   /deposits:
@@ -1534,6 +1367,133 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/SuccessResponse" }
+
+  # ─── WISHLIST ──────────────────────────────────────────────────────────────
+  /wishlist:
+    get:
+      operationId: getWishlist
+      tags: [listings]
+      summary: Get current user's wishlist with listing details
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/WishlistItem"
+
+  /wishlist/public/{username}:
+    get:
+      operationId: getPublicWishlist
+      tags: [listings]
+      summary: Get a user's public wishlist by username (no auth required)
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [username, items]
+                properties:
+                  username:
+                    type: string
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/WishlistItem"
+        "404":
+          description: User not found
+
+  /wishlist/ids:
+    get:
+      operationId: getWishlistIds
+      tags: [listings]
+      summary: Get listing IDs in the current user's wishlist
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: integer
+
+  /wishlist/{listingId}:
+    post:
+      operationId: addToWishlist
+      tags: [listings]
+      summary: Add a listing to wishlist
+      parameters:
+        - name: listingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+    delete:
+      operationId: removeFromWishlist
+      tags: [listings]
+      summary: Remove a listing from wishlist
+      parameters:
+        - name: listingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  # ─── PURCHASES ─────────────────────────────────────────────────────────────
+  /purchases:
+    get:
+      operationId: getPurchases
+      tags: [trades]
+      summary: Get completed purchases for the current user (as buyer)
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Purchase"
 
   # ─── STORAGE ───────────────────────────────────────────────────────────────
   /storage/uploads/request-url:
@@ -2412,97 +2372,54 @@ components:
           type: array
           items: { $ref: "#/components/schemas/LeaderboardEntry" }
 
-    TradeFeedItem:
-      type: object
-      required: [id, amount, createdAt, gameName, category]
-      properties:
-        id: { type: integer }
-        amount: { type: number }
-        createdAt: { type: string, format: date-time }
-        gameName: { type: string }
-        category: { type: string }
-        pictureUrl: { type: ["string", "null"] }
-        platform: { type: ["string", "null"] }
-
-    PlatformReview:
-      type: object
-      required: [id, userId, rating, review, createdAt]
-      properties:
-        id: { type: integer }
-        userId: { type: integer }
-        rating: { type: integer }
-        review: { type: string }
-        adminResponse: { type: ["string", "null"] }
-        createdAt: { type: string, format: date-time }
-        username: { type: ["string", "null"] }
-        isVerified: { type: ["boolean", "null"] }
-
-    AdminReviewResponse:
-      type: object
-      required: [response]
-      properties:
-        response: { type: string }
-
-    PlatformReviewInput:
-      type: object
-      required: [rating, review]
-      properties:
-        rating: { type: integer, minimum: 1, maximum: 5 }
-        review: { type: string, minLength: 10, maxLength: 1000 }
-
-    PlatformReviewsResponse:
-      type: object
-      required: [reviews, averageRating, totalCount]
-      properties:
-        reviews:
-          type: array
-          items: { $ref: "#/components/schemas/PlatformReview" }
-        averageRating: { type: number }
-        totalCount: { type: integer }
-
     WishlistItem:
       type: object
-      required: [id, userId, listingId, createdAt]
+      required: [wishlistId, addedAt, listing]
       properties:
-        id: { type: integer }
-        userId: { type: integer }
-        listingId: { type: integer }
-        createdAt: { type: string, format: date-time }
+        wishlistId:
+          type: integer
+        addedAt:
+          type: string
+          format: date-time
         listing:
-          nullable: true
-          type: object
-          properties:
-            id: { type: integer }
-            gameName: { type: string }
-            description: { type: string }
-            price: { type: number }
-            pictureUrl: { type: ["string", "null"] }
-            status: { type: string }
-            category: { type: string }
-            platform: { type: ["string", "null"] }
-            followerCount: { type: ["integer", "null"] }
-            divisionRank: { type: ["string", "null"] }
-            squadRating: { type: ["integer", "null"] }
-            sellerUsername: { type: ["string", "null"] }
+          $ref: "#/components/schemas/Listing"
 
     Purchase:
       type: object
-      required: [id, listingId, gameName, amount, status, createdAt, sellerId]
+      required: [tradeId, listingId, amount, fee, status, purchasedAt, createdAt]
       properties:
-        id: { type: integer }
-        listingId: { type: ["integer", "null"] }
-        gameName: { type: string }
-        amount: { type: number }
-        fee: { type: ["number", "null"] }
-        status: { type: string }
-        createdAt: { type: string, format: date-time }
-        sellerId: { type: integer }
-        sellerUsername: { type: ["string", "null"] }
-        pictureUrl: { type: ["string", "null"] }
-        category: { type: string }
-        platform: { type: ["string", "null"] }
-        myRating: { type: ["integer", "null"] }
-        ratingComment: { type: ["string", "null"] }
+        tradeId:
+          type: integer
+        listingId:
+          type: integer
+        gameName:
+          type: ["string", "null"]
+        pictureUrl:
+          type: ["string", "null"]
+        category:
+          type: string
+        konamiId:
+          type: ["string", "null"]
+        konamiPassword:
+          type: ["string", "null"]
+        accessCode:
+          type: ["string", "null"]
+        sellerUsername:
+          type: ["string", "null"]
+        amount:
+          type: number
+        fee:
+          type: number
+        status:
+          type: string
+        ratingGiven:
+          type: ["number", "null"]
+        purchasedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
 
     UploadUrlRequest:
       type: object

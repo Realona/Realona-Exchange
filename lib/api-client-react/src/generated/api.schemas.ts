@@ -651,57 +651,35 @@ export interface PlatformReviewsResponse {
   totalCount: number;
 }
 
-export type WishlistItemListing = {
-  id?: number;
-  gameName?: string;
-  description?: string;
-  price?: number;
-  /** @nullable */
-  pictureUrl?: string | null;
-  status?: string;
-  category?: string;
-  /** @nullable */
-  platform?: string | null;
-  /** @nullable */
-  followerCount?: number | null;
-  /** @nullable */
-  divisionRank?: string | null;
-  /** @nullable */
-  squadRating?: number | null;
-  /** @nullable */
-  sellerUsername?: string | null;
-} | null;
-
 export interface WishlistItem {
-  id: number;
-  userId: number;
-  listingId: number;
-  createdAt: string;
-  listing?: WishlistItemListing;
+  wishlistId: number;
+  addedAt: string;
+  listing: Listing;
 }
 
 export interface Purchase {
-  id: number;
+  tradeId: number;
+  listingId: number;
   /** @nullable */
-  listingId: number | null;
-  gameName: string;
-  amount: number;
-  /** @nullable */
-  fee?: number | null;
-  status: string;
-  createdAt: string;
-  sellerId: number;
-  /** @nullable */
-  sellerUsername?: string | null;
+  gameName?: string | null;
   /** @nullable */
   pictureUrl?: string | null;
   category?: string;
   /** @nullable */
-  platform?: string | null;
+  konamiId?: string | null;
   /** @nullable */
-  myRating?: number | null;
+  konamiPassword?: string | null;
   /** @nullable */
-  ratingComment?: string | null;
+  accessCode?: string | null;
+  /** @nullable */
+  sellerUsername?: string | null;
+  amount: number;
+  fee: number;
+  status: string;
+  /** @nullable */
+  ratingGiven?: number | null;
+  purchasedAt: string;
+  createdAt: string;
 }
 
 export interface UploadUrlRequest {
@@ -739,16 +717,10 @@ export type MarkOtpSent200 = {
 export type RequestEmailOtp200 = {
   success?: boolean;
 };
-
 export type GetPublicWishlist200 = {
   username: string;
   items: WishlistItem[];
 };
-
-export type RemoveFromWishlist200 = {
-  success?: boolean;
-};
-
 export type GetAdminUsersParams = {
 search?: string;
 suspended?: boolean;
@@ -769,4 +741,8 @@ status?: string;
 export type GetAdminDepositsParams = {
 status?: string;
 };
-
+export type GetPurchasesParams = {
+search?: string;
+from?: string;
+to?: string;
+};

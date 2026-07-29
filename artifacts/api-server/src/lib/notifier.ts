@@ -11,6 +11,8 @@ type NotificationType =
   | "trade_rated"
   | "announcement"
   | "giveaway"
+  | "wishlist_sold"
+  | "wishlist_price_drop"
   | "deposit_pending";
 
 export async function createNotification(

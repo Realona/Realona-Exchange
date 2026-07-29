@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { useGetListing, useCreateTrade, useMakeOffer, useAddToWishlist, useRemoveFromWishlist, useGetWishlist } from "@workspace/api-client-react";
+import { useGetListing, useCreateTrade, useMakeOffer, useGetWishlistIds, useAddToWishlist, useRemoveFromWishlist } from "@workspace/api-client-react";
 import { formatNaira } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { ShieldCheck, User, ArrowRightLeft, AlertTriangle, HandshakeIcon, Users, Star, Gamepad2, Share2, Copy, Link, Heart } from "lucide-react";
@@ -35,20 +35,29 @@ export default function ListingDetail() {
   const { data: listing, isLoading, isError } = useGetListing(Number(id));
   const createTrade = useCreateTrade();
   const makeOffer = useMakeOffer();
-  const addWishlist = useAddToWishlist();
-  const removeWishlist = useRemoveFromWishlist();
-  const { data: wishlistItems } = useGetWishlist({ query: { enabled: !!user, queryKey: ["getWishlist"] } });
-  const isWishlisted = (wishlistItems ?? []).some(w => w.listingId === Number(id));
+
+  const { data: wishlistIds } = useGetWishlistIds({ query: { enabled: !!user, queryKey: ["getWishlistIds"] } });
+  const addToWishlist = useAddToWishlist();
+  const removeFromWishlist = useRemoveFromWishlist();
+  const isWishlisted = (wishlistIds ?? []).includes(Number(id));
 
   const toggleWishlist = () => {
-    if (!user) { toast({ title: "Login to save listings", variant: "destructive" }); return; }
+    if (!user) { setLocation("/login"); return; }
     if (isWishlisted) {
-      removeWishlist.mutate({ listingId: Number(id) }, {
-        onSuccess: () => { toast({ title: "Removed from wishlist" }); queryClient.invalidateQueries({ queryKey: ["getWishlist"] }); }
+      removeFromWishlist.mutate({ listingId: Number(id) }, {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ["getWishlistIds"] });
+          queryClient.invalidateQueries({ queryKey: ["getWishlist"] });
+          toast({ title: "Removed from wishlist" });
+        },
       });
     } else {
-      addWishlist.mutate({ listingId: Number(id) }, {
-        onSuccess: () => { toast({ title: "Saved to wishlist ❤️" }); queryClient.invalidateQueries({ queryKey: ["getWishlist"] }); }
+      addToWishlist.mutate({ listingId: Number(id) }, {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ["getWishlistIds"] });
+          queryClient.invalidateQueries({ queryKey: ["getWishlist"] });
+          toast({ title: "Saved to wishlist", description: "You'll be notified when it sells." });
+        },
       });
     }
   };
@@ -271,10 +280,10 @@ export default function ListingDetail() {
                 )}
                 <Button
                   size="lg"
-                  variant="outline"
-                  className={`w-full h-11 font-semibold ${isWishlisted ? "text-red-500 border-red-500/30 hover:bg-red-500/10" : "text-muted-foreground"}`}
+                  variant={isWishlisted ? "default" : "outline"}
+                  className={`w-full h-12 font-semibold ${isWishlisted ? "bg-red-500/10 text-red-500 border-red-500/30 hover:bg-red-500/20" : ""}`}
                   onClick={toggleWishlist}
-                  disabled={addWishlist.isPending || removeWishlist.isPending}
+                  disabled={addToWishlist.isPending || removeFromWishlist.isPending}
                 >
                   <Heart className={`w-4 h-4 mr-2 ${isWishlisted ? "fill-red-500" : ""}`} />
                   {isWishlisted ? "Remove from Wishlist" : "Save to Wishlist"}

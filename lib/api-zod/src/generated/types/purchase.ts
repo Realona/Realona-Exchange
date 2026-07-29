@@ -7,25 +7,26 @@
  */
 
 export interface Purchase {
-  id: number;
+  tradeId: number;
+  listingId: number;
   /** @nullable */
-  listingId: number | null;
-  gameName: string;
-  amount: number;
-  /** @nullable */
-  fee?: number | null;
-  status: string;
-  createdAt: Date;
-  sellerId: number;
-  /** @nullable */
-  sellerUsername?: string | null;
+  gameName?: string | null;
   /** @nullable */
   pictureUrl?: string | null;
   category?: string;
   /** @nullable */
-  platform?: string | null;
+  konamiId?: string | null;
   /** @nullable */
-  myRating?: number | null;
+  konamiPassword?: string | null;
   /** @nullable */
-  ratingComment?: string | null;
+  accessCode?: string | null;
+  /** @nullable */
+  sellerUsername?: string | null;
+  amount: number;
+  fee: number;
+  status: string;
+  /** @nullable */
+  ratingGiven?: number | null;
+  purchasedAt: Date;
+  createdAt: Date;
 }

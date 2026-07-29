@@ -13,6 +13,8 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { EFOOTBALL_DIVISIONS } from "./new-listing";
+import { useGetListings } from "@workspace/api-client-react";
+import { useGetWishlistIds, useAddToWishlist, useRemoveFromWishlist } from "@workspace/api-client-react";
 
 export default function Home() {
   const [search, setSearch] = useState("");
@@ -27,25 +29,28 @@ export default function Home() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: wishlistItems } = useGetWishlist({
-    query: { enabled: !!user, queryKey: ["getWishlist"] }
-  });
-  const addWishlist = useAddToWishlist();
-  const removeWishlist = useRemoveFromWishlist();
+  const { data: wishlistIds } = useGetWishlistIds({ query: { enabled: !!user, queryKey: ["getWishlistIds"] } });
+  const addToWishlist = useAddToWishlist();
+  const removeFromWishlist = useRemoveFromWishlist();
 
-  const wishlistIds = new Set((wishlistItems ?? []).map(w => w.listingId));
-
-  const toggleWishlist = (e: React.MouseEvent, listingId: number) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!user) { toast({ title: "Login to save listings", variant: "destructive" }); return; }
-    if (wishlistIds.has(listingId)) {
-      removeWishlist.mutate({ listingId }, {
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: ["getWishlist"] }),
+  const toggleWishlist = (listingId: number) => {
+    if (!user) { window.location.href = "/login"; return; }
+    const isWishlisted = (wishlistIds ?? []).includes(listingId);
+    if (isWishlisted) {
+      removeFromWishlist.mutate({ listingId }, {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ["getWishlistIds"] });
+          queryClient.invalidateQueries({ queryKey: ["getWishlist"] });
+          toast({ title: "Removed from wishlist" });
+        },
       });
     } else {
-      addWishlist.mutate({ listingId }, {
-        onSuccess: () => { toast({ title: "Saved to wishlist ❤️" }); queryClient.invalidateQueries({ queryKey: ["getWishlist"] }); },
+      addToWishlist.mutate({ listingId }, {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ["getWishlistIds"] });
+          queryClient.invalidateQueries({ queryKey: ["getWishlist"] });
+          toast({ title: "Added to wishlist", description: "You'll be notified if it sells." });
+        },
       });
     }
   };
@@ -264,14 +269,17 @@ export default function Home() {
                     <div className="absolute top-2 right-2 bg-background/90 backdrop-blur text-primary font-bold px-3 py-1 rounded shadow-sm border border-border text-sm">
                       {formatNaira(listing.price)}
                     </div>
-                    {/* Wishlist heart button */}
-                    <button
-                      onClick={e => toggleWishlist(e, listing.id)}
-                      className="absolute top-2 left-2 w-8 h-8 rounded-full bg-background/90 backdrop-blur border border-border flex items-center justify-center hover:bg-background transition-colors"
-                      title={wishlistIds.has(listing.id) ? "Remove from wishlist" : "Save to wishlist"}
-                    >
-                      <Heart className={`w-4 h-4 transition-colors ${wishlistIds.has(listing.id) ? "text-red-500 fill-red-500" : "text-muted-foreground"}`} />
-                    </button>
+                    {user?.id !== listing.sellerId && (
+                      <button
+                        className="absolute top-2 left-2 w-8 h-8 rounded-full bg-background/90 backdrop-blur flex items-center justify-center shadow-sm border border-border hover:scale-110 transition-transform"
+                        onClick={(e) => { e.preventDefault(); toggleWishlist(listing.id); }}
+                        title={(wishlistIds ?? []).includes(listing.id) ? "Remove from wishlist" : "Save to wishlist"}
+                      >
+                        <Heart
+                          className={`w-4 h-4 transition-colors ${(wishlistIds ?? []).includes(listing.id) ? "text-red-500 fill-red-500" : "text-muted-foreground"}`}
+                        />
+                      </button>
+                    )}
                   </div>
                   <CardContent className="p-4 flex-1">
                     {/* Division & Rating badges */}

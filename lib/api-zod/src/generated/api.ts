@@ -649,211 +649,6 @@ export const SendTradeMessageResponse = zod.object({
 
 
 /**
- * @summary Public anonymous feed of recent completed trades
- */
-export const GetTradeFeedResponseItem = zod.object({
-  "id": zod.number(),
-  "amount": zod.number(),
-  "createdAt": zod.coerce.date(),
-  "gameName": zod.string(),
-  "category": zod.string(),
-  "pictureUrl": zod.string().nullish(),
-  "platform": zod.string().nullish()
-})
-export const GetTradeFeedResponse = zod.array(GetTradeFeedResponseItem)
-
-
-/**
- * @summary Get all platform reviews
- */
-export const GetPlatformReviewsResponse = zod.object({
-  "reviews": zod.array(zod.object({
-  "id": zod.number(),
-  "userId": zod.number(),
-  "rating": zod.number(),
-  "review": zod.string(),
-  "adminResponse": zod.string().nullish(),
-  "createdAt": zod.coerce.date(),
-  "username": zod.string().nullish(),
-  "isVerified": zod.boolean().nullish()
-})),
-  "averageRating": zod.number(),
-  "totalCount": zod.number()
-})
-
-
-/**
- * @summary Submit or update a platform review
- */
-export const createPlatformReviewBodyRatingMax = 5;
-
-export const createPlatformReviewBodyReviewMin = 10;
-export const createPlatformReviewBodyReviewMax = 1000;
-
-
-
-export const CreatePlatformReviewBody = zod.object({
-  "rating": zod.number().min(1).max(createPlatformReviewBodyRatingMax),
-  "review": zod.string().min(createPlatformReviewBodyReviewMin).max(createPlatformReviewBodyReviewMax)
-})
-
-export const CreatePlatformReviewResponse = zod.object({
-  "id": zod.number(),
-  "userId": zod.number(),
-  "rating": zod.number(),
-  "review": zod.string(),
-  "adminResponse": zod.string().nullish(),
-  "createdAt": zod.coerce.date(),
-  "username": zod.string().nullish(),
-  "isVerified": zod.boolean().nullish()
-})
-
-
-/**
- * @summary Admin responds to a review
- */
-export const AdminRespondToReviewParams = zod.object({
-  "id": zod.coerce.number()
-})
-
-export const AdminRespondToReviewBody = zod.object({
-  "response": zod.string()
-})
-
-export const AdminRespondToReviewResponse = zod.object({
-  "id": zod.number(),
-  "userId": zod.number(),
-  "rating": zod.number(),
-  "review": zod.string(),
-  "adminResponse": zod.string().nullish(),
-  "createdAt": zod.coerce.date(),
-  "username": zod.string().nullish(),
-  "isVerified": zod.boolean().nullish()
-})
-
-
-/**
- * @summary Get current user's wishlist
- */
-export const GetWishlistResponseItem = zod.object({
-  "id": zod.number(),
-  "userId": zod.number(),
-  "listingId": zod.number(),
-  "createdAt": zod.coerce.date(),
-  "listing": zod.object({
-  "id": zod.number().optional(),
-  "gameName": zod.string().optional(),
-  "description": zod.string().optional(),
-  "price": zod.number().optional(),
-  "pictureUrl": zod.string().nullish(),
-  "status": zod.string().optional(),
-  "category": zod.string().optional(),
-  "platform": zod.string().nullish(),
-  "followerCount": zod.number().nullish(),
-  "divisionRank": zod.string().nullish(),
-  "squadRating": zod.number().nullish(),
-  "sellerUsername": zod.string().nullish()
-}).nullish()
-})
-export const GetWishlistResponse = zod.array(GetWishlistResponseItem)
-
-
-/**
- * @summary Get a user's public wishlist (no auth required)
- */
-export const GetPublicWishlistParams = zod.object({
-  "username": zod.coerce.string()
-})
-
-export const GetPublicWishlistResponse = zod.object({
-  "username": zod.string(),
-  "items": zod.array(zod.object({
-  "id": zod.number(),
-  "userId": zod.number(),
-  "listingId": zod.number(),
-  "createdAt": zod.coerce.date(),
-  "listing": zod.object({
-  "id": zod.number().optional(),
-  "gameName": zod.string().optional(),
-  "description": zod.string().optional(),
-  "price": zod.number().optional(),
-  "pictureUrl": zod.string().nullish(),
-  "status": zod.string().optional(),
-  "category": zod.string().optional(),
-  "platform": zod.string().nullish(),
-  "followerCount": zod.number().nullish(),
-  "divisionRank": zod.string().nullish(),
-  "squadRating": zod.number().nullish(),
-  "sellerUsername": zod.string().nullish()
-}).nullish()
-}))
-})
-
-
-/**
- * @summary Add a listing to wishlist
- */
-export const AddToWishlistParams = zod.object({
-  "listingId": zod.coerce.number()
-})
-
-export const AddToWishlistResponse = zod.object({
-  "id": zod.number(),
-  "userId": zod.number(),
-  "listingId": zod.number(),
-  "createdAt": zod.coerce.date(),
-  "listing": zod.object({
-  "id": zod.number().optional(),
-  "gameName": zod.string().optional(),
-  "description": zod.string().optional(),
-  "price": zod.number().optional(),
-  "pictureUrl": zod.string().nullish(),
-  "status": zod.string().optional(),
-  "category": zod.string().optional(),
-  "platform": zod.string().nullish(),
-  "followerCount": zod.number().nullish(),
-  "divisionRank": zod.string().nullish(),
-  "squadRating": zod.number().nullish(),
-  "sellerUsername": zod.string().nullish()
-}).nullish()
-})
-
-
-/**
- * @summary Remove a listing from wishlist
- */
-export const RemoveFromWishlistParams = zod.object({
-  "listingId": zod.coerce.number()
-})
-
-export const RemoveFromWishlistResponse = zod.object({
-  "success": zod.boolean().optional()
-})
-
-
-/**
- * @summary Get completed purchase history for current buyer
- */
-export const GetPurchaseHistoryResponseItem = zod.object({
-  "id": zod.number(),
-  "listingId": zod.number().nullable(),
-  "gameName": zod.string(),
-  "amount": zod.number(),
-  "fee": zod.number().nullish(),
-  "status": zod.string(),
-  "createdAt": zod.coerce.date(),
-  "sellerId": zod.number(),
-  "sellerUsername": zod.string().nullish(),
-  "pictureUrl": zod.string().nullish(),
-  "category": zod.string().optional(),
-  "platform": zod.string().nullish(),
-  "myRating": zod.number().nullish(),
-  "ratingComment": zod.string().nullish()
-})
-export const GetPurchaseHistoryResponse = zod.array(GetPurchaseHistoryResponseItem)
-
-
-/**
  * @summary Get deposit history for current user
  */
 export const GetDepositsResponseItem = zod.object({
@@ -1814,6 +1609,144 @@ export const ConfirmDepositResponse = zod.object({
   "success": zod.boolean(),
   "message": zod.string().nullish()
 })
+
+
+/**
+ * @summary Get current user's wishlist with listing details
+ */
+export const GetWishlistResponseItem = zod.object({
+  "wishlistId": zod.number(),
+  "addedAt": zod.coerce.date(),
+  "listing": zod.object({
+  "id": zod.number(),
+  "sellerId": zod.number(),
+  "sellerUsername": zod.string().nullish(),
+  "sellerIsVerified": zod.boolean().optional(),
+  "sellerRating": zod.number().nullish(),
+  "category": zod.enum(['efootball', 'social_media']),
+  "gameName": zod.string(),
+  "price": zod.number(),
+  "description": zod.string(),
+  "pictureUrl": zod.string().nullish(),
+  "accountEmail": zod.string().nullish(),
+  "accountPassword": zod.string().nullish(),
+  "divisionRank": zod.string().nullish(),
+  "squadRating": zod.number().nullish(),
+  "platform": zod.string().nullish(),
+  "accountHandle": zod.string().nullish(),
+  "followerCount": zod.number().nullish(),
+  "following": zod.number().nullish(),
+  "accountAge": zod.string().nullish(),
+  "engagementRate": zod.string().nullish(),
+  "viewCount": zod.number().optional(),
+  "status": zod.enum(['active', 'sold', 'deleted']),
+  "createdAt": zod.coerce.date()
+})
+})
+export const GetWishlistResponse = zod.array(GetWishlistResponseItem)
+
+
+/**
+ * @summary Get a user's public wishlist by username (no auth required)
+ */
+export const GetPublicWishlistParams = zod.object({
+  "username": zod.coerce.string()
+})
+
+export const GetPublicWishlistResponse = zod.object({
+  "username": zod.string(),
+  "items": zod.array(zod.object({
+  "wishlistId": zod.number(),
+  "addedAt": zod.coerce.date(),
+  "listing": zod.object({
+  "id": zod.number(),
+  "sellerId": zod.number(),
+  "sellerUsername": zod.string().nullish(),
+  "sellerIsVerified": zod.boolean().optional(),
+  "sellerRating": zod.number().nullish(),
+  "category": zod.enum(['efootball', 'social_media']),
+  "gameName": zod.string(),
+  "price": zod.number(),
+  "description": zod.string(),
+  "pictureUrl": zod.string().nullish(),
+  "accountEmail": zod.string().nullish(),
+  "accountPassword": zod.string().nullish(),
+  "divisionRank": zod.string().nullish(),
+  "squadRating": zod.number().nullish(),
+  "platform": zod.string().nullish(),
+  "accountHandle": zod.string().nullish(),
+  "followerCount": zod.number().nullish(),
+  "following": zod.number().nullish(),
+  "accountAge": zod.string().nullish(),
+  "engagementRate": zod.string().nullish(),
+  "viewCount": zod.number().optional(),
+  "status": zod.enum(['active', 'sold', 'deleted']),
+  "createdAt": zod.coerce.date()
+})
+}))
+})
+
+
+/**
+ * @summary Get listing IDs in the current user's wishlist
+ */
+export const GetWishlistIdsResponseItem = zod.number()
+export const GetWishlistIdsResponse = zod.array(GetWishlistIdsResponseItem)
+
+
+/**
+ * @summary Add a listing to wishlist
+ */
+export const AddToWishlistParams = zod.object({
+  "listingId": zod.coerce.number()
+})
+
+export const AddToWishlistResponse = zod.object({
+  "success": zod.boolean(),
+  "message": zod.string().nullish()
+})
+
+
+/**
+ * @summary Remove a listing from wishlist
+ */
+export const RemoveFromWishlistParams = zod.object({
+  "listingId": zod.coerce.number()
+})
+
+export const RemoveFromWishlistResponse = zod.object({
+  "success": zod.boolean(),
+  "message": zod.string().nullish()
+})
+
+
+/**
+ * @summary Get completed purchases for the current user (as buyer)
+ */
+export const GetPurchasesQueryParams = zod.object({
+  "search": zod.coerce.string().optional(),
+  "from": zod.date().optional(),
+  "to": zod.date().optional()
+})
+
+export const GetPurchasesResponseItem = zod.object({
+  "tradeId": zod.number(),
+  "listingId": zod.number(),
+  "gameName": zod.string().nullish(),
+  "pictureUrl": zod.string().nullish(),
+  "category": zod.string().optional(),
+  "konamiId": zod.string().nullish(),
+  "konamiPassword": zod.string().nullish(),
+  "accessCode": zod.string().nullish(),
+  "sellerUsername": zod.string().nullish(),
+  "amount": zod.number(),
+  "fee": zod.number(),
+  "status": zod.string(),
+  "ratingGiven": zod.number().nullish(),
+  "purchasedAt": zod.coerce.date(),
+  "createdAt": zod.coerce.date()
+})
+export const GetPurchasesResponse = zod.array(GetPurchasesResponseItem)
 
 
 /**
