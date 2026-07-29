@@ -28,6 +28,8 @@ import AdminDeposits from "@/pages/admin/deposits";
 import AdminKycReview from "@/pages/admin/kyc-review";
 import AdminAnnouncements from "@/pages/admin/announcements";
 import AdminGiveaways from "@/pages/admin/giveaways";
+import WishlistPage from "@/pages/wishlist";
+import PurchasesPage from "@/pages/purchases";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -145,6 +147,12 @@ function Router() {
       <Route path="/leaderboard" component={Leaderboard} />
       <Route path="/kyc">
         <ProtectedRoute component={KYCPage} />
+      </Route>
+      <Route path="/wishlist">
+        <ProtectedRoute component={WishlistPage} />
+      </Route>
+      <Route path="/purchases">
+        <ProtectedRoute component={PurchasesPage} />
       </Route>
       <Route component={NotFound} />
     </Switch>

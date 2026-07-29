@@ -56,8 +56,10 @@ import type {
   OfferResponse,
   PlatformFee,
   PlatformFeeUpdate,
+  Purchase,
   RegisterInput,
   RejectInput,
+  RemoveFromWishlist200,
   Report,
   ReportInput,
   RequestEmailOtp200,
@@ -76,6 +78,7 @@ import type {
   UserPublic,
   VirtualAccount,
   WalletBalance,
+  WishlistItem,
   Withdrawal,
   WithdrawalInput
 } from './api.schemas';
@@ -2013,6 +2016,300 @@ export const useSendTradeMessage = <TError = ErrorType<unknown>,
       > => {
       return useMutation(getSendTradeMessageMutationOptions(options));
     }
+
+export const getGetWishlistUrl = () => {
+
+
+
+
+  return `/api/wishlist`
+}
+
+/**
+ * @summary Get current user's wishlist
+ */
+export const getWishlist = async ( options?: RequestInit): Promise<WishlistItem[]> => {
+
+  return customFetch<WishlistItem[]>(getGetWishlistUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetWishlistQueryKey = () => {
+    return [
+    `/api/wishlist`
+    ] as const;
+    }
+
+
+export const getGetWishlistQueryOptions = <TData = Awaited<ReturnType<typeof getWishlist>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getWishlist>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetWishlistQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getWishlist>>> = ({ signal }) => getWishlist({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getWishlist>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetWishlistQueryResult = NonNullable<Awaited<ReturnType<typeof getWishlist>>>
+export type GetWishlistQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get current user's wishlist
+ */
+
+export function useGetWishlist<TData = Awaited<ReturnType<typeof getWishlist>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getWishlist>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetWishlistQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getAddToWishlistUrl = (listingId: number,) => {
+
+
+
+
+  return `/api/wishlist/${listingId}`
+}
+
+/**
+ * @summary Add a listing to wishlist
+ */
+export const addToWishlist = async (listingId: number, options?: RequestInit): Promise<WishlistItem> => {
+
+  return customFetch<WishlistItem>(getAddToWishlistUrl(listingId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getAddToWishlistMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addToWishlist>>, TError,{listingId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof addToWishlist>>, TError,{listingId: number}, TContext> => {
+
+const mutationKey = ['addToWishlist'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof addToWishlist>>, {listingId: number}> = (props) => {
+          const {listingId} = props ?? {};
+
+          return  addToWishlist(listingId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AddToWishlistMutationResult = NonNullable<Awaited<ReturnType<typeof addToWishlist>>>
+
+    export type AddToWishlistMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Add a listing to wishlist
+ */
+export const useAddToWishlist = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addToWishlist>>, TError,{listingId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof addToWishlist>>,
+        TError,
+        {listingId: number},
+        TContext
+      > => {
+      return useMutation(getAddToWishlistMutationOptions(options));
+    }
+
+export const getRemoveFromWishlistUrl = (listingId: number,) => {
+
+
+
+
+  return `/api/wishlist/${listingId}`
+}
+
+/**
+ * @summary Remove a listing from wishlist
+ */
+export const removeFromWishlist = async (listingId: number, options?: RequestInit): Promise<RemoveFromWishlist200> => {
+
+  return customFetch<RemoveFromWishlist200>(getRemoveFromWishlistUrl(listingId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getRemoveFromWishlistMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeFromWishlist>>, TError,{listingId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof removeFromWishlist>>, TError,{listingId: number}, TContext> => {
+
+const mutationKey = ['removeFromWishlist'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof removeFromWishlist>>, {listingId: number}> = (props) => {
+          const {listingId} = props ?? {};
+
+          return  removeFromWishlist(listingId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RemoveFromWishlistMutationResult = NonNullable<Awaited<ReturnType<typeof removeFromWishlist>>>
+
+    export type RemoveFromWishlistMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Remove a listing from wishlist
+ */
+export const useRemoveFromWishlist = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeFromWishlist>>, TError,{listingId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof removeFromWishlist>>,
+        TError,
+        {listingId: number},
+        TContext
+      > => {
+      return useMutation(getRemoveFromWishlistMutationOptions(options));
+    }
+
+export const getGetPurchaseHistoryUrl = () => {
+
+
+
+
+  return `/api/purchases`
+}
+
+/**
+ * @summary Get completed purchase history for current buyer
+ */
+export const getPurchaseHistory = async ( options?: RequestInit): Promise<Purchase[]> => {
+
+  return customFetch<Purchase[]>(getGetPurchaseHistoryUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetPurchaseHistoryQueryKey = () => {
+    return [
+    `/api/purchases`
+    ] as const;
+    }
+
+
+export const getGetPurchaseHistoryQueryOptions = <TData = Awaited<ReturnType<typeof getPurchaseHistory>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPurchaseHistory>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPurchaseHistoryQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPurchaseHistory>>> = ({ signal }) => getPurchaseHistory({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPurchaseHistory>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetPurchaseHistoryQueryResult = NonNullable<Awaited<ReturnType<typeof getPurchaseHistory>>>
+export type GetPurchaseHistoryQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get completed purchase history for current buyer
+ */
+
+export function useGetPurchaseHistory<TData = Awaited<ReturnType<typeof getPurchaseHistory>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPurchaseHistory>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetPurchaseHistoryQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getGetDepositsUrl = () => {
 

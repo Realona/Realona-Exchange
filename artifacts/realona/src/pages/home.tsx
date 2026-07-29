@@ -2,10 +2,12 @@ import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "wouter";
-import { useGetListings } from "@workspace/api-client-react";
+import { useGetListings, useAddToWishlist, useRemoveFromWishlist, useGetWishlist } from "@workspace/api-client-react";
 import { formatNaira } from "@/lib/utils";
-import { Search, ShieldCheck, Zap, MessageSquare, SlidersHorizontal, X, Users, Star } from "lucide-react";
+import { Search, ShieldCheck, Zap, MessageSquare, SlidersHorizontal, X, Users, Star, Heart } from "lucide-react";
 import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
@@ -20,6 +22,31 @@ export default function Home() {
   const [showFilters, setShowFilters] = useState(false);
   const [category, setCategory] = useState<"all" | "efootball" | "social_media">("all");
   const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const { data: wishlistItems } = useGetWishlist({
+    query: { enabled: !!user, queryKey: ["getWishlist"] }
+  });
+  const addWishlist = useAddToWishlist();
+  const removeWishlist = useRemoveFromWishlist();
+
+  const wishlistIds = new Set((wishlistItems ?? []).map(w => w.listingId));
+
+  const toggleWishlist = (e: React.MouseEvent, listingId: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!user) { toast({ title: "Login to save listings", variant: "destructive" }); return; }
+    if (wishlistIds.has(listingId)) {
+      removeWishlist.mutate({ listingId }, {
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ["getWishlist"] }),
+      });
+    } else {
+      addWishlist.mutate({ listingId }, {
+        onSuccess: () => { toast({ title: "Saved to wishlist ❤️" }); queryClient.invalidateQueries({ queryKey: ["getWishlist"] }); },
+      });
+    }
+  };
 
   const hasFilters = divisionRank || minRating || maxRating;
 
@@ -205,6 +232,14 @@ export default function Home() {
                     <div className="absolute top-2 right-2 bg-background/90 backdrop-blur text-primary font-bold px-3 py-1 rounded shadow-sm border border-border text-sm">
                       {formatNaira(listing.price)}
                     </div>
+                    {/* Wishlist heart button */}
+                    <button
+                      onClick={e => toggleWishlist(e, listing.id)}
+                      className="absolute top-2 left-2 w-8 h-8 rounded-full bg-background/90 backdrop-blur border border-border flex items-center justify-center hover:bg-background transition-colors"
+                      title={wishlistIds.has(listing.id) ? "Remove from wishlist" : "Save to wishlist"}
+                    >
+                      <Heart className={`w-4 h-4 transition-colors ${wishlistIds.has(listing.id) ? "text-red-500 fill-red-500" : "text-muted-foreground"}`} />
+                    </button>
                   </div>
                   <CardContent className="p-4 flex-1">
                     {/* Division & Rating badges */}

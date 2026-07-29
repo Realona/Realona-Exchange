@@ -12,7 +12,7 @@ import {
 import { formatNaira } from "@/lib/utils";
 import {
   Wallet, ShoppingBag, ArrowRightLeft, Plus, TrendingUp,
-  Megaphone, Gift, X, HandshakeIcon, Trophy, ShieldCheck, AlertTriangle, Zap, Info
+  Megaphone, Gift, X, HandshakeIcon, Trophy, ShieldCheck, AlertTriangle, Zap, Info, Heart
 } from "lucide-react";
 
 function tradeStatusBadge(status: string) {
@@ -165,6 +165,18 @@ export default function Dashboard() {
                 <Link href="/leaderboard">
                   <Trophy className="w-4 h-4 mr-2" />
                   Leaderboard
+                </Link>
+              </Button>
+              <Button variant="outline" asChild>
+                <Link href="/wishlist">
+                  <Heart className="w-4 h-4 mr-2" />
+                  Wishlist
+                </Link>
+              </Button>
+              <Button variant="outline" asChild>
+                <Link href="/purchases">
+                  <ShoppingBag className="w-4 h-4 mr-2" />
+                  Purchases
                 </Link>
               </Button>
               {user?.kycLevel === 0 && (

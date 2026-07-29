@@ -17,6 +17,8 @@ import notificationsRouter from "./notifications";
 import announcementsRouter from "./announcements";
 import giveawaysRouter from "./giveaways";
 import leaderboardRouter from "./leaderboard";
+import wishlistRouter from "./wishlist";
+import purchasesRouter from "./purchases";
 
 const router: IRouter = Router();
 
@@ -38,5 +40,7 @@ router.use(notificationsRouter);
 router.use(announcementsRouter);
 router.use(giveawaysRouter);
 router.use(leaderboardRouter);
+router.use(wishlistRouter);
+router.use(purchasesRouter);
 
 export default router;

@@ -649,6 +649,95 @@ export const SendTradeMessageResponse = zod.object({
 
 
 /**
+ * @summary Get current user's wishlist
+ */
+export const GetWishlistResponseItem = zod.object({
+  "id": zod.number(),
+  "userId": zod.number(),
+  "listingId": zod.number(),
+  "createdAt": zod.coerce.date(),
+  "listing": zod.object({
+  "id": zod.number().optional(),
+  "gameName": zod.string().optional(),
+  "description": zod.string().optional(),
+  "price": zod.number().optional(),
+  "pictureUrl": zod.string().nullish(),
+  "status": zod.string().optional(),
+  "category": zod.string().optional(),
+  "platform": zod.string().nullish(),
+  "followerCount": zod.number().nullish(),
+  "divisionRank": zod.string().nullish(),
+  "squadRating": zod.number().nullish(),
+  "sellerUsername": zod.string().nullish()
+}).nullish()
+})
+export const GetWishlistResponse = zod.array(GetWishlistResponseItem)
+
+
+/**
+ * @summary Add a listing to wishlist
+ */
+export const AddToWishlistParams = zod.object({
+  "listingId": zod.coerce.number()
+})
+
+export const AddToWishlistResponse = zod.object({
+  "id": zod.number(),
+  "userId": zod.number(),
+  "listingId": zod.number(),
+  "createdAt": zod.coerce.date(),
+  "listing": zod.object({
+  "id": zod.number().optional(),
+  "gameName": zod.string().optional(),
+  "description": zod.string().optional(),
+  "price": zod.number().optional(),
+  "pictureUrl": zod.string().nullish(),
+  "status": zod.string().optional(),
+  "category": zod.string().optional(),
+  "platform": zod.string().nullish(),
+  "followerCount": zod.number().nullish(),
+  "divisionRank": zod.string().nullish(),
+  "squadRating": zod.number().nullish(),
+  "sellerUsername": zod.string().nullish()
+}).nullish()
+})
+
+
+/**
+ * @summary Remove a listing from wishlist
+ */
+export const RemoveFromWishlistParams = zod.object({
+  "listingId": zod.coerce.number()
+})
+
+export const RemoveFromWishlistResponse = zod.object({
+  "success": zod.boolean().optional()
+})
+
+
+/**
+ * @summary Get completed purchase history for current buyer
+ */
+export const GetPurchaseHistoryResponseItem = zod.object({
+  "id": zod.number(),
+  "listingId": zod.number().nullable(),
+  "gameName": zod.string(),
+  "amount": zod.number(),
+  "fee": zod.number().nullish(),
+  "status": zod.string(),
+  "createdAt": zod.coerce.date(),
+  "sellerId": zod.number(),
+  "sellerUsername": zod.string().nullish(),
+  "pictureUrl": zod.string().nullish(),
+  "category": zod.string().optional(),
+  "platform": zod.string().nullish(),
+  "myRating": zod.number().nullish(),
+  "ratingComment": zod.string().nullish()
+})
+export const GetPurchaseHistoryResponse = zod.array(GetPurchaseHistoryResponseItem)
+
+
+/**
  * @summary Get deposit history for current user
  */
 export const GetDepositsResponseItem = zod.object({

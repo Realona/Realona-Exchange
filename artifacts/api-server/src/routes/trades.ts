@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { db, tradesTable, listingsTable, usersTable, tradeMessagesTable, platformConfigTable, tradeRatingsTable, notificationsTable } from "@workspace/db";
+import { db, tradesTable, listingsTable, usersTable, tradeMessagesTable, platformConfigTable, tradeRatingsTable, notificationsTable, wishlistTable } from "@workspace/db";
 import { eq, and, sql, or } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
 import {
@@ -300,6 +300,12 @@ router.post("/trades/:id/confirm-receipt", requireAuth, async (req, res): Promis
   await db.update(tradesTable).set({ status: "completed" }).where(eq(tradesTable.id, params.data.id));
   await addSystemMsg(params.data.id, `Trade completed! Seller received ₦${sellerAmount.toLocaleString()}. Platform fee: ₦${Number(trade.fee).toLocaleString()}.`, req.userId!);
 
+  // Notify users who wishlisted this listing
+  if (trade.listingId) {
+    const wishers = await db.select({ userId: wishlistTable.userId }).from(wishlistTable).where(eq(wishlistTable.listingId, trade.listingId));
+    await Promise.all(wishers.map(w => createNotification(w.userId, "trade_update", "Wishlisted Account Sold", `An account you saved to your wishlist has been sold. Check out similar listings!`, { listingId: trade.listingId })));
+  }
+
   const row = await getTradeWithDetails(params.data.id);
 
   // Email both parties
@@ -457,6 +463,12 @@ router.post("/trades/:id/confirm-access", requireAuth, async (req, res): Promise
   // Notify seller
   const [buyer] = await db.select({ username: usersTable.username }).from(usersTable).where(eq(usersTable.id, req.userId!));
   await createNotification(trade.sellerId, "trade_update", "Trade Completed!", `${buyer?.username ?? "Buyer"} confirmed account access. ₦${sellerAmount.toLocaleString()} has been released to your wallet.`, { tradeId });
+
+  // Notify wishlist users
+  if (trade.listingId) {
+    const wishers = await db.select({ userId: wishlistTable.userId }).from(wishlistTable).where(eq(wishlistTable.listingId, trade.listingId));
+    await Promise.all(wishers.map(w => w.userId !== req.userId ? createNotification(w.userId, "trade_update", "Wishlisted Account Sold", "An account you saved to your wishlist has just been sold. Browse similar listings!", { listingId: trade.listingId }) : Promise.resolve()));
+  }
 
   res.json({ success: true });
 });

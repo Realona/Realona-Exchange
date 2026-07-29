@@ -602,6 +602,59 @@ export interface Leaderboard {
   mostTrusted: LeaderboardEntry[];
 }
 
+export type WishlistItemListing = {
+  id?: number;
+  gameName?: string;
+  description?: string;
+  price?: number;
+  /** @nullable */
+  pictureUrl?: string | null;
+  status?: string;
+  category?: string;
+  /** @nullable */
+  platform?: string | null;
+  /** @nullable */
+  followerCount?: number | null;
+  /** @nullable */
+  divisionRank?: string | null;
+  /** @nullable */
+  squadRating?: number | null;
+  /** @nullable */
+  sellerUsername?: string | null;
+} | null;
+
+export interface WishlistItem {
+  id: number;
+  userId: number;
+  listingId: number;
+  createdAt: string;
+  listing?: WishlistItemListing;
+}
+
+export interface Purchase {
+  id: number;
+  /** @nullable */
+  listingId: number | null;
+  gameName: string;
+  amount: number;
+  /** @nullable */
+  fee?: number | null;
+  status: string;
+  createdAt: string;
+  sellerId: number;
+  /** @nullable */
+  sellerUsername?: string | null;
+  /** @nullable */
+  pictureUrl?: string | null;
+  category?: string;
+  /** @nullable */
+  platform?: string | null;
+  /** @nullable */
+  myRating?: number | null;
+  /** @nullable */
+  ratingComment?: string | null;
+}
+
 export interface UploadUrlRequest {
   /** @minLength 1 */
   name: string;
@@ -635,6 +688,10 @@ export type MarkOtpSent200 = {
 };
 
 export type RequestEmailOtp200 = {
+  success?: boolean;
+};
+
+export type RemoveFromWishlist200 = {
   success?: boolean;
 };
 

@@ -24,6 +24,7 @@ tags:
   - name: announcements
   - name: leaderboard
   - name: giveaways
+  - name: wishlist
   - name: Storage
     description: Object storage upload and serving endpoints.
 
@@ -547,6 +548,75 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TradeMessage"
+
+  # ─── WISHLIST ──────────────────────────────────────────────────────────────
+  /wishlist:
+    get:
+      operationId: getWishlist
+      tags: [wishlist]
+      summary: Get current user's wishlist
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/WishlistItem"
+
+  /wishlist/{listingId}:
+    post:
+      operationId: addToWishlist
+      tags: [wishlist]
+      summary: Add a listing to wishlist
+      parameters:
+        - name: listingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "201":
+          description: Added
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WishlistItem"
+    delete:
+      operationId: removeFromWishlist
+      tags: [wishlist]
+      summary: Remove a listing from wishlist
+      parameters:
+        - name: listingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Removed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+
+  /purchases:
+    get:
+      operationId: getPurchaseHistory
+      tags: [trades]
+      summary: Get completed purchase history for current buyer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Purchase"
 
   # ─── DEPOSITS ──────────────────────────────────────────────────────────────
   /deposits:
@@ -2244,6 +2314,50 @@ components:
         mostTrusted:
           type: array
           items: { $ref: "#/components/schemas/LeaderboardEntry" }
+
+    WishlistItem:
+      type: object
+      required: [id, userId, listingId, createdAt]
+      properties:
+        id: { type: integer }
+        userId: { type: integer }
+        listingId: { type: integer }
+        createdAt: { type: string, format: date-time }
+        listing:
+          nullable: true
+          type: object
+          properties:
+            id: { type: integer }
+            gameName: { type: string }
+            description: { type: string }
+            price: { type: number }
+            pictureUrl: { type: ["string", "null"] }
+            status: { type: string }
+            category: { type: string }
+            platform: { type: ["string", "null"] }
+            followerCount: { type: ["integer", "null"] }
+            divisionRank: { type: ["string", "null"] }
+            squadRating: { type: ["integer", "null"] }
+            sellerUsername: { type: ["string", "null"] }
+
+    Purchase:
+      type: object
+      required: [id, listingId, gameName, amount, status, createdAt, sellerId]
+      properties:
+        id: { type: integer }
+        listingId: { type: ["integer", "null"] }
+        gameName: { type: string }
+        amount: { type: number }
+        fee: { type: ["number", "null"] }
+        status: { type: string }
+        createdAt: { type: string, format: date-time }
+        sellerId: { type: integer }
+        sellerUsername: { type: ["string", "null"] }
+        pictureUrl: { type: ["string", "null"] }
+        category: { type: string }
+        platform: { type: ["string", "null"] }
+        myRating: { type: ["integer", "null"] }
+        ratingComment: { type: ["string", "null"] }
 
     UploadUrlRequest:
       type: object

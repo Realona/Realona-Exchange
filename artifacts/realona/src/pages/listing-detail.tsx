@@ -8,10 +8,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { useGetListing, useCreateTrade, useMakeOffer } from "@workspace/api-client-react";
+import { useGetListing, useCreateTrade, useMakeOffer, useAddToWishlist, useRemoveFromWishlist, useGetWishlist } from "@workspace/api-client-react";
 import { formatNaira } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { ShieldCheck, User, ArrowRightLeft, AlertTriangle, HandshakeIcon, Users, Star, Gamepad2, Share2, Copy, Link } from "lucide-react";
+import { ShieldCheck, User, ArrowRightLeft, AlertTriangle, HandshakeIcon, Users, Star, Gamepad2, Share2, Copy, Link, Heart } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
 const SOCIAL_PLATFORM_ICONS: Record<string, string> = {
@@ -35,6 +35,23 @@ export default function ListingDetail() {
   const { data: listing, isLoading, isError } = useGetListing(Number(id));
   const createTrade = useCreateTrade();
   const makeOffer = useMakeOffer();
+  const addWishlist = useAddToWishlist();
+  const removeWishlist = useRemoveFromWishlist();
+  const { data: wishlistItems } = useGetWishlist({ query: { enabled: !!user, queryKey: ["getWishlist"] } });
+  const isWishlisted = (wishlistItems ?? []).some(w => w.listingId === Number(id));
+
+  const toggleWishlist = () => {
+    if (!user) { toast({ title: "Login to save listings", variant: "destructive" }); return; }
+    if (isWishlisted) {
+      removeWishlist.mutate({ listingId: Number(id) }, {
+        onSuccess: () => { toast({ title: "Removed from wishlist" }); queryClient.invalidateQueries({ queryKey: ["getWishlist"] }); }
+      });
+    } else {
+      addWishlist.mutate({ listingId: Number(id) }, {
+        onSuccess: () => { toast({ title: "Saved to wishlist ❤️" }); queryClient.invalidateQueries({ queryKey: ["getWishlist"] }); }
+      });
+    }
+  };
 
   const handleBuy = () => {
     if (!user) { setLocation("/login"); return; }
@@ -252,6 +269,16 @@ export default function ListingDetail() {
                     Make an Offer
                   </Button>
                 )}
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className={`w-full h-11 font-semibold ${isWishlisted ? "text-red-500 border-red-500/30 hover:bg-red-500/10" : "text-muted-foreground"}`}
+                  onClick={toggleWishlist}
+                  disabled={addWishlist.isPending || removeWishlist.isPending}
+                >
+                  <Heart className={`w-4 h-4 mr-2 ${isWishlisted ? "fill-red-500" : ""}`} />
+                  {isWishlisted ? "Remove from Wishlist" : "Save to Wishlist"}
+                </Button>
               </div>
             )}
 

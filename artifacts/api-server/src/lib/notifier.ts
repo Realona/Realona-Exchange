@@ -10,7 +10,8 @@ type NotificationType =
   | "offer_responded"
   | "trade_rated"
   | "announcement"
-  | "giveaway";
+  | "giveaway"
+  | "deposit_pending";
 
 export async function createNotification(
   userId: number,
