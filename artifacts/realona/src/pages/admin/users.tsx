@@ -59,6 +59,8 @@ export default function AdminUsers() {
   const [demoUsername, setDemoUsername] = useState("");
   const [demoEmail, setDemoEmail] = useState("");
   const [demoPassword, setDemoPassword] = useState("");
+  const [suspendingIds, setSuspendingIds] = useState<Set<number>>(new Set());
+  const [verifyingIds, setVerifyingIds] = useState<Set<number>>(new Set());
 
   const { data: users } = useGetAdminUsers({ search: search || undefined });
   const { data: demoAccounts, refetch: refetchDemo } = useGetDemoAccounts();
@@ -69,22 +71,26 @@ export default function AdminUsers() {
   const deleteDemo = useDeleteDemoAccount();
 
   const handleSuspend = (id: number, suspended: boolean) => {
+    setSuspendingIds(prev => new Set(prev).add(id));
     suspendMutation.mutate({ id, data: { suspended } }, {
       onSuccess: () => {
         toast({ title: suspended ? "User suspended" : "User unsuspended" });
         queryClient.invalidateQueries({ queryKey: ["getAdminUsers"] });
       },
       onError: (err: any) => toast({ title: "Failed", description: err?.data?.error ?? err?.message, variant: "destructive" }),
+      onSettled: () => setSuspendingIds(prev => { const n = new Set(prev); n.delete(id); return n; }),
     });
   };
 
   const handleVerify = (id: number, verified: boolean) => {
+    setVerifyingIds(prev => new Set(prev).add(id));
     verifyTrader.mutate({ id, data: { verified } }, {
       onSuccess: () => {
         toast({ title: verified ? "✅ Verified Trader badge granted" : "Badge revoked" });
         queryClient.invalidateQueries({ queryKey: ["getAdminUsers"] });
       },
       onError: (err: any) => toast({ title: "Failed", description: err?.data?.error ?? err?.message, variant: "destructive" }),
+      onSettled: () => setVerifyingIds(prev => { const n = new Set(prev); n.delete(id); return n; }),
     });
   };
 
@@ -188,11 +194,11 @@ export default function AdminUsers() {
                       variant="outline"
                       className={u.isVerified ? "text-yellow-600 border-yellow-500/30 hover:bg-yellow-500/10" : "text-green-600 border-green-500/30 hover:bg-green-500/10"}
                       onClick={() => handleVerify(u.id, !u.isVerified)}
-                      disabled={verifyTrader.isPending}
+                      disabled={verifyingIds.has(u.id)}
                       title={u.isVerified ? "Revoke Verified Trader badge" : "Grant Verified Trader badge"}
                     >
                       <BadgeCheck className="w-4 h-4 mr-1" />
-                      {u.isVerified ? "Unverify" : "Verify"}
+                      {verifyingIds.has(u.id) ? "Saving..." : u.isVerified ? "Unverify" : "Verify"}
                     </Button>
                   )}
                   <Button
@@ -200,7 +206,7 @@ export default function AdminUsers() {
                     variant="outline"
                     className={u.isSuspended ? "text-green-500 border-green-500/30" : "text-red-500 border-red-500/30"}
                     onClick={() => handleSuspend(u.id, !u.isSuspended)}
-                    disabled={suspendMutation.isPending || u.id === user?.id}
+                    disabled={suspendingIds.has(u.id) || u.id === user?.id}
                   >
                     {u.isSuspended ? <UserCheck className="w-4 h-4" /> : <UserX className="w-4 h-4" />}
                     {u.isSuspended ? "Unsuspend" : "Suspend"}
