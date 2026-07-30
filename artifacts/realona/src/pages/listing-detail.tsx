@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { useGetListing, useCreateTrade, useMakeOffer, useGetWishlistIds, useAddToWishlist, useRemoveFromWishlist } from "@workspace/api-client-react";
 import { formatNaira } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { ShieldCheck, User, ArrowRightLeft, AlertTriangle, HandshakeIcon, Users, Star, Gamepad2, Share2, Copy, Link, Heart } from "lucide-react";
+import { ShieldCheck, User, ArrowRightLeft, AlertTriangle, HandshakeIcon, Users, Star, Gamepad2, Share2, Copy, Link, Heart, X as XIcon, ZoomIn } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
 const SOCIAL_PLATFORM_ICONS: Record<string, string> = {
@@ -131,6 +131,7 @@ export default function ListingDetail() {
   const isMine = user?.id === listing.sellerId;
   const isAvailable = listing.status === "active";
   const isSocial = (listing as any).category === "social_media";
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   return (
     <Layout>
@@ -138,15 +139,48 @@ export default function ListingDetail() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Image / Social Info */}
           <div className="space-y-4">
-            <div className="aspect-[4/3] rounded-xl overflow-hidden bg-muted border border-border">
+            <div className="aspect-[4/3] rounded-xl overflow-hidden bg-muted border border-border relative group">
               {listing.pictureUrl ? (
-                <img src={listing.pictureUrl} alt={listing.gameName} className="w-full h-full object-cover" />
+                <>
+                  <img
+                    src={listing.pictureUrl}
+                    alt={listing.gameName}
+                    className="w-full h-full object-cover cursor-zoom-in"
+                    onClick={() => setLightboxOpen(true)}
+                  />
+                  <div
+                    className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center pointer-events-none"
+                  >
+                    <ZoomIn className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
+                  </div>
+                </>
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-muted-foreground text-lg">
                   {isSocial ? <Users className="w-12 h-12 opacity-30" /> : <Gamepad2 className="w-12 h-12 opacity-30" />}
                 </div>
               )}
             </div>
+
+            {/* Lightbox */}
+            {lightboxOpen && listing.pictureUrl && (
+              <div
+                className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+                onClick={() => setLightboxOpen(false)}
+              >
+                <button
+                  className="absolute top-4 right-4 text-white bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+                  onClick={() => setLightboxOpen(false)}
+                >
+                  <XIcon className="w-6 h-6" />
+                </button>
+                <img
+                  src={listing.pictureUrl}
+                  alt={listing.gameName}
+                  className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
+                  onClick={e => e.stopPropagation()}
+                />
+              </div>
+            )}
 
             {/* Social media stats */}
             {isSocial && (
