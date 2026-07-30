@@ -308,6 +308,36 @@ export async function emailWithdrawalRejected(opts: {
 
 // ─── Auth emails ─────────────────────────────────────────────────────────────
 
+export async function emailVerifiedBadgeGranted(opts: { email: string; username: string }) {
+  await send(
+    opts.email,
+    "🏅 You're now a Verified Trader on Realona Exchange!",
+    base(
+      "You've been verified!",
+      p(`Hi <strong>${opts.username}</strong>, congratulations — you have been granted the <strong>Verified Trader</strong> badge on Realona Exchange!`) +
+      table(
+        badge("Badge", "✅ Verified Trader") +
+        badge("Effect", "Your listings now appear in Verified Sellers filters")
+      ) +
+      p("Buyers actively filter for Verified Traders, so your listings will get more visibility. Keep up the great work!") +
+      btn("View My Listings", `${APP_URL}/my-listings`)
+    )
+  );
+}
+
+export async function emailVerifiedBadgeRevoked(opts: { email: string; username: string }) {
+  await send(
+    opts.email,
+    "Your Verified Trader badge has been removed",
+    base(
+      "Verified Trader badge removed",
+      p(`Hi <strong>${opts.username}</strong>, your Verified Trader badge on Realona Exchange has been removed by the admin team.`) +
+      p("Your listings are still active and visible on the marketplace. If you believe this was a mistake, please contact support via the chat button on the site.") +
+      btn("Go to Realona Exchange", APP_URL)
+    )
+  );
+}
+
 export async function emailOtp(opts: { email: string; username: string; otp: string }) {
   // Always log to console in non-production so registration can be tested
   // even when Gmail credentials are not yet configured

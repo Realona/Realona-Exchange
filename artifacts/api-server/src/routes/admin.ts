@@ -2,7 +2,8 @@ import { Router, type IRouter } from "express";
 import { db, usersTable, tradesTable, depositsTable, withdrawalsTable, reportsTable, listingsTable, tradeMessagesTable, platformConfigTable, kycSubmissionsTable, announcementsTable, giveawaysTable, giveawayClaimsTable } from "@workspace/db";
 import { eq, sql, and, ilike, or } from "drizzle-orm";
 import { requireAdmin, requireSuperAdmin, hashPassword } from "../lib/auth";
-import { emailWithdrawalApproved, emailWithdrawalRejected } from "../lib/email";
+import { emailWithdrawalApproved, emailWithdrawalRejected, emailVerifiedBadgeGranted, emailVerifiedBadgeRevoked } from "../lib/email";
+import { createNotification } from "../lib/notifier";
 import {
   SuspendUserParams, SuspendUserBody,
   AdjustUserBalanceParams, AdjustUserBalanceBody,
@@ -120,6 +121,15 @@ router.post("/admin/users/:id/verify", requireSuperAdmin, async (req, res): Prom
   if (!user) {
     res.status(404).json({ error: "User not found" });
     return;
+  }
+
+  // Notify the seller (fire-and-forget — never block the response)
+  if (parsed.data.verified) {
+    createNotification(user.id, "giveaway", "🏅 Verified Trader Badge Granted", "Congratulations! You've been granted the Verified Trader badge. Your listings now appear in Verified Sellers filters.", {}).catch(() => {});
+    emailVerifiedBadgeGranted({ email: user.email, username: user.username }).catch(() => {});
+  } else {
+    createNotification(user.id, "giveaway", "Verified Trader Badge Removed", "Your Verified Trader badge has been removed. Your listings remain active on the marketplace.", {}).catch(() => {});
+    emailVerifiedBadgeRevoked({ email: user.email, username: user.username }).catch(() => {});
   }
 
   res.json(formatAdminUser(user));
