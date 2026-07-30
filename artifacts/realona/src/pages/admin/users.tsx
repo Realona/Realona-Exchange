@@ -6,11 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { useGetAdminUsers, useSuspendUser, useAdjustUserBalance, useCreateDemoAccount, useDeleteDemoAccount, useGetDemoAccounts } from "@workspace/api-client-react";
+import { useGetAdminUsers, useSuspendUser, useAdjustUserBalance, useCreateDemoAccount, useDeleteDemoAccount, useGetDemoAccounts, useVerifyTrader } from "@workspace/api-client-react";
 import { formatNaira } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { Search, UserX, UserCheck, Wallet, FlaskConical, Plus, Trash2 } from "lucide-react";
+import { Search, UserX, UserCheck, Wallet, FlaskConical, Plus, Trash2, BadgeCheck } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { useAuth as useAuthCtx } from "@/hooks/use-auth";
@@ -64,6 +64,7 @@ export default function AdminUsers() {
   const { data: demoAccounts, refetch: refetchDemo } = useGetDemoAccounts();
   const suspendMutation = useSuspendUser();
   const adjustBalance = useAdjustUserBalance();
+  const verifyTrader = useVerifyTrader();
   const createDemo = useCreateDemoAccount();
   const deleteDemo = useDeleteDemoAccount();
 
@@ -71,6 +72,16 @@ export default function AdminUsers() {
     suspendMutation.mutate({ id, data: { suspended } }, {
       onSuccess: () => {
         toast({ title: suspended ? "User suspended" : "User unsuspended" });
+        queryClient.invalidateQueries({ queryKey: ["getAdminUsers"] });
+      },
+      onError: (err: any) => toast({ title: "Failed", description: err?.data?.error ?? err?.message, variant: "destructive" }),
+    });
+  };
+
+  const handleVerify = (id: number, verified: boolean) => {
+    verifyTrader.mutate({ id, data: { verified } }, {
+      onSuccess: () => {
+        toast({ title: verified ? "✅ Verified Trader badge granted" : "Badge revoked" });
         queryClient.invalidateQueries({ queryKey: ["getAdminUsers"] });
       },
       onError: (err: any) => toast({ title: "Failed", description: err?.data?.error ?? err?.message, variant: "destructive" }),
@@ -156,12 +167,13 @@ export default function AdminUsers() {
                     <span className="text-muted-foreground text-sm">{u.email}</span>
                     {u.isSuperAdmin && <Badge className="text-xs bg-purple-500/10 text-purple-500 border-purple-500/20" variant="outline">Super Admin</Badge>}
                     {u.isAdmin && !u.isSuperAdmin && <Badge className="text-xs bg-blue-500/10 text-blue-500 border-blue-500/20" variant="outline">Admin</Badge>}
+                    {u.isVerified && <Badge variant="outline" className="text-xs bg-green-500/10 text-green-600 border-green-500/20"><BadgeCheck className="w-2.5 h-2.5 mr-1" />Verified Trader</Badge>}
                     {(u as any).isDemo && <Badge variant="outline" className="text-xs bg-amber-500/10 text-amber-500 border-amber-500/20"><FlaskConical className="w-2.5 h-2.5 mr-1" />Demo</Badge>}
                     {u.isSuspended && <Badge variant="outline" className="text-xs bg-red-500/10 text-red-500 border-red-500/20">Suspended</Badge>}
                   </div>
                   <p className="text-sm text-primary font-medium">{formatNaira(u.walletBalance)}</p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap justify-end">
                   <Button
                     size="sm"
                     variant="outline"
@@ -170,6 +182,19 @@ export default function AdminUsers() {
                   >
                     <Wallet className="w-4 h-4" />
                   </Button>
+                  {user?.isSuperAdmin && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className={u.isVerified ? "text-yellow-600 border-yellow-500/30 hover:bg-yellow-500/10" : "text-green-600 border-green-500/30 hover:bg-green-500/10"}
+                      onClick={() => handleVerify(u.id, !u.isVerified)}
+                      disabled={verifyTrader.isPending}
+                      title={u.isVerified ? "Revoke Verified Trader badge" : "Grant Verified Trader badge"}
+                    >
+                      <BadgeCheck className="w-4 h-4 mr-1" />
+                      {u.isVerified ? "Unverify" : "Verify"}
+                    </Button>
+                  )}
                   <Button
                     size="sm"
                     variant="outline"

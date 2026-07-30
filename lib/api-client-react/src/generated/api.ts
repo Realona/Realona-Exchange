@@ -96,6 +96,7 @@ import type {
   User,
   UserPublic,
   VerifyEmailInput,
+  VerifyTraderInput,
   VirtualAccount,
   WalletBalance,
   WishlistItem,
@@ -2981,6 +2982,77 @@ export const useSuspendUser = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getSuspendUserMutationOptions(options));
+    }
+
+export const getVerifyTraderUrl = (id: number,) => {
+
+
+
+
+  return `/api/admin/users/${id}/verify`
+}
+
+/**
+ * @summary Grant or revoke Verified Trader badge (superadmin only)
+ */
+export const verifyTrader = async (id: number,
+    verifyTraderInput: VerifyTraderInput, options?: RequestInit): Promise<AdminUser> => {
+
+  return customFetch<AdminUser>(getVerifyTraderUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(verifyTraderInput)
+  }
+);}
+
+
+
+
+export const getVerifyTraderMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyTrader>>, TError,{id: number;data: BodyType<VerifyTraderInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof verifyTrader>>, TError,{id: number;data: BodyType<VerifyTraderInput>}, TContext> => {
+
+const mutationKey = ['verifyTrader'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof verifyTrader>>, {id: number;data: BodyType<VerifyTraderInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  verifyTrader(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type VerifyTraderMutationResult = NonNullable<Awaited<ReturnType<typeof verifyTrader>>>
+    export type VerifyTraderMutationBody = BodyType<VerifyTraderInput>
+    export type VerifyTraderMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Grant or revoke Verified Trader badge (superadmin only)
+ */
+export const useVerifyTrader = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyTrader>>, TError,{id: number;data: BodyType<VerifyTraderInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof verifyTrader>>,
+        TError,
+        {id: number;data: BodyType<VerifyTraderInput>},
+        TContext
+      > => {
+      return useMutation(getVerifyTraderMutationOptions(options));
     }
 
 export const getAdjustUserBalanceUrl = (id: number,) => {

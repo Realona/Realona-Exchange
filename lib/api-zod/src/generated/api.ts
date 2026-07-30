@@ -915,6 +915,7 @@ export const GetAdminUsersResponseItem = zod.object({
   "isSuperAdmin": zod.boolean(),
   "isSuspended": zod.boolean(),
   "isDemo": zod.boolean(),
+  "isVerified": zod.boolean(),
   "totalDeposits": zod.number().optional(),
   "totalWithdrawals": zod.number().optional(),
   "totalTrades": zod.number().optional(),
@@ -944,6 +945,35 @@ export const SuspendUserResponse = zod.object({
   "isSuperAdmin": zod.boolean(),
   "isSuspended": zod.boolean(),
   "isDemo": zod.boolean(),
+  "isVerified": zod.boolean(),
+  "totalDeposits": zod.number().optional(),
+  "totalWithdrawals": zod.number().optional(),
+  "totalTrades": zod.number().optional(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Grant or revoke Verified Trader badge (superadmin only)
+ */
+export const VerifyTraderParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const VerifyTraderBody = zod.object({
+  "verified": zod.boolean()
+})
+
+export const VerifyTraderResponse = zod.object({
+  "id": zod.number(),
+  "email": zod.string(),
+  "username": zod.string(),
+  "walletBalance": zod.number(),
+  "isAdmin": zod.boolean(),
+  "isSuperAdmin": zod.boolean(),
+  "isSuspended": zod.boolean(),
+  "isDemo": zod.boolean(),
+  "isVerified": zod.boolean(),
   "totalDeposits": zod.number().optional(),
   "totalWithdrawals": zod.number().optional(),
   "totalTrades": zod.number().optional(),
@@ -972,6 +1002,7 @@ export const AdjustUserBalanceResponse = zod.object({
   "isSuperAdmin": zod.boolean(),
   "isSuspended": zod.boolean(),
   "isDemo": zod.boolean(),
+  "isVerified": zod.boolean(),
   "totalDeposits": zod.number().optional(),
   "totalWithdrawals": zod.number().optional(),
   "totalTrades": zod.number().optional(),
@@ -1199,6 +1230,7 @@ export const GetDemoAccountsResponseItem = zod.object({
   "isSuperAdmin": zod.boolean(),
   "isSuspended": zod.boolean(),
   "isDemo": zod.boolean(),
+  "isVerified": zod.boolean(),
   "totalDeposits": zod.number().optional(),
   "totalWithdrawals": zod.number().optional(),
   "totalTrades": zod.number().optional(),
@@ -1225,6 +1257,7 @@ export const CreateDemoAccountResponse = zod.object({
   "isSuperAdmin": zod.boolean(),
   "isSuspended": zod.boolean(),
   "isDemo": zod.boolean(),
+  "isVerified": zod.boolean(),
   "totalDeposits": zod.number().optional(),
   "totalWithdrawals": zod.number().optional(),
   "totalTrades": zod.number().optional(),
@@ -1256,6 +1289,7 @@ export const GetAdminsResponseItem = zod.object({
   "isSuperAdmin": zod.boolean(),
   "isSuspended": zod.boolean(),
   "isDemo": zod.boolean(),
+  "isVerified": zod.boolean(),
   "totalDeposits": zod.number().optional(),
   "totalWithdrawals": zod.number().optional(),
   "totalTrades": zod.number().optional(),
@@ -1281,6 +1315,7 @@ export const CreateAdminResponse = zod.object({
   "isSuperAdmin": zod.boolean(),
   "isSuspended": zod.boolean(),
   "isDemo": zod.boolean(),
+  "isVerified": zod.boolean(),
   "totalDeposits": zod.number().optional(),
   "totalWithdrawals": zod.number().optional(),
   "totalTrades": zod.number().optional(),

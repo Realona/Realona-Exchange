@@ -6,6 +6,7 @@ import { emailWithdrawalApproved, emailWithdrawalRejected } from "../lib/email";
 import {
   SuspendUserParams, SuspendUserBody,
   AdjustUserBalanceParams, AdjustUserBalanceBody,
+  VerifyTraderParams, VerifyTraderBody,
   GetAdminUsersQueryParams, GetAdminTradesQueryParams, GetAdminWithdrawalsQueryParams,
   ForceCompleteTradeParams, RefundBuyerParams,
   ApproveWithdrawalParams, RejectWithdrawalParams, RejectWithdrawalBody,
@@ -25,6 +26,7 @@ function formatAdminUser(user: typeof usersTable.$inferSelect, extras?: { totalD
     isSuperAdmin: user.isSuperAdmin,
     isSuspended: user.isSuspended,
     isDemo: user.isDemo,
+    isVerified: user.isVerified,
     totalDeposits: extras?.totalDeposits ?? 0,
     totalWithdrawals: extras?.totalWithdrawals ?? 0,
     totalTrades: extras?.totalTrades ?? 0,
@@ -87,6 +89,31 @@ router.post("/admin/users/:id/suspend", requireAdmin, async (req, res): Promise<
 
   const [user] = await db.update(usersTable)
     .set({ isSuspended: parsed.data.suspended })
+    .where(eq(usersTable.id, params.data.id))
+    .returning();
+
+  if (!user) {
+    res.status(404).json({ error: "User not found" });
+    return;
+  }
+
+  res.json(formatAdminUser(user));
+});
+
+router.post("/admin/users/:id/verify", requireSuperAdmin, async (req, res): Promise<void> => {
+  const params = VerifyTraderParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: "Invalid user ID" });
+    return;
+  }
+  const parsed = VerifyTraderBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const [user] = await db.update(usersTable)
+    .set({ isVerified: parsed.data.verified })
     .where(eq(usersTable.id, params.data.id))
     .returning();
 

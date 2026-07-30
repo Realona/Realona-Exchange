@@ -810,6 +810,31 @@ paths:
               schema:
                 $ref: "#/components/schemas/AdminUser"
 
+  /admin/users/{id}/verify:
+    post:
+      operationId: verifyTrader
+      tags: [admin]
+      summary: Grant or revoke Verified Trader badge (superadmin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyTraderInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUser"
+
   /admin/users/{id}/adjust-balance:
     post:
       operationId: adjustUserBalance
@@ -2467,7 +2492,7 @@ components:
 
     AdminUser:
       type: object
-      required: [id, email, username, walletBalance, isAdmin, isSuperAdmin, isSuspended, isDemo, createdAt]
+      required: [id, email, username, walletBalance, isAdmin, isSuperAdmin, isSuspended, isDemo, isVerified, createdAt]
       properties:
         id:
           type: integer
@@ -2484,6 +2509,8 @@ components:
         isSuspended:
           type: boolean
         isDemo:
+          type: boolean
+        isVerified:
           type: boolean
         totalDeposits:
           type: number
@@ -2506,6 +2533,13 @@ components:
           format: email
         password:
           type: string
+
+    VerifyTraderInput:
+      type: object
+      required: [verified]
+      properties:
+        verified:
+          type: boolean
 
     SuspendInput:
       type: object

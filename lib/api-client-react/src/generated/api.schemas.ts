@@ -453,6 +453,7 @@ export interface AdminUser {
   isSuperAdmin: boolean;
   isSuspended: boolean;
   isDemo: boolean;
+  isVerified: boolean;
   totalDeposits?: number;
   totalWithdrawals?: number;
   totalTrades?: number;
@@ -463,6 +464,10 @@ export interface CreateDemoAccountInput {
   username: string;
   email: string;
   password: string;
+}
+
+export interface VerifyTraderInput {
+  verified: boolean;
 }
 
 export interface SuspendInput {

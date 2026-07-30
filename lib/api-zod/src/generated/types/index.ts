@@ -99,6 +99,7 @@ export * from './uploadUrlResponse';
 export * from './user';
 export * from './userPublic';
 export * from './verifyEmailInput';
+export * from './verifyTraderInput';
 export * from './virtualAccount';
 export * from './walletBalance';
 export * from './wishlistItem';
