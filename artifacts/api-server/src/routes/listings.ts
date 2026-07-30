@@ -49,6 +49,7 @@ router.get("/listings", async (req, res): Promise<void> => {
     .select({
       listing: listingsTable,
       sellerUsername: usersTable.username,
+      sellerIsVerified: usersTable.isVerified,
     })
     .from(listingsTable)
     .leftJoin(usersTable, eq(listingsTable.sellerId, usersTable.id))
@@ -65,7 +66,7 @@ router.get("/listings", async (req, res): Promise<void> => {
 
   const rows = await query.where(and(...conditions)).orderBy(sql`${listingsTable.createdAt} DESC`);
 
-  res.json(rows.map(r => formatListing(r.listing, r.sellerUsername)));
+  res.json(rows.map(r => formatListing(r.listing, r.sellerUsername, { sellerIsVerified: r.sellerIsVerified ?? false })));
 });
 
 router.post("/listings", requireAuth, async (req, res): Promise<void> => {
@@ -192,13 +193,13 @@ router.post("/listings/bulk", requireAuth, async (req, res): Promise<void> => {
 
 router.get("/listings/my", requireAuth, async (req, res): Promise<void> => {
   const rows = await db
-    .select({ listing: listingsTable, sellerUsername: usersTable.username })
+    .select({ listing: listingsTable, sellerUsername: usersTable.username, sellerIsVerified: usersTable.isVerified })
     .from(listingsTable)
     .leftJoin(usersTable, eq(listingsTable.sellerId, usersTable.id))
     .where(eq(listingsTable.sellerId, req.userId!))
     .orderBy(sql`${listingsTable.createdAt} DESC`);
 
-  res.json(rows.map(r => formatListing(r.listing, r.sellerUsername)));
+  res.json(rows.map(r => formatListing(r.listing, r.sellerUsername, { sellerIsVerified: r.sellerIsVerified ?? false })));
 });
 
 router.get("/listings/:id", async (req, res): Promise<void> => {
@@ -209,7 +210,7 @@ router.get("/listings/:id", async (req, res): Promise<void> => {
   }
 
   const [row] = await db
-    .select({ listing: listingsTable, sellerUsername: usersTable.username })
+    .select({ listing: listingsTable, sellerUsername: usersTable.username, sellerIsVerified: usersTable.isVerified })
     .from(listingsTable)
     .leftJoin(usersTable, eq(listingsTable.sellerId, usersTable.id))
     .where(eq(listingsTable.id, params.data.id));
@@ -219,7 +220,7 @@ router.get("/listings/:id", async (req, res): Promise<void> => {
     return;
   }
 
-  res.json(formatListing(row.listing, row.sellerUsername));
+  res.json(formatListing(row.listing, row.sellerUsername, { sellerIsVerified: row.sellerIsVerified ?? false }));
 });
 
 router.patch("/listings/:id", requireAuth, async (req, res): Promise<void> => {
