@@ -31,6 +31,7 @@ export default function ListingDetail() {
   const [offerOpen, setOfferOpen] = useState(false);
   const [offerAmount, setOfferAmount] = useState("");
   const [offerMessage, setOfferMessage] = useState("");
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   const { data: listing, isLoading, isError } = useGetListing(Number(id));
   const createTrade = useCreateTrade();
@@ -131,7 +132,6 @@ export default function ListingDetail() {
   const isMine = user?.id === listing.sellerId;
   const isAvailable = listing.status === "active";
   const isSocial = (listing as any).category === "social_media";
-  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   return (
     <Layout>
