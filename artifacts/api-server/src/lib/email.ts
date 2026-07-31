@@ -365,6 +365,23 @@ export async function emailOtp(opts: { email: string; username: string; otp: str
   );
 }
 
+export async function emailNotification(opts: {
+  email: string; username: string; title: string; message: string; linkUrl?: string; linkText?: string;
+}) {
+  const linkTarget = opts.linkUrl ?? APP_URL;
+  const linkLabel = opts.linkText ?? "Open Realona Exchange";
+  await send(
+    opts.email,
+    opts.title,
+    base(
+      opts.title,
+      p(`Hi <strong>${opts.username}</strong>,`) +
+      p(opts.message) +
+      btn(linkLabel, linkTarget)
+    )
+  );
+}
+
 export async function emailWelcome(opts: { email: string; username: string }) {
   await send(
     opts.email,

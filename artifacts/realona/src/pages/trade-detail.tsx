@@ -333,29 +333,11 @@ export default function TradeDetail() {
                   <CardTitle className="text-sm text-muted-foreground uppercase tracking-wider">Actions</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {/* Buyer pending: show payment instructions + notify button */}
+                  {/* Buyer pending: trade is processing */}
                   {isBuyer && trade.status === "pending" && (
-                    <div className="space-y-3">
-                      <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 space-y-1.5">
-                        <p className="text-xs font-bold text-amber-700 dark:text-amber-400 flex items-center gap-1">
-                          <ShieldCheck className="w-3.5 h-3.5" /> Payment Instructions
-                        </p>
-                        <p className="text-xs text-muted-foreground">Transfer <span className="font-bold text-foreground">{formatNaira(trade.amount)}</span> to:</p>
-                        <p className="text-xs font-mono bg-muted rounded px-2 py-1">Moniepoint · 9160385331</p>
-                        <p className="text-xs font-mono bg-muted rounded px-2 py-1">Account Name: Olukoya Kolade</p>
-                        <p className="text-xs text-muted-foreground mt-1">After transferring, click the button below to notify admin.</p>
-                      </div>
-                      {(trade as any).buyerPaidNotified ? (
-                        <div className="rounded-lg border border-blue-500/30 bg-blue-500/5 p-3 text-center">
-                          <p className="text-xs text-blue-600 dark:text-blue-400 font-semibold">⏳ Waiting for admin to confirm your payment…</p>
-                          <p className="text-xs text-muted-foreground mt-1">Admin will confirm once payment is received.</p>
-                        </div>
-                      ) : (
-                        <Button className="w-full" onClick={handleNotifyPayment} disabled={notifyPayment.isPending}>
-                          <ShieldCheck className="w-4 h-4 mr-2" />
-                          {notifyPayment.isPending ? "Notifying..." : "I Have Made Payment"}
-                        </Button>
-                      )}
+                    <div className="rounded-lg border border-blue-500/30 bg-blue-500/5 p-3 text-center space-y-1">
+                      <p className="text-sm font-semibold text-blue-600 dark:text-blue-400">⏳ Setting up your trade…</p>
+                      <p className="text-xs text-muted-foreground">Please wait while we process your order.</p>
                     </div>
                   )}
 
@@ -368,9 +350,7 @@ export default function TradeDetail() {
 
                   {isSeller && ["pending"].includes(trade.status) && (
                     <p className="text-xs text-muted-foreground text-center">
-                      {(trade as any).buyerPaidNotified
-                        ? "Buyer has notified admin of payment. Waiting for admin to confirm."
-                        : "Waiting for buyer to make payment."}
+                      Setting up trade. Please wait.
                     </p>
                   )}
                   {isSeller && ["payment_confirmed", "seller_transferred"].includes(trade.status) && (

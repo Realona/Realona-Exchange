@@ -192,7 +192,7 @@ export default function AdminUsers() {
                     <Button
                       size="sm"
                       variant="outline"
-                      className={u.isVerified ? "text-yellow-600 border-yellow-500/30 hover:bg-yellow-500/10" : "text-green-600 border-green-500/30 hover:bg-green-500/10"}
+                      className={u.isVerified ? "text-yellow-600 border-yellow-500/30 hover:bg-yellow-500/10" : "bg-green-600 hover:bg-green-700 text-white border-green-600"}
                       onClick={() => handleVerify(u.id, !u.isVerified)}
                       disabled={verifyingIds.has(u.id)}
                       title={u.isVerified ? "Revoke Verified Trader badge" : "Grant Verified Trader badge"}

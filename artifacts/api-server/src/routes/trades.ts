@@ -3,7 +3,7 @@ import { db, tradesTable, listingsTable, usersTable, tradeMessagesTable, platfor
 import { eq, and, sql, or } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
 import {
-  emailTradeCreated, emailPaymentConfirmed, emailSellerTransferred,
+  emailPaymentConfirmed, emailSellerTransferred,
   emailTradeCompleted, emailDisputeOpened, emailBuyerPaid,
 } from "../lib/email";
 import {
@@ -137,30 +137,55 @@ router.post("/trades", requireAuth, async (req, res): Promise<void> => {
   const isFirstTrade = Number(tradeCountRow?.count ?? 0) === 0;
   const fee = (isFirstTrade || isAdminBuyer) ? 0 : parseFloat((amount * feePercent / 100).toFixed(2));
 
+  // Verify buyer wallet has sufficient balance (wallet-funded escrow, no bank transfer needed)
+  const [buyerWallet] = await db.select({ walletBalance: usersTable.walletBalance }).from(usersTable).where(eq(usersTable.id, req.userId!));
+  if (!buyerWallet || Number(buyerWallet.walletBalance) < amount) {
+    res.status(400).json({ error: `Insufficient wallet balance. You need at least ₦${amount.toLocaleString()} to complete this purchase. Please deposit funds to your wallet first.` });
+    return;
+  }
+
+  // Create trade directly as payment_confirmed — funds deducted from buyer wallet
   const [trade] = await db.insert(tradesTable).values({
     listingId: listing.id,
     buyerId: req.userId!,
     sellerId: listing.sellerId,
     amount: String(amount),
     fee: String(fee),
-    status: "pending",
+    status: "payment_confirmed",
   }).returning();
 
-  // Add system message
-  await addSystemMsg(trade.id, `Trade initiated. Please make payment.`, req.userId!);
+  // Deduct from buyer wallet (held in escrow)
+  await db.update(usersTable).set({
+    walletBalance: sql`${usersTable.walletBalance} - ${amount}`,
+  }).where(eq(usersTable.id, req.userId!));
+
+  await addSystemMsg(trade.id, `✅ Trade started. ₦${amount.toLocaleString()} deducted from buyer's wallet and held in escrow.`, req.userId!);
+  await addSystemMsg(trade.id, `🔐 Account credentials have been revealed to the buyer.`, req.userId!);
 
   const row = await getTradeWithDetails(trade.id);
 
-  // Email seller about new trade
+  // Fetch seller and buyer for notifications
   const [seller] = await db.select({ email: usersTable.email }).from(usersTable).where(eq(usersTable.id, listing.sellerId));
   const [buyer] = await db.select({ username: usersTable.username }).from(usersTable).where(eq(usersTable.id, req.userId!));
+
+  // Email seller to transfer account (payment already confirmed)
   if (seller && buyer) {
-    emailTradeCreated({
+    emailPaymentConfirmed({
       sellerEmail: seller.email, sellerUsername: row.sellerUsername ?? "",
       buyerUsername: buyer.username, gameName: listing.gameName,
       amount, tradeId: trade.id,
     }).catch(() => {});
   }
+
+  // In-app notifications: skip email for seller (emailPaymentConfirmed already sent); email buyer separately via notification
+  createNotification(listing.sellerId, "trade_update", "New Trade — Payment Confirmed",
+    `${buyer?.username ?? "A buyer"} has purchased your ${listing.gameName} listing. ₦${amount.toLocaleString()} is held in escrow. Please share the account credentials via trade chat.`,
+    { tradeId: trade.id }, true /* skipEmail — emailPaymentConfirmed already sent */
+  ).catch(() => {});
+  createNotification(req.userId!, "trade_update", "Trade Started!",
+    `Your purchase of ${listing.gameName} is confirmed. ₦${amount.toLocaleString()} has been deducted from your wallet and held in escrow. The seller will share account credentials shortly.`,
+    { tradeId: trade.id }
+  ).catch(() => {});
 
   res.status(201).json(formatTrade(row.trade, { buyerUsername: row.buyerUsername, sellerUsername: row.sellerUsername, gameName: row.gameName, pictureUrl: row.pictureUrl }));
 });
@@ -223,7 +248,7 @@ router.post("/trades/:id/buyer-paid", requireAuth, async (req, res): Promise<voi
   // Notify all admin users (in-app + email)
   await Promise.all([
     ...admins.map(admin =>
-      createNotification(admin.id, "trade_update", "Payment Confirmation Needed", `${buyerUsername} has notified payment for Trade #${tradeId} (${gameName}, ₦${Number(trade.amount).toLocaleString()}). Please verify and confirm.`, { tradeId })
+      createNotification(admin.id, "trade_update", "Payment Confirmation Needed", `${buyerUsername} has notified payment for Trade #${tradeId} (${gameName}, ₦${Number(trade.amount).toLocaleString()}). Please verify and confirm.`, { tradeId }, true /* skipEmail — emailBuyerPaid already sent */)
     ),
     emailBuyerPaid({
       adminEmail,

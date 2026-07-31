@@ -1,4 +1,6 @@
-import { db, notificationsTable } from "@workspace/db";
+import { db, notificationsTable, usersTable } from "@workspace/db";
+import { eq } from "drizzle-orm";
+import { emailNotification } from "./email";
 
 type NotificationType =
   | "trade_update"
@@ -21,10 +23,20 @@ export async function createNotification(
   type: NotificationType,
   title: string,
   message: string,
-  metadata?: Record<string, unknown>
+  metadata?: Record<string, unknown>,
+  skipEmail?: boolean
 ): Promise<void> {
   try {
     await db.insert(notificationsTable).values({ userId, type, title, message, metadata: metadata ?? null });
+    if (!skipEmail) {
+      const [user] = await db
+        .select({ email: usersTable.email, username: usersTable.username })
+        .from(usersTable)
+        .where(eq(usersTable.id, userId));
+      if (user?.email) {
+        emailNotification({ email: user.email, username: user.username, title, message }).catch(() => {});
+      }
+    }
   } catch {
     // Never let notification errors break the main flow
   }
