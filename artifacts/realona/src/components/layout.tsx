@@ -98,8 +98,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </div>
       )}
       {/* ── Blue header ── */}
-      <header className="sticky top-0 z-50 shadow-md" style={{ background: "hsl(221,70%,48%)" }}>
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+      <header className="sticky top-0 z-50 shadow-md overflow-hidden" style={{ background: "hsl(221,70%,48%)" }}>
+        <div className="container mx-auto px-2 sm:px-4 h-16 flex items-center gap-2 overflow-hidden">
 
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 shrink-0">
@@ -109,7 +109,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </span>
           </Link>
 
-          <nav className="flex items-center gap-0.5">
+          <nav className="min-w-0 flex-1 flex items-center gap-0.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {user ? (
               <>
                 <Link href="/dashboard">

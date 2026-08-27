@@ -83,6 +83,7 @@ import type {
   RequestOtp200,
   ResendOtpInput,
   ResolveReportInput,
+  SellerAnalytics,
   SuccessResponse,
   SuspendInput,
   Trade,
@@ -1089,6 +1090,83 @@ export const useCreateBulkListings = <TError = ErrorType<unknown>,
       > => {
       return useMutation(getCreateBulkListingsMutationOptions(options));
     }
+
+export const getGetSellerAnalyticsUrl = () => {
+
+
+
+
+  return `/api/seller/analytics`
+}
+
+/**
+ * @summary Get analytics for the authenticated seller
+ */
+export const getSellerAnalytics = async ( options?: RequestInit): Promise<SellerAnalytics> => {
+
+  return customFetch<SellerAnalytics>(getGetSellerAnalyticsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetSellerAnalyticsQueryKey = () => {
+    return [
+    `/api/seller/analytics`
+    ] as const;
+    }
+
+
+export const getGetSellerAnalyticsQueryOptions = <TData = Awaited<ReturnType<typeof getSellerAnalytics>>, TError = ErrorType<ErrorResponse>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getSellerAnalytics>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSellerAnalyticsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSellerAnalytics>>> = ({ signal }) => getSellerAnalytics({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSellerAnalytics>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetSellerAnalyticsQueryResult = NonNullable<Awaited<ReturnType<typeof getSellerAnalytics>>>
+export type GetSellerAnalyticsQueryError = ErrorType<ErrorResponse>
+
+
+/**
+ * @summary Get analytics for the authenticated seller
+ */
+
+export function useGetSellerAnalytics<TData = Awaited<ReturnType<typeof getSellerAnalytics>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getSellerAnalytics>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetSellerAnalyticsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getGetMyListingsUrl = () => {
 

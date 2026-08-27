@@ -21,6 +21,7 @@ import wishlistRouter from "./wishlist";
 import purchasesRouter from "./purchases";
 import tradeFeedRouter from "./trade-feed";
 import platformReviewsRouter from "./platform-reviews";
+import sellerAnalyticsRouter from "./seller-analytics";
 
 const router: IRouter = Router();
 
@@ -46,5 +47,6 @@ router.use(leaderboardRouter);
 router.use(wishlistRouter);
 router.use(purchasesRouter);
 router.use(platformReviewsRouter);
+router.use(sellerAnalyticsRouter);
 
 export default router;

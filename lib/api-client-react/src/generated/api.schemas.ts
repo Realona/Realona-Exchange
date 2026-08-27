@@ -257,6 +257,35 @@ export interface BulkListingResult {
   errorDetails?: BulkListingResultError[];
 }
 
+export interface SellerAnalyticsMonthlySales {
+  /** Month in YYYY-MM format */
+  month: string;
+  sales: number;
+  earnings: number;
+}
+
+export interface SellerAnalyticsListing {
+  listingId: number;
+  gameName: string;
+  views: number;
+  sales: number;
+  earnings: number;
+  conversionRate: number;
+}
+
+export interface SellerAnalytics {
+  totalViews: number;
+  totalSales: number;
+  averageSalePrice: number;
+  conversionRate: number;
+  totalEarned: number;
+  thisMonthEarnings: number;
+  lastMonthEarnings: number;
+  growthRate: number;
+  monthlySales: SellerAnalyticsMonthlySales[];
+  listingPerformance: SellerAnalyticsListing[];
+}
+
 export interface BulkListingSettings {
   enabled: boolean;
   maxImages: number;

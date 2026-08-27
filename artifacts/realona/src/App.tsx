@@ -38,6 +38,7 @@ import Wishlist from "@/pages/wishlist";
 import Purchases from "@/pages/purchases";
 import VerifyOtp from "@/pages/verify-otp";
 import BulkListing from "@/pages/bulk-listing";
+import SellerAnalytics from "@/pages/seller-analytics";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -113,6 +114,9 @@ function Router() {
       <Route path="/verify-otp" component={VerifyOtp} />
       <Route path="/dashboard">
         <ProtectedRoute component={Dashboard} />
+      </Route>
+      <Route path="/seller/analytics">
+        <ProtectedRoute component={SellerAnalytics} />
       </Route>
       <Route path="/wallet">
         <ProtectedRoute component={Wallet} />

@@ -337,6 +337,34 @@ export const CreateBulkListingsResponse = zod.object({
 
 
 /**
+ * @summary Get analytics for the authenticated seller
+ */
+export const GetSellerAnalyticsResponse = zod.object({
+  "totalViews": zod.number(),
+  "totalSales": zod.number(),
+  "averageSalePrice": zod.number(),
+  "conversionRate": zod.number(),
+  "totalEarned": zod.number(),
+  "thisMonthEarnings": zod.number(),
+  "lastMonthEarnings": zod.number(),
+  "growthRate": zod.number(),
+  "monthlySales": zod.array(zod.object({
+  "month": zod.string().describe('Month in YYYY-MM format'),
+  "sales": zod.number(),
+  "earnings": zod.number()
+})),
+  "listingPerformance": zod.array(zod.object({
+  "listingId": zod.number(),
+  "gameName": zod.string(),
+  "views": zod.number(),
+  "sales": zod.number(),
+  "earnings": zod.number(),
+  "conversionRate": zod.number()
+}))
+})
+
+
+/**
  * @summary Get current user listings
  */
 export const GetMyListingsResponseItem = zod.object({

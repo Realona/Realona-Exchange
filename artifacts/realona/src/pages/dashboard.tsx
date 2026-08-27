@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { formatNaira } from "@/lib/utils";
 import {
   Wallet, ShoppingBag, ArrowRightLeft, Plus, TrendingUp,
-  Megaphone, Gift, X, HandshakeIcon, Trophy, ShieldCheck, AlertTriangle, Zap, Info, Heart, History, ChevronRight
+  Megaphone, Gift, X, HandshakeIcon, Trophy, ShieldCheck, AlertTriangle, Zap, Info, Heart, History, ChevronRight, BarChart3
 } from "lucide-react";
 
 function tradeStatusBadge(status: string) {
@@ -232,6 +232,12 @@ export default function Dashboard() {
                 <Link href="/purchases">
                   <History className="w-5 h-5" />
                   Purchase History
+                </Link>
+              </Button>
+              <Button size="lg" variant="outline" className="h-14 text-base justify-start gap-3" asChild>
+                <Link href="/seller/analytics" data-testid="link-seller-analytics">
+                  <BarChart3 className="w-5 h-5" />
+                  Seller Analytics
                 </Link>
               </Button>
               {user?.kycLevel === 0 && (

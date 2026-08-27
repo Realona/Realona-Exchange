@@ -24,6 +24,7 @@ tags:
   - name: announcements
   - name: leaderboard
   - name: giveaways
+  - name: seller analytics
   - name: Storage
     description: Object storage upload and serving endpoints.
 
@@ -300,6 +301,25 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BulkListingResult"
+
+  /seller/analytics:
+    get:
+      operationId: getSellerAnalytics
+      tags: [seller analytics]
+      summary: Get analytics for the authenticated seller
+      responses:
+        "200":
+          description: Seller analytics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SellerAnalytics"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /listings/my:
     get:
@@ -2238,6 +2258,74 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/BulkListingResultError"
+
+    SellerAnalyticsMonthlySales:
+      type: object
+      required: [month, sales, earnings]
+      properties:
+        month:
+          type: string
+          description: Month in YYYY-MM format
+        sales:
+          type: integer
+        earnings:
+          type: number
+
+    SellerAnalyticsListing:
+      type: object
+      required: [listingId, gameName, views, sales, earnings, conversionRate]
+      properties:
+        listingId:
+          type: integer
+        gameName:
+          type: string
+        views:
+          type: integer
+        sales:
+          type: integer
+        earnings:
+          type: number
+        conversionRate:
+          type: number
+
+    SellerAnalytics:
+      type: object
+      required:
+        - totalViews
+        - totalSales
+        - averageSalePrice
+        - conversionRate
+        - totalEarned
+        - thisMonthEarnings
+        - lastMonthEarnings
+        - growthRate
+        - monthlySales
+        - listingPerformance
+      properties:
+        totalViews:
+          type: integer
+        totalSales:
+          type: integer
+        averageSalePrice:
+          type: number
+        conversionRate:
+          type: number
+        totalEarned:
+          type: number
+        thisMonthEarnings:
+          type: number
+        lastMonthEarnings:
+          type: number
+        growthRate:
+          type: number
+        monthlySales:
+          type: array
+          items:
+            $ref: "#/components/schemas/SellerAnalyticsMonthlySales"
+        listingPerformance:
+          type: array
+          items:
+            $ref: "#/components/schemas/SellerAnalyticsListing"
 
     BulkListingSettings:
       type: object
