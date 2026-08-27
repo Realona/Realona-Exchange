@@ -1,4 +1,5 @@
 import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
+import { useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -51,6 +52,10 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
   const { user, isLoading } = useAuth();
   const [, setLocation] = useLocation();
 
+  useEffect(() => {
+    if (!isLoading && !user) setLocation("/login");
+  }, [isLoading, user, setLocation]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -60,7 +65,6 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
   }
 
   if (!user) {
-    setLocation("/login");
     return null;
   }
 
@@ -71,6 +75,15 @@ function AdminRoute({ component: Component }: { component: React.ComponentType }
   const { user, isLoading } = useAuth();
   const [, setLocation] = useLocation();
 
+  useEffect(() => {
+    if (isLoading) return;
+    if (!user) {
+      setLocation("/login");
+    } else if (!user.isAdmin && !user.isSuperAdmin) {
+      setLocation("/dashboard");
+    }
+  }, [isLoading, user, setLocation]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -80,12 +93,10 @@ function AdminRoute({ component: Component }: { component: React.ComponentType }
   }
 
   if (!user) {
-    setLocation("/login");
     return null;
   }
 
   if (!user.isAdmin && !user.isSuperAdmin) {
-    setLocation("/dashboard");
     return null;
   }
 

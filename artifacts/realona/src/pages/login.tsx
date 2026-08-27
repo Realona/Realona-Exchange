@@ -72,7 +72,13 @@ export default function Login() {
                     <FormItem>
                       <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input placeholder="name@example.com" type="email" {...field} className="bg-background" />
+                        <Input
+                          placeholder="name@example.com"
+                          type="email"
+                          autoComplete="email"
+                          {...field}
+                          className="bg-background"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -85,7 +91,13 @@ export default function Login() {
                     <FormItem>
                       <FormLabel>Password</FormLabel>
                       <FormControl>
-                        <Input placeholder="••••••••" type="password" {...field} className="bg-background" />
+                        <Input
+                          placeholder="••••••••"
+                          type="password"
+                          autoComplete="current-password"
+                          {...field}
+                          className="bg-background"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

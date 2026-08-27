@@ -23,6 +23,10 @@ function AdminNav() {
     { href: "/admin/users", label: "Users" },
     { href: "/admin/trades", label: "Trades" },
     { href: "/admin/withdrawals", label: "Withdrawals" },
+    { href: "/admin/deposits", label: "Deposits" },
+    { href: "/admin/kyc-review", label: "KYC Review" },
+    { href: "/admin/announcements", label: "Announcements" },
+    { href: "/admin/giveaways", label: "Giveaways" },
     { href: "/admin/reports", label: "Reports" },
     { href: "/admin/reviews", label: "Reviews" },
   ];
@@ -110,13 +114,34 @@ export default function AdminUsers() {
   };
 
   const handleDeleteDemo = (id: number, username: string) => {
+    const confirmed = window.confirm(
+      `Delete demo account "${username}"?\n\nThis permanently removes the account and all of its listings, trades, offers, messages, reviews, and other activity. This cannot be undone.`,
+    );
+    if (!confirmed) return;
+
     deleteDemo.mutate({ id }, {
       onSuccess: () => {
         toast({ title: "Demo account deleted", description: `${username} has been removed.` });
         refetchDemo();
-        queryClient.invalidateQueries({ queryKey: ["getAdminUsers"] });
+        [
+          "getAdminUsers",
+          "getDemoAccounts",
+          "getAdminStats",
+          "getAdminTrades",
+          "getTrades",
+          "getListings",
+          "getMyListings",
+          "getOffers",
+          "getWishlist",
+          "getPlatformReviews",
+          "getLeaderboard",
+        ].forEach((key) => queryClient.invalidateQueries({ queryKey: [key] }));
       },
-      onError: (err: any) => toast({ title: "Failed", description: err?.response?.data?.error ?? err?.message, variant: "destructive" }),
+      onError: (err: any) => toast({
+        title: "Could not delete demo account",
+        description: err?.data?.error ?? err?.response?.data?.error ?? err?.message ?? "Please refresh and try again.",
+        variant: "destructive",
+      }),
     });
   };
 

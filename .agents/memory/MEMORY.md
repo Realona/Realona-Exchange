@@ -8,3 +8,4 @@
 - [Express route ordering](route-ordering.md) — specific routes (e.g. /trades/feed) must be mounted before /:id wildcard routers or they get swallowed.
 - [Admin pages pattern](admin-pages-pattern.md) — 4 touch points: page file, AdminNav in users.tsx, nav in index.tsx, route in App.tsx.
 - [OpenAPI yaml merge risk](openapi-merge-risk.md) — task agent merges can wipe yaml additions; grep + re-add + re-run codegen after every merge.
+- [User deletion cascade](user-deletion-cascade.md) — user-related foreign keys do not cascade; account deletion must clean dependent records atomically before deleting the user.

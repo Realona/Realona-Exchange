@@ -1,6 +1,26 @@
 import { Router, type IRouter } from "express";
-import { db, usersTable, tradesTable, depositsTable, withdrawalsTable, reportsTable, listingsTable, tradeMessagesTable, platformConfigTable, kycSubmissionsTable, announcementsTable, giveawaysTable, giveawayClaimsTable } from "@workspace/db";
-import { eq, sql, and, ilike, or } from "drizzle-orm";
+import {
+  db,
+  usersTable,
+  tradesTable,
+  depositsTable,
+  withdrawalsTable,
+  reportsTable,
+  listingsTable,
+  tradeMessagesTable,
+  platformConfigTable,
+  kycSubmissionsTable,
+  announcementsTable,
+  giveawaysTable,
+  giveawayClaimsTable,
+  offersTable,
+  notificationsTable,
+  wishlistItemsTable,
+  tradeRatingsTable,
+  platformReviewsTable,
+  virtualAccountsTable,
+} from "@workspace/db";
+import { eq, sql, and, ilike, or, inArray } from "drizzle-orm";
 import { requireAdmin, requireSuperAdmin, hashPassword } from "../lib/auth";
 import { emailWithdrawalApproved, emailWithdrawalRejected, emailVerifiedBadgeGranted, emailVerifiedBadgeRevoked } from "../lib/email";
 import { createNotification } from "../lib/notifier";
@@ -509,8 +529,117 @@ router.delete("/admin/demo-accounts/:id", requireAdmin, async (req, res): Promis
   const [user] = await db.select().from(usersTable).where(and(eq(usersTable.id, id), eq(usersTable.isDemo, true)));
   if (!user) { res.status(404).json({ error: "Demo account not found" }); return; }
 
-  await db.delete(usersTable).where(eq(usersTable.id, id));
-  res.json({ success: true });
+  try {
+    const deleted = await db.transaction(async (tx) => {
+      const ownedListings = await tx
+        .select({ id: listingsTable.id })
+        .from(listingsTable)
+        .where(eq(listingsTable.sellerId, id));
+      const listingIds = ownedListings.map((listing) => listing.id);
+
+      const tradeCondition = listingIds.length > 0
+        ? or(
+            eq(tradesTable.buyerId, id),
+            eq(tradesTable.sellerId, id),
+            inArray(tradesTable.listingId, listingIds),
+          )!
+        : or(eq(tradesTable.buyerId, id), eq(tradesTable.sellerId, id))!;
+      const relatedTrades = await tx
+        .select({ id: tradesTable.id })
+        .from(tradesTable)
+        .where(tradeCondition);
+      const tradeIds = relatedTrades.map((trade) => trade.id);
+
+      if (tradeIds.length > 0) {
+        await tx.delete(tradeMessagesTable).where(
+          or(eq(tradeMessagesTable.senderId, id), inArray(tradeMessagesTable.tradeId, tradeIds))!,
+        );
+        await tx.delete(tradeRatingsTable).where(
+          or(
+            eq(tradeRatingsTable.raterId, id),
+            eq(tradeRatingsTable.rateeId, id),
+            inArray(tradeRatingsTable.tradeId, tradeIds),
+          )!,
+        );
+        await tx.delete(reportsTable).where(
+          or(
+            eq(reportsTable.reporterId, id),
+            eq(reportsTable.reportedId, id),
+            inArray(reportsTable.tradeId, tradeIds),
+          )!,
+        );
+      } else {
+        await tx.delete(tradeMessagesTable).where(eq(tradeMessagesTable.senderId, id));
+        await tx.delete(tradeRatingsTable).where(
+          or(eq(tradeRatingsTable.raterId, id), eq(tradeRatingsTable.rateeId, id))!,
+        );
+        await tx.delete(reportsTable).where(
+          or(eq(reportsTable.reporterId, id), eq(reportsTable.reportedId, id))!,
+        );
+      }
+
+      if (listingIds.length > 0) {
+        await tx.delete(wishlistItemsTable).where(
+          or(eq(wishlistItemsTable.userId, id), inArray(wishlistItemsTable.listingId, listingIds))!,
+        );
+        await tx.delete(offersTable).where(
+          or(
+            eq(offersTable.buyerId, id),
+            eq(offersTable.sellerId, id),
+            inArray(offersTable.listingId, listingIds),
+          )!,
+        );
+      } else {
+        await tx.delete(wishlistItemsTable).where(eq(wishlistItemsTable.userId, id));
+        await tx.delete(offersTable).where(
+          or(eq(offersTable.buyerId, id), eq(offersTable.sellerId, id))!,
+        );
+      }
+
+      await tx.delete(notificationsTable).where(eq(notificationsTable.userId, id));
+      await tx.delete(depositsTable).where(eq(depositsTable.userId, id));
+      await tx.delete(withdrawalsTable).where(eq(withdrawalsTable.userId, id));
+      await tx.delete(kycSubmissionsTable).where(eq(kycSubmissionsTable.userId, id));
+      await tx.delete(platformReviewsTable).where(eq(platformReviewsTable.userId, id));
+      await tx.delete(virtualAccountsTable).where(eq(virtualAccountsTable.userId, id));
+
+      const claims = await tx
+        .select({ giveawayId: giveawayClaimsTable.giveawayId })
+        .from(giveawayClaimsTable)
+        .where(eq(giveawayClaimsTable.userId, id));
+      await tx.delete(giveawayClaimsTable).where(eq(giveawayClaimsTable.userId, id));
+      for (const giveawayId of new Set(claims.map((claim) => claim.giveawayId))) {
+        const removedCount = claims.filter((claim) => claim.giveawayId === giveawayId).length;
+        await tx
+          .update(giveawaysTable)
+          .set({ claimedCount: sql`GREATEST(0, ${giveawaysTable.claimedCount} - ${removedCount})` })
+          .where(eq(giveawaysTable.id, giveawayId));
+      }
+
+      if (tradeIds.length > 0) {
+        await tx.delete(tradesTable).where(inArray(tradesTable.id, tradeIds));
+      }
+      if (listingIds.length > 0) {
+        await tx.delete(listingsTable).where(inArray(listingsTable.id, listingIds));
+      }
+
+      await tx.update(usersTable).set({ referredBy: null }).where(eq(usersTable.referredBy, id));
+      const [removedUser] = await tx
+        .delete(usersTable)
+        .where(and(eq(usersTable.id, id), eq(usersTable.isDemo, true)))
+        .returning({ id: usersTable.id });
+      return removedUser;
+    });
+
+    if (!deleted) {
+      res.status(409).json({ error: "Demo account could not be deleted. Please refresh and try again." });
+      return;
+    }
+    res.json({ success: true });
+  } catch (error) {
+    console.error("[admin] failed to delete demo account", { userId: id, error });
+    res.status(500).json({ error: "Could not delete the demo account and its related data. No changes were saved." });
+  }
 });
 
 // Admin management (super admin only)
