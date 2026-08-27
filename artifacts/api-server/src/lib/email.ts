@@ -1,7 +1,19 @@
 import { ReplitConnectors } from "@replit/connectors-sdk";
+import nodemailer from "nodemailer";
 
-const FROM = process.env.RESEND_FROM_EMAIL ?? "Realona Exchange <onboarding@resend.dev>";
+const RESEND_FROM = process.env.RESEND_FROM_EMAIL;
+const GMAIL_FROM = process.env.EMAIL_FROM ?? "realonabusinessexchange@gmail.com";
 const APP_URL = process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS.split(",")[0]}` : "http://localhost:80";
+
+function gmailTransporter() {
+  return nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: GMAIL_FROM,
+      pass: process.env.GMAIL_APP_PASSWORD,
+    },
+  });
+}
 
 function base(title: string, body: string): string {
   return `<!DOCTYPE html>
@@ -51,24 +63,42 @@ function table(rows: string) {
 }
 
 async function send(to: string, subject: string, html: string) {
-  try {
-    const connectors = new ReplitConnectors();
-    const response = await connectors.proxy("resend", "/emails", {
-      method: "POST",
-      body: {
-        from: FROM,
-        to: [to],
-        subject,
-        html,
-      },
-    });
+  if (RESEND_FROM) {
+    try {
+      const connectors = new ReplitConnectors();
+      const response = await connectors.proxy("resend", "/emails", {
+        method: "POST",
+        body: {
+          from: RESEND_FROM,
+          to: [to],
+          subject,
+          html,
+        },
+      });
 
-    if (!response.ok) {
+      if (response.ok) return;
+
       const details = await response.text().catch(() => "");
-      throw new Error(`Resend returned ${response.status}${details ? `: ${details}` : ""}`);
+      console.error(`[email] Resend failed (${response.status})${details ? `: ${details}` : ""}`);
+    } catch (err: any) {
+      console.error("[email] Resend failed:", err?.message);
     }
+  }
+
+  if (!process.env.GMAIL_APP_PASSWORD) {
+    console.error("[email] no working delivery transport is configured");
+    return;
+  }
+
+  try {
+    await gmailTransporter().sendMail({
+      from: `"Realona Exchange" <${GMAIL_FROM}>`,
+      to,
+      subject,
+      html,
+    });
   } catch (err: any) {
-    console.error("[email] failed to send:", err?.message);
+    console.error("[email] Gmail fallback failed:", err?.message);
   }
 }
 
