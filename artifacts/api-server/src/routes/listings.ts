@@ -4,6 +4,7 @@ import { eq, and, gte, lte, ilike, or, sql } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
 import { CreateListingBody, UpdateListingBody, GetListingParams, UpdateListingParams, DeleteListingParams, GetListingsQueryParams, CreateBulkListingsBody } from "@workspace/api-zod";
 import { createNotification } from "../lib/notifier";
+import { isOwnedUploadPath } from "../lib/ownedUpload";
 
 const router: IRouter = Router();
 
@@ -12,7 +13,11 @@ function parseHighlightedPlayers(raw: string | null | undefined): string[] | nul
   try { return JSON.parse(raw); } catch { return null; }
 }
 
-function formatListing(listing: typeof listingsTable.$inferSelect & { highlighted_players?: string | null }, sellerUsername?: string | null, extras?: { sellerIsVerified?: boolean; sellerRating?: number | null }) {
+function formatListing(
+  listing: typeof listingsTable.$inferSelect & { highlighted_players?: string | null },
+  sellerUsername?: string | null,
+  extras?: { sellerIsVerified?: boolean; sellerRating?: number | null; includeCredentials?: boolean },
+) {
   return {
     id: listing.id,
     sellerId: listing.sellerId,
@@ -24,8 +29,8 @@ function formatListing(listing: typeof listingsTable.$inferSelect & { highlighte
     price: Number(listing.price),
     description: listing.description,
     pictureUrl: listing.pictureUrl ?? null,
-    accountEmail: listing.accountEmail ?? null,
-    accountPassword: listing.accountPassword ?? null,
+    accountEmail: extras?.includeCredentials ? listing.accountEmail ?? null : null,
+    accountPassword: extras?.includeCredentials ? listing.accountPassword ?? null : null,
     divisionRank: listing.divisionRank ?? null,
     squadRating: listing.squadRating ?? null,
     platform: listing.platform ?? null,
@@ -75,6 +80,10 @@ router.post("/listings", requireAuth, async (req, res): Promise<void> => {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
+  if (!isOwnedUploadPath(parsed.data.pictureUrl, req.userId!)) {
+    res.status(400).json({ error: "Listing image must be uploaded from your account" });
+    return;
+  }
 
   const d = parsed.data;
   const [listing] = await db
@@ -104,7 +113,7 @@ router.post("/listings", requireAuth, async (req, res): Promise<void> => {
     .returning();
 
   const [seller] = await db.select({ username: usersTable.username }).from(usersTable).where(eq(usersTable.id, req.userId!));
-  res.status(201).json(formatListing(listing, seller?.username));
+  res.status(201).json(formatListing(listing, seller?.username, { includeCredentials: true }));
 });
 
 router.post("/listings/bulk", requireAuth, async (req, res): Promise<void> => {
@@ -129,6 +138,10 @@ router.post("/listings/bulk", requireAuth, async (req, res): Promise<void> => {
   }
 
   const items = parsed.data.items;
+  if (items.some((item) => !isOwnedUploadPath(item.pictureUrl, req.userId!))) {
+    res.status(400).json({ error: "Every listing image must be uploaded from your account" });
+    return;
+  }
 
   if (items.length > maxImages) {
     res.status(400).json({ error: `Maximum ${maxImages} listings per batch` });
@@ -186,7 +199,7 @@ router.post("/listings/bulk", requireAuth, async (req, res): Promise<void> => {
     created: createdListings.length,
     errors: errorDetails.length,
     total: items.length,
-    listings: createdListings.map(l => formatListing(l, seller?.username)),
+    listings: createdListings.map(l => formatListing(l, seller?.username, { includeCredentials: true })),
     errorDetails,
   });
 });
@@ -199,7 +212,10 @@ router.get("/listings/my", requireAuth, async (req, res): Promise<void> => {
     .where(eq(listingsTable.sellerId, req.userId!))
     .orderBy(sql`${listingsTable.createdAt} DESC`);
 
-  res.json(rows.map(r => formatListing(r.listing, r.sellerUsername, { sellerIsVerified: r.sellerIsVerified ?? false })));
+  res.json(rows.map(r => formatListing(r.listing, r.sellerUsername, {
+    sellerIsVerified: r.sellerIsVerified ?? false,
+    includeCredentials: true,
+  })));
 });
 
 router.get("/listings/:id", async (req, res): Promise<void> => {
@@ -251,10 +267,34 @@ router.patch("/listings/:id", requireAuth, async (req, res): Promise<void> => {
   if (parsed.data.gameName !== undefined) updateData.gameName = parsed.data.gameName;
   if (parsed.data.price !== undefined) updateData.price = String(parsed.data.price);
   if (parsed.data.description !== undefined) updateData.description = parsed.data.description;
+  if (
+    parsed.data.pictureUrl !== undefined &&
+    parsed.data.pictureUrl !== existing.pictureUrl &&
+    !isOwnedUploadPath(parsed.data.pictureUrl, req.userId!)
+  ) {
+    res.status(400).json({ error: "Listing image must be uploaded from your account" });
+    return;
+  }
   if (parsed.data.pictureUrl !== undefined) updateData.pictureUrl = parsed.data.pictureUrl;
-  if (parsed.data.status !== undefined) updateData.status = parsed.data.status;
+  if (parsed.data.status !== undefined) {
+    const allowedTransition =
+      (existing.status === "active" && parsed.data.status === "paused") ||
+      (existing.status === "paused" && parsed.data.status === "active");
+    if (!allowedTransition) {
+      res.status(409).json({ error: "This listing status can no longer be changed" });
+      return;
+    }
+    updateData.status = parsed.data.status;
+  }
 
-  const [updated] = await db.update(listingsTable).set(updateData).where(eq(listingsTable.id, params.data.id)).returning();
+  const [updated] = await db.update(listingsTable).set(updateData).where(and(
+    eq(listingsTable.id, params.data.id),
+    eq(listingsTable.status, existing.status),
+  )).returning();
+  if (!updated) {
+    res.status(409).json({ error: "This listing changed while you were editing it. Refresh and try again." });
+    return;
+  }
   const [seller] = await db.select({ username: usersTable.username }).from(usersTable).where(eq(usersTable.id, updated.sellerId));
 
   // Price drop notification → all wishlist users
@@ -277,7 +317,7 @@ router.patch("/listings/:id", requireAuth, async (req, res): Promise<void> => {
     );
   }
 
-  res.json(formatListing(updated, seller?.username));
+  res.json(formatListing(updated, seller?.username, { includeCredentials: true }));
 });
 
 router.delete("/listings/:id", requireAuth, async (req, res): Promise<void> => {

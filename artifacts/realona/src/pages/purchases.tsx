@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Layout } from "@/components/layout";
-import { useAuth } from "@/hooks/use-auth";
-import { useLocation, Link } from "wouter";
+import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +9,7 @@ import { ShoppingBag, Search, Eye, EyeOff, Copy, Star } from "lucide-react";
 import { formatNaira } from "@/lib/utils";
 import { useGetPurchases } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
+import { QueryErrorState } from "@/components/query-error-state";
 
 function StarRating({ value }: { value: number | null | undefined }) {
   if (value == null) return <span className="text-xs text-muted-foreground">Not rated</span>;
@@ -55,22 +55,15 @@ function CredentialField({ label, value }: { label: string; value: string | null
 }
 
 export default function Purchases() {
-  const { user } = useAuth();
-  const [, setLocation] = useLocation();
   const [search, setSearch] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
 
-  const { data: purchases, isLoading } = useGetPurchases({
+  const { data: purchases, isLoading, isError, refetch } = useGetPurchases({
     search: search || undefined,
     from: from || undefined,
     to: to || undefined,
   });
-
-  if (!user) {
-    setLocation("/login");
-    return null;
-  }
 
   return (
     <Layout>
@@ -117,6 +110,8 @@ export default function Purchases() {
               <div key={i} className="h-40 bg-card border border-border rounded-lg animate-pulse" />
             ))}
           </div>
+        ) : isError ? (
+          <QueryErrorState title="We couldn't load your purchases" onRetry={() => { void refetch(); }} />
         ) : !purchases || purchases.length === 0 ? (
           <div className="text-center py-20 border border-dashed border-border rounded-lg bg-card/50">
             <ShoppingBag className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-30" />

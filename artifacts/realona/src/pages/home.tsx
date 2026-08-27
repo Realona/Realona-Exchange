@@ -1,7 +1,7 @@
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useGetListings, useAddToWishlist, useRemoveFromWishlist, useGetWishlistIds, useGetTradeFeed } from "@workspace/api-client-react";
 import { formatNaira } from "@/lib/utils";
 import { Search, ShieldCheck, Zap, MessageSquare, SlidersHorizontal, X, Users, Star, Heart, TrendingUp } from "lucide-react";
@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { EFOOTBALL_DIVISIONS } from "./new-listing";
+import { QueryErrorState } from "@/components/query-error-state";
 
 export default function Home() {
   const [search, setSearch] = useState("");
@@ -26,13 +27,14 @@ export default function Home() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
 
   const { data: wishlistIds } = useGetWishlistIds({ query: { enabled: !!user, queryKey: ["getWishlistIds"] } });
   const addToWishlist = useAddToWishlist();
   const removeFromWishlist = useRemoveFromWishlist();
 
   const toggleWishlist = (listingId: number) => {
-    if (!user) { window.location.href = "/login"; return; }
+    if (!user) { setLocation("/login"); return; }
     const isWishlisted = (wishlistIds ?? []).includes(listingId);
     if (isWishlisted) {
       removeFromWishlist.mutate({ listingId }, {
@@ -55,7 +57,7 @@ export default function Home() {
 
   const hasFilters = divisionRank || minRating || maxRating || verifiedOnly || playerSearch;
 
-  const { data: allListings, isLoading } = useGetListings({
+  const { data: allListings, isLoading, isError, refetch } = useGetListings({
     search: search || undefined,
     divisionRank: divisionRank || undefined,
     minSquadRating: minRating ? Number(minRating) : undefined,
@@ -248,6 +250,8 @@ export default function Home() {
                 <div key={i} className="h-80 bg-card border border-border rounded-lg animate-pulse"></div>
               ))}
             </div>
+          ) : isError ? (
+            <QueryErrorState title="We couldn't load the marketplace" onRetry={() => { void refetch(); }} />
           ) : listings && listings.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {listings.map((listing) => (

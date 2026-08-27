@@ -7,6 +7,7 @@ import { useGetTrades } from "@workspace/api-client-react";
 import { formatNaira } from "@/lib/utils";
 import { Link } from "wouter";
 import { ArrowRightLeft, ChevronRight } from "lucide-react";
+import { QueryErrorState } from "@/components/query-error-state";
 
 function statusBadge(status: string) {
   const map: Record<string, string> = {
@@ -32,7 +33,7 @@ function statusBadge(status: string) {
 
 export default function Trades() {
   const { user } = useAuth();
-  const { data: trades, isLoading } = useGetTrades();
+  const { data: trades, isLoading, isError, refetch } = useGetTrades();
 
   return (
     <Layout>
@@ -46,6 +47,8 @@ export default function Trades() {
           <div className="space-y-4">
             {[1, 2, 3].map(i => <div key={i} className="h-32 bg-muted animate-pulse rounded-xl" />)}
           </div>
+        ) : isError ? (
+          <QueryErrorState title="We couldn't load your trades" onRetry={() => { void refetch(); }} />
         ) : !trades || trades.length === 0 ? (
           <div className="text-center py-24 border border-dashed border-border rounded-2xl bg-card/50">
             <ArrowRightLeft className="w-16 h-16 mx-auto mb-5 text-muted-foreground/30" />

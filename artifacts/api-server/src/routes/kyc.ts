@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import { db, kycSubmissionsTable, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
+import { isOwnedUploadPath } from "../lib/ownedUpload";
 
 const router: IRouter = Router();
 
@@ -25,6 +26,10 @@ router.post("/kyc/submit", requireAuth, async (req, res): Promise<void> => {
   const { documentType, documentUrl, selfieUrl } = req.body;
   if (!documentType || !documentUrl) {
     res.status(400).json({ error: "documentType and documentUrl are required" }); return;
+  }
+  if (!isOwnedUploadPath(documentUrl, req.userId!) || !isOwnedUploadPath(selfieUrl, req.userId!)) {
+    res.status(400).json({ error: "KYC documents must be uploaded from your account" });
+    return;
   }
 
   // Check if user already has an approved KYC

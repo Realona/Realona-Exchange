@@ -5,7 +5,9 @@ import {
   RequestUploadUrlResponse,
 } from "@workspace/api-zod";
 import { ObjectStorageService, ObjectNotFoundError } from "../lib/objectStorage";
-import { ObjectPermission } from "../lib/objectAcl";
+import { db, kycSubmissionsTable, listingsTable } from "@workspace/db";
+import { eq, or } from "drizzle-orm";
+import { optionalAuth, requireAuth } from "../lib/auth";
 
 const router: IRouter = Router();
 const objectStorageService = new ObjectStorageService();
@@ -17,7 +19,7 @@ const objectStorageService = new ObjectStorageService();
  * The client sends JSON metadata (name, size, contentType) — NOT the file.
  * Then uploads the file directly to the returned presigned URL.
  */
-router.post("/storage/uploads/request-url", async (req: Request, res: Response) => {
+router.post("/storage/uploads/request-url", requireAuth, async (req: Request, res: Response) => {
   const parsed = RequestUploadUrlBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Missing or invalid required fields" });
@@ -27,7 +29,7 @@ router.post("/storage/uploads/request-url", async (req: Request, res: Response) 
   try {
     const { name, size, contentType } = parsed.data;
 
-    const uploadURL = await objectStorageService.getObjectEntityUploadURL();
+    const uploadURL = await objectStorageService.getObjectEntityUploadURL(String(req.userId));
     const objectPath = objectStorageService.normalizeObjectEntityPath(uploadURL);
 
     res.json(
@@ -84,27 +86,43 @@ router.get("/storage/public-objects/*filePath", async (req: Request, res: Respon
  * These are served from a separate path from /public-objects and can optionally
  * be protected with authentication or ACL checks based on the use case.
  */
-router.get("/storage/objects/*path", async (req: Request, res: Response) => {
+router.get("/storage/objects/*path", optionalAuth, async (req: Request, res: Response) => {
   try {
     const raw = req.params.path;
     const wildcardPath = Array.isArray(raw) ? raw.join("/") : raw;
     const objectPath = `/objects/${wildcardPath}`;
     const objectFile = await objectStorageService.getObjectEntityFile(objectPath);
 
-    // --- Protected route example (uncomment when using replit-auth) ---
-    // if (!req.isAuthenticated()) {
-    //   res.status(401).json({ error: "Unauthorized" });
-    //   return;
-    // }
-    // const canAccess = await objectStorageService.canAccessObjectEntity({
-    //   userId: req.user.id,
-    //   objectFile,
-    //   requestedPermission: ObjectPermission.READ,
-    // });
-    // if (!canAccess) {
-    //   res.status(403).json({ error: "Forbidden" });
-    //   return;
-    // }
+    const servedPath = `/api/storage${objectPath}`;
+    const [publicListing] = await db
+      .select({ id: listingsTable.id })
+      .from(listingsTable)
+      .where(or(
+        eq(listingsTable.pictureUrl, servedPath),
+        eq(listingsTable.pictureUrl, objectPath),
+      ))
+      .limit(1);
+
+    if (!publicListing) {
+      const [kycReference] = await db
+        .select({ userId: kycSubmissionsTable.userId })
+        .from(kycSubmissionsTable)
+        .where(or(
+          eq(kycSubmissionsTable.documentUrl, servedPath),
+          eq(kycSubmissionsTable.documentUrl, objectPath),
+          eq(kycSubmissionsTable.selfieUrl, servedPath),
+          eq(kycSubmissionsTable.selfieUrl, objectPath),
+        ))
+        .limit(1);
+
+      const isOwnerUpload = req.userId !== undefined && wildcardPath.startsWith(`uploads/${req.userId}/`);
+      const isKycOwner = kycReference?.userId === req.userId;
+      const isAdmin = req.user?.isAdmin || req.user?.isSuperAdmin;
+      if (!isOwnerUpload && !isKycOwner && !isAdmin) {
+        res.status(req.user ? 403 : 401).json({ error: req.user ? "Forbidden" : "Unauthorized" });
+        return;
+      }
+    }
 
     const response = await objectStorageService.downloadObject(objectFile);
 

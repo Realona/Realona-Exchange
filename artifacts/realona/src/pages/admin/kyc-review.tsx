@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +19,60 @@ function statusBadge(status: string) {
     rejected: "bg-red-500/10 text-red-500 border-red-500/20",
   };
   return <Badge variant="outline" className={s[status] ?? ""}>{status}</Badge>;
+}
+
+function ProtectedKycImage({ src, alt }: { src: string; alt: string }) {
+  const [objectUrl, setObjectUrl] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    let createdUrl: string | null = null;
+    const isLocalProtectedObject =
+      src.startsWith("/api/storage/objects/") &&
+      !src.includes("?") &&
+      !src.includes("#") &&
+      !src.includes("\\");
+    if (!isLocalProtectedObject) {
+      setFailed(true);
+      return () => {
+        active = false;
+      };
+    }
+
+    const token = localStorage.getItem("realona_token");
+    fetch(src, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
+      .then((response) => {
+        if (!response.ok) throw new Error("Unable to load protected image");
+        return response.blob();
+      })
+      .then((blob) => {
+        if (!active) return;
+        createdUrl = URL.createObjectURL(blob);
+        setObjectUrl(createdUrl);
+      })
+      .catch(() => {
+        if (active) setFailed(true);
+      });
+
+    return () => {
+      active = false;
+      if (createdUrl) URL.revokeObjectURL(createdUrl);
+    };
+  }, [src]);
+
+  if (failed) {
+    return <div className="flex h-40 items-center justify-center rounded-lg border border-border bg-muted text-xs text-muted-foreground">Unable to load image</div>;
+  }
+  if (!objectUrl) {
+    return <div className="h-40 animate-pulse rounded-lg border border-border bg-muted" />;
+  }
+  return (
+    <a href={objectUrl} target="_blank" rel="noopener noreferrer" className="block">
+      <img src={objectUrl} alt={alt} className="h-40 w-full rounded-lg border border-border object-cover transition-opacity hover:opacity-90" />
+      <p className="mt-1 flex items-center gap-1 text-xs text-primary"><ExternalLink className="h-3 w-3" />View full size</p>
+    </a>
+  );
 }
 
 export default function AdminKycReview() {
@@ -131,18 +185,12 @@ export default function AdminKycReview() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                       <p className="text-xs text-muted-foreground mb-1 font-medium">Document</p>
-                      <a href={s.documentUrl} target="_blank" rel="noopener noreferrer" className="block">
-                        <img src={s.documentUrl} alt="Document" className="w-full h-40 object-cover rounded-lg border border-border hover:opacity-90 transition-opacity" />
-                        <p className="text-xs text-primary mt-1 flex items-center gap-1"><ExternalLink className="w-3 h-3" />View full size</p>
-                      </a>
+                      <ProtectedKycImage src={s.documentUrl} alt="Document" />
                     </div>
                     {s.selfieUrl && (
                       <div>
                         <p className="text-xs text-muted-foreground mb-1 font-medium">Selfie with ID</p>
-                        <a href={s.selfieUrl} target="_blank" rel="noopener noreferrer" className="block">
-                          <img src={s.selfieUrl} alt="Selfie" className="w-full h-40 object-cover rounded-lg border border-border hover:opacity-90 transition-opacity" />
-                          <p className="text-xs text-primary mt-1 flex items-center gap-1"><ExternalLink className="w-3 h-3" />View full size</p>
-                        </a>
+                        <ProtectedKycImage src={s.selfieUrl} alt="Selfie" />
                       </div>
                     )}
                   </div>

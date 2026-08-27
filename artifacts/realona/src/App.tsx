@@ -39,6 +39,7 @@ import Purchases from "@/pages/purchases";
 import VerifyOtp from "@/pages/verify-otp";
 import BulkListing from "@/pages/bulk-listing";
 import SellerAnalytics from "@/pages/seller-analytics";
+import { QueryErrorState } from "@/components/query-error-state";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -50,12 +51,12 @@ const queryClient = new QueryClient({
 });
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, isUnavailable, retryAuth } = useAuth();
   const [, setLocation] = useLocation();
 
   useEffect(() => {
-    if (!isLoading && !user) setLocation("/login");
-  }, [isLoading, user, setLocation]);
+    if (!isLoading && !isUnavailable && !user) setLocation("/login");
+  }, [isLoading, isUnavailable, user, setLocation]);
 
   if (isLoading) {
     return (
@@ -63,6 +64,9 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
         <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     );
+  }
+  if (isUnavailable) {
+    return <QueryErrorState title="We couldn't verify your session" onRetry={retryAuth} />;
   }
 
   if (!user) {
@@ -73,17 +77,17 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
 }
 
 function AdminRoute({ component: Component }: { component: React.ComponentType }) {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, isUnavailable, retryAuth } = useAuth();
   const [, setLocation] = useLocation();
 
   useEffect(() => {
-    if (isLoading) return;
+    if (isLoading || isUnavailable) return;
     if (!user) {
       setLocation("/login");
     } else if (!user.isAdmin && !user.isSuperAdmin) {
       setLocation("/dashboard");
     }
-  }, [isLoading, user, setLocation]);
+  }, [isLoading, isUnavailable, user, setLocation]);
 
   if (isLoading) {
     return (
@@ -91,6 +95,9 @@ function AdminRoute({ component: Component }: { component: React.ComponentType }
         <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     );
+  }
+  if (isUnavailable) {
+    return <QueryErrorState title="We couldn't verify your session" onRetry={retryAuth} />;
   }
 
   if (!user) {

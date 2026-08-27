@@ -5,6 +5,7 @@ import { useGetAdminStats } from "@workspace/api-client-react";
 import { formatNaira } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Users, ArrowRightLeft, Wallet, TrendingUp, AlertTriangle, Clock } from "lucide-react";
+import { QueryErrorState } from "@/components/query-error-state";
 
 function StatCard({ title, value, sub, icon: Icon, color = "text-primary" }: {
   title: string; value: string | number; sub?: string; icon: React.ElementType; color?: string;
@@ -26,7 +27,7 @@ function StatCard({ title, value, sub, icon: Icon, color = "text-primary" }: {
 export default function AdminDashboard() {
   const { user } = useAuth();
   const [location] = useLocation();
-  const { data: stats } = useGetAdminStats();
+  const { data: stats, isLoading, isError, refetch } = useGetAdminStats();
 
   if (!user?.isAdmin && !user?.isSuperAdmin) {
     return (
@@ -77,7 +78,9 @@ export default function AdminDashboard() {
           <p className="text-muted-foreground text-sm">Platform health at a glance.</p>
         </div>
 
-        {stats ? (
+        {isError ? (
+          <QueryErrorState title="We couldn't load admin statistics" onRetry={() => { void refetch(); }} />
+        ) : stats ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <StatCard title="Total Users" value={stats.totalUsers} icon={Users} />
             <StatCard title="Total Trades" value={stats.totalTrades} icon={ArrowRightLeft} />
@@ -86,11 +89,11 @@ export default function AdminDashboard() {
             <StatCard title="Pending Disputes" value={stats.pendingDisputes ?? 0} icon={AlertTriangle} color={(stats.pendingDisputes ?? 0) > 0 ? "text-red-500" : "text-muted-foreground"} />
             <StatCard title="Pending Withdrawals" value={stats.pendingWithdrawals ?? 0} icon={Clock} color={(stats.pendingWithdrawals ?? 0) > 0 ? "text-yellow-500" : "text-muted-foreground"} />
           </div>
-        ) : (
+        ) : isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {[...Array(6)].map((_, i) => <div key={i} className="h-32 bg-muted animate-pulse rounded-lg" />)}
           </div>
-        )}
+        ) : null}
       </div>
     </Layout>
   );

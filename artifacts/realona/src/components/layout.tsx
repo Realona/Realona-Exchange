@@ -311,15 +311,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <footer className="border-t border-border bg-card py-8 mt-12">
         <div className="container mx-auto px-4 text-center text-sm flex flex-col gap-2">
           <div className="flex items-center justify-center gap-4 mb-3 flex-wrap">
-            <a href="/how-it-works" className="text-xs text-muted-foreground hover:text-primary transition-colors">How It Works</a>
+            <Link href="/how-it-works" className="text-xs text-muted-foreground hover:text-primary transition-colors">How It Works</Link>
             <span className="text-xs text-border">·</span>
-            <a href="/leaderboard" className="text-xs text-muted-foreground hover:text-primary transition-colors">Leaderboard</a>
+            <Link href="/leaderboard" className="text-xs text-muted-foreground hover:text-primary transition-colors">Leaderboard</Link>
             <span className="text-xs text-border">·</span>
-            <a href="/reviews" className="text-xs text-muted-foreground hover:text-primary transition-colors">Reviews</a>
+            <Link href="/reviews" className="text-xs text-muted-foreground hover:text-primary transition-colors">Reviews</Link>
             <span className="text-xs text-border">·</span>
-            <a href="/faq" className="text-xs text-muted-foreground hover:text-primary transition-colors">FAQ</a>
+            <Link href="/faq" className="text-xs text-muted-foreground hover:text-primary transition-colors">FAQ</Link>
             <span className="text-xs text-border">·</span>
-            <a href="/kyc" className="text-xs text-muted-foreground hover:text-primary transition-colors">KYC Verification</a>
+            <Link href="/kyc" className="text-xs text-muted-foreground hover:text-primary transition-colors">KYC Verification</Link>
           </div>
           <div className="flex items-center justify-center gap-1.5 mb-1">
             <span className="font-bold text-foreground text-sm">Realona</span>

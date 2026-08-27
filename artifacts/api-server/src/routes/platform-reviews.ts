@@ -10,6 +10,7 @@ router.get("/reviews", async (_req, res): Promise<void> => {
   const rows = await db
     .select({
       id: platformReviewsTable.id,
+      userId: platformReviewsTable.userId,
       rating: platformReviewsTable.rating,
       review: platformReviewsTable.review,
       adminResponse: platformReviewsTable.adminResponse,
@@ -19,8 +20,7 @@ router.get("/reviews", async (_req, res): Promise<void> => {
     })
     .from(platformReviewsTable)
     .leftJoin(usersTable, eq(platformReviewsTable.userId, usersTable.id))
-    .orderBy(sql`${platformReviewsTable.createdAt} DESC`)
-    .limit(50);
+    .orderBy(sql`${platformReviewsTable.createdAt} DESC`);
 
   const avgRating = rows.length > 0
     ? rows.reduce((sum, r) => sum + r.rating, 0) / rows.length
@@ -35,7 +35,8 @@ router.get("/reviews", async (_req, res): Promise<void> => {
 
 // Create a review (authenticated)
 router.post("/reviews", requireAuth, async (req, res): Promise<void> => {
-  const { rating, review } = req.body;
+  const rating = req.body?.rating;
+  const review = typeof req.body?.review === "string" ? req.body.review.trim() : "";
   if (!rating || typeof rating !== "number" || rating < 1 || rating > 5) { res.status(400).json({ error: "Rating must be 1–5" }); return; }
   if (!review || typeof review !== "string" || review.length < 10 || review.length > 1000) { res.status(400).json({ error: "Review must be 10–1000 characters" }); return; }
   const parsed = { data: { rating: rating as number, review: review as string } };
@@ -58,7 +59,7 @@ router.post("/reviews", requireAuth, async (req, res): Promise<void> => {
     review: parsed.data.review,
   }).returning();
 
-  res.status(201).json(review);
+  res.status(201).json(newReview);
 });
 
 // Admin: respond to a review
@@ -85,7 +86,9 @@ router.post("/reviews/:id/respond", requireAuth, async (req, res): Promise<void>
     "Realona responded to your review",
     "An admin has posted an official response to your platform review.",
     { linkUrl: "/reviews" },
-  ).catch(() => {});
+  ).catch((error) => {
+    req.log.warn({ err: error, reviewId: updated.id }, "Failed to notify reviewer about admin response");
+  });
   res.json(updated);
 });
 

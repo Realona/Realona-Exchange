@@ -1,6 +1,5 @@
 import { Layout } from "@/components/layout";
-import { useAuth } from "@/hooks/use-auth";
-import { Link, useLocation } from "wouter";
+import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,20 +8,14 @@ import { formatNaira } from "@/lib/utils";
 import { useGetWishlist, useRemoveFromWishlist } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { QueryErrorState } from "@/components/query-error-state";
 
 export default function Wishlist() {
-  const { user } = useAuth();
-  const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: items, isLoading } = useGetWishlist();
+  const { data: items, isLoading, isError, refetch } = useGetWishlist();
   const removeFromWishlist = useRemoveFromWishlist();
-
-  if (!user) {
-    setLocation("/login");
-    return null;
-  }
 
   const handleRemove = (listingId: number) => {
     removeFromWishlist.mutate(
@@ -57,6 +50,8 @@ export default function Wishlist() {
               <div key={i} className="h-80 bg-card border border-border rounded-lg animate-pulse" />
             ))}
           </div>
+        ) : isError ? (
+          <QueryErrorState title="We couldn't load your wishlist" onRetry={() => { void refetch(); }} />
         ) : !items || items.length === 0 ? (
           <div className="text-center py-20 border border-dashed border-border rounded-lg bg-card/50">
             <Heart className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-30" />

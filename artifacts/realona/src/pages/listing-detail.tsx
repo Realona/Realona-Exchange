@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams, useLocation } from "wouter";
+import { Link, useParams, useLocation } from "wouter";
 import { Layout } from "@/components/layout";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -11,8 +11,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { useGetListing, useCreateTrade, useMakeOffer, useGetWishlistIds, useAddToWishlist, useRemoveFromWishlist } from "@workspace/api-client-react";
 import { formatNaira } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { ShieldCheck, User, ArrowRightLeft, AlertTriangle, HandshakeIcon, Users, Star, Gamepad2, Share2, Copy, Link, Heart, X as XIcon, ZoomIn } from "lucide-react";
+import { ShieldCheck, User, ArrowRightLeft, AlertTriangle, HandshakeIcon, Users, Star, Gamepad2, Share2, Copy, Heart, X as XIcon, ZoomIn } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { QueryErrorState } from "@/components/query-error-state";
 
 const SOCIAL_PLATFORM_ICONS: Record<string, string> = {
   instagram: "IG",
@@ -33,7 +34,7 @@ export default function ListingDetail() {
   const [offerMessage, setOfferMessage] = useState("");
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
-  const { data: listing, isLoading, isError } = useGetListing(Number(id));
+  const { data: listing, isLoading, isError, refetch } = useGetListing(Number(id));
   const createTrade = useCreateTrade();
   const makeOffer = useMakeOffer();
 
@@ -116,14 +117,24 @@ export default function ListingDetail() {
     );
   }
 
-  if (isError || !listing) {
+  if (isError) {
+    return (
+      <Layout>
+        <div className="container mx-auto max-w-3xl px-4 py-16">
+          <QueryErrorState title="We couldn't load this listing" onRetry={() => { void refetch(); }} />
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!listing) {
     return (
       <Layout>
         <div className="container mx-auto px-4 py-16 text-center">
           <AlertTriangle className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
           <h2 className="text-2xl font-bold mb-2">Listing Not Found</h2>
           <p className="text-muted-foreground mb-6">This listing may have been sold or removed.</p>
-          <Button asChild><a href="/">Browse Marketplace</a></Button>
+          <Button asChild><Link href="/">Browse Marketplace</Link></Button>
         </div>
       </Layout>
     );
@@ -135,8 +146,8 @@ export default function ListingDetail() {
 
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-8 max-w-5xl">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="container mx-auto min-w-0 max-w-5xl overflow-x-hidden px-4 py-8">
+        <div className="grid min-w-0 grid-cols-1 gap-8 lg:grid-cols-2">
           {/* Image / Social Info */}
           <div className="space-y-4">
             <div className="aspect-[4/3] rounded-xl overflow-hidden bg-muted border border-border relative group">
@@ -250,7 +261,7 @@ export default function ListingDetail() {
           </div>
 
           {/* Details */}
-          <div className="space-y-6">
+          <div className="min-w-0 space-y-6">
             <div>
               <div className="flex items-center gap-2 mb-2 flex-wrap">
                 <Badge className="text-xs">{listing.gameName}</Badge>
@@ -261,8 +272,8 @@ export default function ListingDetail() {
                   <Badge variant="outline" className="bg-red-500/10 text-red-500 border-red-500/20 text-xs">{listing.status}</Badge>
                 )}
               </div>
-              <h1 className="text-3xl font-bold mb-3">{listing.description}</h1>
-              <div className="flex items-center gap-2 text-muted-foreground text-sm">
+              <h1 className="mb-3 break-words text-3xl font-bold">{listing.description}</h1>
+              <div className="flex min-w-0 items-center gap-2 text-sm text-muted-foreground">
                 <User className="w-4 h-4" />
                 <span>Sold by <strong>{listing.sellerUsername}</strong></span>
                 {(listing as any).sellerIsVerified && (
@@ -277,7 +288,7 @@ export default function ListingDetail() {
             <Card className="border-primary/30 bg-primary/5">
               <CardContent className="p-6">
                 <p className="text-sm text-muted-foreground mb-1">Listing Price</p>
-                <p className="text-4xl font-bold text-primary">{formatNaira(listing.price)}</p>
+                <p className="break-words text-3xl font-bold text-primary sm:text-4xl">{formatNaira(listing.price)}</p>
                 <p className="text-xs text-muted-foreground mt-2">Platform fee (4%) deducted from seller earnings</p>
               </CardContent>
             </Card>
@@ -327,7 +338,7 @@ export default function ListingDetail() {
 
             {!user && (
               <p className="text-center text-sm text-muted-foreground">
-                <a href="/login" className="text-primary underline underline-offset-4">Login</a> to purchase this account.
+                <Link href="/login" className="text-primary underline underline-offset-4">Login</Link> to purchase this account.
               </p>
             )}
 

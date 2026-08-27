@@ -13,6 +13,7 @@ import { formatNaira } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { HandshakeIcon, Clock, CheckCircle, XCircle, ArrowRightLeft, RefreshCcw } from "lucide-react";
+import { QueryErrorState } from "@/components/query-error-state";
 
 function offerStatusBadge(status: string) {
   const styles: Record<string, string> = {
@@ -45,7 +46,7 @@ export default function Offers() {
   const [counterDialogOffer, setCounterDialogOffer] = useState<any>(null);
   const [counterAmount, setCounterAmount] = useState("");
 
-  const { data: offers, isLoading } = useGetMyOffers();
+  const { data: offers, isLoading, isError, refetch } = useGetMyOffers();
   const respond = useRespondToOffer();
   const startTrade = useCreateTrade();
 
@@ -172,6 +173,10 @@ export default function Offers() {
           </TabsTrigger>
           </TabsList>
 
+          {isError ? (
+            <QueryErrorState title="We couldn't load your offers" onRetry={() => { void refetch(); }} />
+          ) : (
+          <>
           <TabsContent value="received">
             {isLoading ? (
               <div className="space-y-3">{[...Array(3)].map((_, i) => <div key={i} className="h-24 bg-muted rounded-lg animate-pulse" />)}</div>
@@ -199,6 +204,8 @@ export default function Offers() {
               <div className="space-y-3">{myOffersMade.map((o: any) => <OfferCard key={o.id} offer={o} isReceiver={false} />)}</div>
             )}
           </TabsContent>
+          </>
+          )}
         </Tabs>
 
         {/* Counter dialog */}

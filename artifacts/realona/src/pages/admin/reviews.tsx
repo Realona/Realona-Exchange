@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { AdminNav } from "./users";
 import { Star, MessageSquare, ShieldCheck, Clock } from "lucide-react";
+import { QueryErrorState } from "@/components/query-error-state";
 
 function StarDisplay({ rating }: { rating: number }) {
   return (
@@ -31,7 +32,7 @@ export default function AdminReviews() {
   const [respondId, setRespondId] = useState<number | null>(null);
   const [response, setResponse] = useState("");
 
-  const { data } = useGetPlatformReviews({ query: { queryKey: ["getPlatformReviews"] } });
+  const { data, isLoading, isError, refetch } = useGetPlatformReviews({ query: { queryKey: ["getPlatformReviews"] } });
   const adminRespond = useAdminRespondToReview();
 
   const reviews = data?.reviews ?? [];
@@ -91,10 +92,12 @@ export default function AdminReviews() {
 
         {/* Reviews list */}
         <div className="space-y-3">
-          {!data ? (
+          {isLoading ? (
             [...Array(5)].map((_, i) => (
               <div key={i} className="h-28 bg-muted animate-pulse rounded-lg" />
             ))
+          ) : isError ? (
+            <QueryErrorState title="We couldn't load platform reviews" onRetry={() => { void refetch(); }} />
           ) : sorted.length === 0 ? (
             <p className="text-center text-muted-foreground py-12">No reviews yet.</p>
           ) : (

@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useGetPlatformReviews, useCreatePlatformReview } from "@workspace/api-client-react";
 import { Star, ShieldCheck, MessageSquare, TrendingUp } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { QueryErrorState } from "@/components/query-error-state";
 
 function StarRating({ value, onChange, readonly = false }: { value: number; onChange?: (v: number) => void; readonly?: boolean }) {
   const [hover, setHover] = useState(0);
@@ -48,7 +49,7 @@ export default function ReviewsPage() {
   const [reviewText, setReviewText] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const { data, isLoading } = useGetPlatformReviews({ query: { queryKey: ["getPlatformReviews"] } });
+  const { data, isLoading, isError, refetch } = useGetPlatformReviews({ query: { queryKey: ["getPlatformReviews"] } });
   const createReview = useCreatePlatformReview();
 
   const handleSubmit = () => {
@@ -148,6 +149,8 @@ export default function ReviewsPage() {
           <div className="space-y-4">
             {[...Array(3)].map((_, i) => <div key={i} className="h-28 rounded-xl bg-muted animate-pulse" />)}
           </div>
+        ) : isError ? (
+          <QueryErrorState title="We couldn't load platform reviews" onRetry={() => { void refetch(); }} />
         ) : reviews.length === 0 ? (
           <Card className="border-border bg-card">
             <CardContent className="py-12 text-center text-muted-foreground">

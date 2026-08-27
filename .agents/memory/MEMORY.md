@@ -9,3 +9,5 @@
 - [Admin pages pattern](admin-pages-pattern.md) — 4 touch points: page file, AdminNav in users.tsx, nav in index.tsx, route in App.tsx.
 - [OpenAPI yaml merge risk](openapi-merge-risk.md) — task agent merges can wipe yaml additions; grep + re-add + re-run codegen after every merge.
 - [User deletion cascade](user-deletion-cascade.md) — user-related foreign keys do not cascade; account deletion must clean dependent records atomically before deleting the user.
+- [Trade listing reservation](trade-listing-reservation.md) — purchases must reserve the listing, capture price, debit wallet, and create the trade atomically.
+- [Private upload ownership](private-upload-ownership.md) — validate owner-scoped private object paths before accepting listing or KYC references.

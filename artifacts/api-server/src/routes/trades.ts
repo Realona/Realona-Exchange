@@ -126,7 +126,6 @@ router.post("/trades", requireAuth, async (req, res): Promise<void> => {
   }
 
   const feePercent = await getPlatformFee();
-  const amount = Number(listing.price);
 
   // First trade 0% fee + admin/superadmin exemption
   const isAdminBuyer = req.user?.isAdmin || req.user?.isSuperAdmin;
@@ -135,29 +134,58 @@ router.post("/trades", requireAuth, async (req, res): Promise<void> => {
     .from(tradesTable)
     .where(and(eq(tradesTable.buyerId, req.userId!), eq(tradesTable.status, "completed")));
   const isFirstTrade = Number(tradeCountRow?.count ?? 0) === 0;
-  const fee = (isFirstTrade || isAdminBuyer) ? 0 : parseFloat((amount * feePercent / 100).toFixed(2));
+  let result: {
+    trade: typeof tradesTable.$inferSelect;
+    purchasedListing: typeof listingsTable.$inferSelect;
+    amount: number;
+  };
+  try {
+    result = await db.transaction(async (tx) => {
+      const [reservedListing] = await tx
+        .update(listingsTable)
+        .set({ status: "sold" })
+        .where(and(eq(listingsTable.id, listing.id), eq(listingsTable.status, "active")))
+        .returning();
+      if (!reservedListing) {
+        throw new Error("LISTING_UNAVAILABLE");
+      }
 
-  // Verify buyer wallet has sufficient balance (wallet-funded escrow, no bank transfer needed)
-  const [buyerWallet] = await db.select({ walletBalance: usersTable.walletBalance }).from(usersTable).where(eq(usersTable.id, req.userId!));
-  if (!buyerWallet || Number(buyerWallet.walletBalance) < amount) {
-    res.status(400).json({ error: `Insufficient wallet balance. You need at least ₦${amount.toLocaleString()} to complete this purchase. Please deposit funds to your wallet first.` });
-    return;
+      const amount = Number(reservedListing.price);
+      const fee = (isFirstTrade || isAdminBuyer) ? 0 : parseFloat((amount * feePercent / 100).toFixed(2));
+      const [debitedBuyer] = await tx
+        .update(usersTable)
+        .set({ walletBalance: sql`${usersTable.walletBalance} - ${amount}` })
+        .where(and(
+          eq(usersTable.id, req.userId!),
+          sql`${usersTable.walletBalance} >= ${amount}`,
+        ))
+        .returning({ id: usersTable.id });
+      if (!debitedBuyer) {
+        throw new Error("INSUFFICIENT_BALANCE");
+      }
+
+      const [createdTrade] = await tx.insert(tradesTable).values({
+        listingId: listing.id,
+        buyerId: req.userId!,
+        sellerId: listing.sellerId,
+        amount: String(amount),
+        fee: String(fee),
+        status: "payment_confirmed",
+      }).returning();
+      return { trade: createdTrade, purchasedListing: reservedListing, amount };
+    });
+  } catch (error) {
+    if (error instanceof Error && error.message === "LISTING_UNAVAILABLE") {
+      res.status(409).json({ error: "This listing was just purchased by another buyer and is no longer available." });
+      return;
+    }
+    if (error instanceof Error && error.message === "INSUFFICIENT_BALANCE") {
+      res.status(400).json({ error: "Insufficient wallet balance for this purchase. Please deposit funds to your wallet first." });
+      return;
+    }
+    throw error;
   }
-
-  // Create trade directly as payment_confirmed — funds deducted from buyer wallet
-  const [trade] = await db.insert(tradesTable).values({
-    listingId: listing.id,
-    buyerId: req.userId!,
-    sellerId: listing.sellerId,
-    amount: String(amount),
-    fee: String(fee),
-    status: "payment_confirmed",
-  }).returning();
-
-  // Deduct from buyer wallet (held in escrow)
-  await db.update(usersTable).set({
-    walletBalance: sql`${usersTable.walletBalance} - ${amount}`,
-  }).where(eq(usersTable.id, req.userId!));
+  const { trade, purchasedListing, amount } = result;
 
   await addSystemMsg(trade.id, `✅ Trade started. ₦${amount.toLocaleString()} deducted from buyer's wallet and held in escrow.`, req.userId!);
   await addSystemMsg(trade.id, `🔐 Account credentials have been revealed to the buyer.`, req.userId!);
@@ -165,27 +193,27 @@ router.post("/trades", requireAuth, async (req, res): Promise<void> => {
   const row = await getTradeWithDetails(trade.id);
 
   // Fetch seller and buyer for notifications
-  const [seller] = await db.select({ email: usersTable.email }).from(usersTable).where(eq(usersTable.id, listing.sellerId));
+  const [seller] = await db.select({ email: usersTable.email }).from(usersTable).where(eq(usersTable.id, purchasedListing.sellerId));
   const [buyer] = await db.select({ username: usersTable.username }).from(usersTable).where(eq(usersTable.id, req.userId!));
 
   // Email seller to transfer account (payment already confirmed)
   if (seller && buyer) {
     emailPaymentConfirmed({
       sellerEmail: seller.email, sellerUsername: row.sellerUsername ?? "",
-      buyerUsername: buyer.username, gameName: listing.gameName,
+      buyerUsername: buyer.username, gameName: purchasedListing.gameName,
       amount, tradeId: trade.id,
     }).catch(() => {});
   }
 
   // In-app notifications: skip email for seller (emailPaymentConfirmed already sent); email buyer separately via notification
-  createNotification(listing.sellerId, "trade_update", "New Trade — Payment Confirmed",
-    `${buyer?.username ?? "A buyer"} has purchased your ${listing.gameName} listing. ₦${amount.toLocaleString()} is held in escrow. Please share the account credentials via trade chat.`,
+  createNotification(purchasedListing.sellerId, "trade_update", "New Trade — Payment Confirmed",
+    `${buyer?.username ?? "A buyer"} has purchased your ${purchasedListing.gameName} listing. ₦${amount.toLocaleString()} is held in escrow. Please share the account credentials via trade chat.`,
     { tradeId: trade.id }, true /* skipEmail — emailPaymentConfirmed already sent */
-  ).catch(() => {});
+  ).catch((error) => req.log.warn({ err: error, tradeId: trade.id }, "Failed to notify seller about new trade"));
   createNotification(req.userId!, "trade_update", "Trade Started!",
-    `Your purchase of ${listing.gameName} is confirmed. ₦${amount.toLocaleString()} has been deducted from your wallet and held in escrow. The seller will share account credentials shortly.`,
+    `Your purchase of ${purchasedListing.gameName} is confirmed. ₦${amount.toLocaleString()} has been deducted from your wallet and held in escrow. The seller will share account credentials shortly.`,
     { tradeId: trade.id }
-  ).catch(() => {});
+  ).catch((error) => req.log.warn({ err: error, tradeId: trade.id }, "Failed to notify buyer about new trade"));
 
   res.status(201).json(formatTrade(row.trade, { buyerUsername: row.buyerUsername, sellerUsername: row.sellerUsername, gameName: row.gameName, pictureUrl: row.pictureUrl }));
 });

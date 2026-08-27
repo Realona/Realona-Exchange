@@ -11,6 +11,7 @@ import { formatNaira } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { Copy, Wallet, ArrowDownCircle, ArrowUpCircle, Building2, CheckCircle, AlertCircle, Info } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { QueryErrorState } from "@/components/query-error-state";
 
 export default function WalletPage() {
   const { user } = useAuth();
@@ -26,10 +27,10 @@ export default function WalletPage() {
   const [depositAmount, setDepositAmount] = useState("");
   const [depositSubmitted, setDepositSubmitted] = useState(false);
 
-  const { data: walletData } = useGetWalletBalance();
-  const { data: deposits } = useGetDeposits();
+  const { data: walletData, isError: walletError, refetch: refetchWallet } = useGetWalletBalance();
+  const { data: deposits, isError: depositsError, refetch: refetchDeposits } = useGetDeposits();
   const requestDeposit = useRequestDeposit();
-  const { data: withdrawals } = useGetWithdrawals();
+  const { data: withdrawals, isError: withdrawalsError, refetch: refetchWithdrawals } = useGetWithdrawals();
   const withdrawMutation = useRequestWithdrawal();
 
   const [wAmount, setWAmount] = useState("");
@@ -110,6 +111,14 @@ export default function WalletPage() {
           </CardContent>
         </Card>
 
+        {walletError || depositsError || withdrawalsError ? (
+          <QueryErrorState
+            title="We couldn't load your wallet"
+            onRetry={() => {
+              void Promise.all([refetchWallet(), refetchDeposits(), refetchWithdrawals()]);
+            }}
+          />
+        ) : (
         <Tabs defaultValue="deposit">
           <TabsList className="mb-6">
             <TabsTrigger value="deposit"><ArrowDownCircle className="w-4 h-4 mr-2" />Deposit</TabsTrigger>
@@ -358,6 +367,7 @@ export default function WalletPage() {
             </div>
           </TabsContent>
         </Tabs>
+        )}
       </div>
     </Layout>
   );
