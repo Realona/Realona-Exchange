@@ -3,6 +3,7 @@ import { db, usersTable, pendingRegistrationsTable } from "@workspace/db";
 import { eq, and, gt } from "drizzle-orm";
 import { hashPassword, comparePassword, signToken, requireAuth } from "../lib/auth";
 import { emailWelcome, emailOtp } from "../lib/email";
+import { notifyAdmins } from "../lib/adminNotifier";
 import { RegisterBody, LoginBody, VerifyEmailBody, ResendOtpBody } from "@workspace/api-zod";
 import crypto from "crypto";
 
@@ -146,6 +147,12 @@ router.post("/auth/verify-email", async (req, res): Promise<void> => {
 
   const token = signToken({ userId: user.id });
   emailWelcome({ email: user.email, username: user.username }).catch(() => {});
+  await notifyAdmins({
+    title: "New user registration",
+    message: `${user.username} has completed email verification and registered on Realona Exchange.`,
+    linkUrl: "/admin/users",
+    metadata: { userId: user.id, linkUrl: "/admin/users" },
+  });
   res.status(201).json({ user: formatUser(user), token });
 });
 

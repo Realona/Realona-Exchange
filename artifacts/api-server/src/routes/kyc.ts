@@ -3,6 +3,7 @@ import { db, kycSubmissionsTable, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
 import { isOwnedUploadPath } from "../lib/ownedUpload";
+import { notifyAdmins } from "../lib/adminNotifier";
 
 const router: IRouter = Router();
 
@@ -56,6 +57,13 @@ router.post("/kyc/submit", requireAuth, async (req, res): Promise<void> => {
     level,
   }).returning();
 
+  const [submitter] = await db.select({ username: usersTable.username }).from(usersTable).where(eq(usersTable.id, req.userId!));
+  await notifyAdmins({
+    title: "New KYC submission",
+    message: `${submitter?.username ?? "A user"} submitted Level ${level} identity documents for review.`,
+    linkUrl: "/admin/kyc-review",
+    metadata: { kycId: submission.id, linkUrl: "/admin/kyc-review" },
+  });
   res.status(201).json(formatKyc(submission));
 });
 

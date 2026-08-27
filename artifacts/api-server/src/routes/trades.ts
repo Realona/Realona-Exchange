@@ -4,7 +4,7 @@ import { eq, and, sql, or } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
 import {
   emailPaymentConfirmed, emailSellerTransferred,
-  emailTradeCompleted, emailDisputeOpened, emailBuyerPaid,
+  emailTradeCompleted, emailDisputeOpened,
 } from "../lib/email";
 import {
   CreateTradeBody,
@@ -16,6 +16,7 @@ import {
   OpenDisputeBody,
 } from "@workspace/api-zod";
 import { createNotification } from "../lib/notifier";
+import { notifyAdmins } from "../lib/adminNotifier";
 
 const router: IRouter = Router();
 
@@ -195,6 +196,12 @@ router.post("/trades", requireAuth, async (req, res): Promise<void> => {
   // Fetch seller and buyer for notifications
   const [seller] = await db.select({ email: usersTable.email }).from(usersTable).where(eq(usersTable.id, purchasedListing.sellerId));
   const [buyer] = await db.select({ username: usersTable.username }).from(usersTable).where(eq(usersTable.id, req.userId!));
+  await notifyAdmins({
+    title: "New trade started",
+    message: `${buyer?.username ?? "A buyer"} purchased ${purchasedListing.gameName} for ₦${amount.toLocaleString()} (Trade #${trade.id}).`,
+    linkUrl: "/admin/trades",
+    metadata: { tradeId: trade.id, listingId: purchasedListing.id, linkUrl: "/admin/trades" },
+  });
 
   // Email seller to transfer account (payment already confirmed)
   if (seller && buyer) {
@@ -249,7 +256,19 @@ router.post("/trades/:id/buyer-paid", requireAuth, async (req, res): Promise<voi
   if (trade.buyerId !== req.userId) { res.status(403).json({ error: "Not authorized" }); return; }
   if (trade.status !== "pending") { res.status(400).json({ error: "Trade is not pending" }); return; }
 
-  await db.update(tradesTable).set({ buyerPaidNotified: true }).where(eq(tradesTable.id, tradeId));
+  const [paymentNotice] = await db
+    .update(tradesTable)
+    .set({ buyerPaidNotified: true })
+    .where(and(
+      eq(tradesTable.id, tradeId),
+      eq(tradesTable.status, "pending"),
+      eq(tradesTable.buyerPaidNotified, false),
+    ))
+    .returning({ id: tradesTable.id });
+  if (!paymentNotice) {
+    res.status(409).json({ error: "Payment has already been reported for this trade" });
+    return;
+  }
   await addSystemMsg(tradeId, "💰 Buyer has notified admin of payment. Waiting for admin to confirm.", req.userId!);
 
   // Fetch buyer, seller, listing info and all admins in parallel
@@ -257,36 +276,25 @@ router.post("/trades/:id/buyer-paid", requireAuth, async (req, res): Promise<voi
     [buyer],
     [seller],
     listing,
-    admins,
   ] = await Promise.all([
     db.select({ username: usersTable.username }).from(usersTable).where(eq(usersTable.id, req.userId!)),
     db.select({ username: usersTable.username, email: usersTable.email }).from(usersTable).where(eq(usersTable.id, trade.sellerId)),
     db.select({ gameName: listingsTable.gameName }).from(listingsTable).where(eq(listingsTable.id, trade.listingId)),
-    db.select({ id: usersTable.id, email: usersTable.email }).from(usersTable).where(or(eq(usersTable.isAdmin, true), eq(usersTable.isSuperAdmin, true))),
   ]);
 
   const buyerUsername = buyer?.username ?? "Buyer";
   const sellerUsername = seller?.username ?? "Seller";
   const gameName = listing[0]?.gameName ?? "Account";
-  const adminEmail = process.env.EMAIL_FROM ?? "realonabusinessexchange@gmail.com";
 
   // Notify seller
   await createNotification(trade.sellerId, "trade_update", "Buyer Paid", `${buyerUsername} has notified admin of payment for Trade #${tradeId}. Waiting for admin confirmation.`, { tradeId });
 
-  // Notify all admin users (in-app + email)
-  await Promise.all([
-    ...admins.map(admin =>
-      createNotification(admin.id, "trade_update", "Payment Confirmation Needed", `${buyerUsername} has notified payment for Trade #${tradeId} (${gameName}, ₦${Number(trade.amount).toLocaleString()}). Please verify and confirm.`, { tradeId }, true /* skipEmail — emailBuyerPaid already sent */)
-    ),
-    emailBuyerPaid({
-      adminEmail,
-      buyerUsername,
-      sellerUsername,
-      gameName,
-      amount: Number(trade.amount),
-      tradeId,
-    }),
-  ]);
+  await notifyAdmins({
+    title: "Payment confirmation needed",
+    message: `${buyerUsername} has notified payment for Trade #${tradeId} (${gameName}, ₦${Number(trade.amount).toLocaleString()}). Please verify and confirm.`,
+    linkUrl: "/admin/trades",
+    metadata: { tradeId, linkUrl: "/admin/trades" },
+  });
 
   res.json({ success: true });
 });
@@ -472,10 +480,17 @@ router.post("/trades/:id/dispute", requireAuth, async (req, res): Promise<void> 
     return;
   }
 
-  await db.update(tradesTable).set({
+  const [disputedTrade] = await db.update(tradesTable).set({
     status: "disputed",
     disputeReason: parsed.data.reason,
-  }).where(eq(tradesTable.id, params.data.id));
+  }).where(and(
+    eq(tradesTable.id, params.data.id),
+    eq(tradesTable.status, trade.status),
+  )).returning({ id: tradesTable.id });
+  if (!disputedTrade) {
+    res.status(409).json({ error: "This trade has already changed and can no longer be disputed from its previous state" });
+    return;
+  }
 
   await addSystemMsg(params.data.id, `Dispute opened: ${parsed.data.reason}. Admin will review this trade.`, req.userId!);
 
@@ -484,11 +499,9 @@ router.post("/trades/:id/dispute", requireAuth, async (req, res): Promise<void> 
   // Email admin + both parties
   const [sellerUser] = await db.select({ email: usersTable.email }).from(usersTable).where(eq(usersTable.id, trade.sellerId));
   const [buyerUser] = await db.select({ email: usersTable.email }).from(usersTable).where(eq(usersTable.id, trade.buyerId));
-  const adminEmail = process.env.EMAIL_FROM ?? "realonabusinessexchange@gmail.com";
   const isOpenerBuyer = req.userId === trade.buyerId;
   if (sellerUser && buyerUser) {
     emailDisputeOpened({
-      adminEmail,
       buyerUsername: row.buyerUsername ?? "", sellerUsername: row.sellerUsername ?? "",
       gameName: row.gameName ?? "", reason: parsed.data.reason, tradeId: trade.id,
       openerEmail: isOpenerBuyer ? buyerUser.email : sellerUser.email,
@@ -497,6 +510,12 @@ router.post("/trades/:id/dispute", requireAuth, async (req, res): Promise<void> 
       otherUsername: isOpenerBuyer ? (row.sellerUsername ?? "") : (row.buyerUsername ?? ""),
     }).catch(() => {});
   }
+  await notifyAdmins({
+    title: "Dispute opened",
+    message: `A dispute was opened on Trade #${trade.id} by ${isOpenerBuyer ? row.buyerUsername : row.sellerUsername}.`,
+    linkUrl: `/admin/trades`,
+    metadata: { tradeId: trade.id, linkUrl: "/admin/trades" },
+  });
 
   res.json(formatTrade(row.trade, { buyerUsername: row.buyerUsername, sellerUsername: row.sellerUsername, gameName: row.gameName, pictureUrl: row.pictureUrl }));
 });

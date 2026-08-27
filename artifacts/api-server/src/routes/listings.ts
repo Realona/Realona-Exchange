@@ -5,6 +5,7 @@ import { requireAuth } from "../lib/auth";
 import { CreateListingBody, UpdateListingBody, GetListingParams, UpdateListingParams, DeleteListingParams, GetListingsQueryParams, CreateBulkListingsBody } from "@workspace/api-zod";
 import { createNotification } from "../lib/notifier";
 import { isOwnedUploadPath } from "../lib/ownedUpload";
+import { notifyAdmins } from "../lib/adminNotifier";
 
 const router: IRouter = Router();
 
@@ -113,6 +114,12 @@ router.post("/listings", requireAuth, async (req, res): Promise<void> => {
     .returning();
 
   const [seller] = await db.select({ username: usersTable.username }).from(usersTable).where(eq(usersTable.id, req.userId!));
+  await notifyAdmins({
+    title: "New listing created",
+    message: `${seller?.username ?? "A seller"} created a ${listing.gameName} listing for ₦${Number(listing.price).toLocaleString()}.`,
+    linkUrl: "/admin",
+    metadata: { listingId: listing.id, linkUrl: "/admin" },
+  });
   res.status(201).json(formatListing(listing, seller?.username, { includeCredentials: true }));
 });
 
@@ -194,6 +201,14 @@ router.post("/listings/bulk", requireAuth, async (req, res): Promise<void> => {
   }
 
   const [seller] = await db.select({ username: usersTable.username }).from(usersTable).where(eq(usersTable.id, req.userId!));
+  if (createdListings.length > 0) {
+    await notifyAdmins({
+      title: "Bulk listings created",
+      message: `${seller?.username ?? "A seller"} created ${createdListings.length} new listing${createdListings.length === 1 ? "" : "s"} in a bulk upload.`,
+      linkUrl: "/admin",
+      metadata: { listingIds: createdListings.map((listing) => listing.id), linkUrl: "/admin" },
+    });
+  }
 
   res.status(201).json({
     created: createdListings.length,
@@ -296,6 +311,12 @@ router.patch("/listings/:id", requireAuth, async (req, res): Promise<void> => {
     return;
   }
   const [seller] = await db.select({ username: usersTable.username }).from(usersTable).where(eq(usersTable.id, updated.sellerId));
+  await notifyAdmins({
+    title: "Listing updated",
+    message: `${seller?.username ?? "A seller"} updated listing #${updated.id} (${updated.gameName}).`,
+    linkUrl: "/admin",
+    metadata: { listingId: updated.id, linkUrl: "/admin" },
+  });
 
   // Price drop notification → all wishlist users
   if (parsed.data.price !== undefined && Number(parsed.data.price) < Number(existing.price)) {
@@ -337,8 +358,26 @@ router.delete("/listings/:id", requireAuth, async (req, res): Promise<void> => {
     res.status(403).json({ error: "Not authorized" });
     return;
   }
+  if (!["active", "paused"].includes(existing.status)) {
+    res.status(409).json({ error: "This listing can no longer be removed" });
+    return;
+  }
 
-  await db.update(listingsTable).set({ status: "deleted" }).where(eq(listingsTable.id, params.data.id));
+  const [deleted] = await db.update(listingsTable)
+    .set({ status: "deleted" })
+    .where(and(eq(listingsTable.id, params.data.id), eq(listingsTable.status, existing.status)))
+    .returning({ id: listingsTable.id });
+  if (!deleted) {
+    res.status(409).json({ error: "This listing changed while you were removing it. Refresh and try again." });
+    return;
+  }
+  const [seller] = await db.select({ username: usersTable.username }).from(usersTable).where(eq(usersTable.id, existing.sellerId));
+  await notifyAdmins({
+    title: "Listing removed",
+    message: `${seller?.username ?? "A seller"} removed listing #${existing.id} (${existing.gameName}).`,
+    linkUrl: "/admin",
+    metadata: { listingId: existing.id, linkUrl: "/admin" },
+  });
   res.json({ success: true, message: "Listing deleted" });
 });
 

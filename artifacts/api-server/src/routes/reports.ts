@@ -3,6 +3,7 @@ import { db, reportsTable, usersTable } from "@workspace/db";
 import { eq, sql } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
 import { CreateReportBody } from "@workspace/api-zod";
+import { notifyAdmins } from "../lib/adminNotifier";
 
 const router: IRouter = Router();
 
@@ -34,6 +35,12 @@ router.post("/reports", requireAuth, async (req, res): Promise<void> => {
   }).returning();
 
   const [reporter] = await db.select({ username: usersTable.username }).from(usersTable).where(eq(usersTable.id, req.userId!));
+  await notifyAdmins({
+    title: "New user report",
+    message: `${reporter?.username ?? "A user"} submitted a report about ${reported.username}.`,
+    linkUrl: "/admin/reports",
+    metadata: { reportId: report.id, tradeId: report.tradeId, linkUrl: "/admin/reports" },
+  });
 
   res.status(201).json({
     id: report.id,

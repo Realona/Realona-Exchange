@@ -3,6 +3,7 @@ import { db, offersTable, listingsTable, usersTable } from "@workspace/db";
 import { eq, and, sql, or } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
 import { createNotification } from "../lib/notifier";
+import { notifyAdmins } from "../lib/adminNotifier";
 
 const router: IRouter = Router();
 
@@ -58,6 +59,12 @@ router.post("/listings/:id/offers", requireAuth, async (req, res): Promise<void>
 
   // Notify seller
   const [buyer] = await db.select({ username: usersTable.username }).from(usersTable).where(eq(usersTable.id, req.userId!));
+  await notifyAdmins({
+    title: "New offer submitted",
+    message: `${buyer?.username ?? "A buyer"} offered ₦${amount.toLocaleString()} on ${listing.gameName}.`,
+    linkUrl: "/admin",
+    metadata: { offerId: offer.id, listingId, linkUrl: "/admin" },
+  });
   await createNotification(
     listing.sellerId,
     "offer_received",
@@ -119,17 +126,32 @@ router.post("/offers/:id/respond", requireAuth, async (req, res): Promise<void> 
   else if (action === "reject") { newStatus = "rejected"; }
   else { newStatus = "countered"; updateData.counterAmount = String(counterAmount); }
 
-  await db.update(offersTable).set({ status: newStatus, ...updateData }).where(eq(offersTable.id, offerId));
+  const [updatedOffer] = await db
+    .update(offersTable)
+    .set({ status: newStatus, ...updateData })
+    .where(and(eq(offersTable.id, offerId), eq(offersTable.status, offer.status)))
+    .returning({ id: offersTable.id });
+  if (!updatedOffer) {
+    res.status(409).json({ error: "This offer has already been updated" });
+    return;
+  }
 
   // Notify buyer
   const [listing] = await db.select({ gameName: listingsTable.gameName }).from(listingsTable).where(eq(listingsTable.id, offer.listingId));
-  const [seller] = await db.select({ username: usersTable.username }).from(usersTable).where(eq(usersTable.id, req.userId!));
+  const [responder] = await db.select({ username: usersTable.username }).from(usersTable).where(eq(usersTable.id, req.userId!));
+  const responderRole = offer.status === "countered" ? "Buyer" : "Seller";
   const actionText = action === "accept" ? "accepted" : action === "reject" ? "rejected" : "countered";
+  await notifyAdmins({
+    title: `Offer ${actionText}`,
+    message: `${responderRole} ${responder?.username ?? `#${req.userId}`} ${actionText} offer #${offerId} on ${listing?.gameName ?? "a listing"}.`,
+    linkUrl: "/admin",
+    metadata: { offerId, listingId: offer.listingId, linkUrl: "/admin" },
+  });
   await createNotification(
     offer.buyerId,
     "offer_responded",
     `Offer ${actionText}`,
-    `${seller?.username ?? "Seller"} ${actionText} your offer on "${listing?.gameName ?? "listing"}"`,
+    `${responder?.username ?? responderRole} ${actionText} your offer on "${listing?.gameName ?? "listing"}"`,
     { offerId, listingId: offer.listingId }
   );
 

@@ -2,8 +2,8 @@ import { Router, type IRouter } from "express";
 import { db, withdrawalsTable, usersTable, tradesTable } from "@workspace/db";
 import { eq, sql, and, or, inArray } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
-import { emailWithdrawalRequested } from "../lib/email";
 import { RequestWithdrawalBody } from "@workspace/api-zod";
+import { notifyAdmins } from "../lib/adminNotifier";
 
 const router: IRouter = Router();
 
@@ -94,6 +94,12 @@ router.post("/withdrawals", requireAuth, async (req, res): Promise<void> => {
     status: "pending",
   }).returning();
 
+  await notifyAdmins({
+    title: "New withdrawal request",
+    message: `${user.username} requested a withdrawal of ₦${amount.toLocaleString()} to ${bankName}.`,
+    linkUrl: "/admin/withdrawals",
+    metadata: { withdrawalId: withdrawal.id, linkUrl: "/admin/withdrawals" },
+  });
   res.status(201).json(formatWithdrawal(withdrawal, user.username));
 });
 

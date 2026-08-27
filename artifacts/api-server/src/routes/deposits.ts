@@ -1,8 +1,8 @@
 import { Router, type IRouter } from "express";
 import { db, depositsTable, usersTable } from "@workspace/db";
-import { eq, sql, or } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
-import { createNotification } from "../lib/notifier";
+import { notifyAdmins } from "../lib/adminNotifier";
 
 const router: IRouter = Router();
 
@@ -48,21 +48,12 @@ router.post("/deposits/request", requireAuth, async (req, res): Promise<void> =>
     status: "pending",
   }).returning();
 
-  // Notify all admins
-  const admins = await db
-    .select({ id: usersTable.id })
-    .from(usersTable)
-    .where(sql`${usersTable.isAdmin} = true OR ${usersTable.isSuperAdmin} = true`);
-
-  for (const admin of admins) {
-    await createNotification(
-      admin.id,
-      "deposit_pending",
-      "New Deposit Request",
-      `${user.username} submitted a deposit of ₦${amt.toLocaleString()}. Reference: ${reference}. Please verify on Moniepoint and confirm.`,
-      { depositId: deposit.id }
-    );
-  }
+  await notifyAdmins({
+    title: "New deposit request",
+    message: `${user.username} submitted a deposit of ₦${amt.toLocaleString()}. Reference: ${reference}. Please verify on Moniepoint and confirm.`,
+    linkUrl: "/admin/deposits",
+    metadata: { depositId: deposit.id, linkUrl: "/admin/deposits" },
+  });
 
   res.status(201).json(formatDeposit(deposit, user.username));
 });

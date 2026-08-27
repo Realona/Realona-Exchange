@@ -50,6 +50,15 @@ function p(text: string) {
   return `<p style="color:#475569;font-size:15px;line-height:1.6;margin:0 0 16px;">${text}</p>`;
 }
 
+function escapeHtml(text: string): string {
+  return text
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
 function btn(text: string, url: string) {
   return `<p style="margin:24px 0;"><a href="${url}" style="background:#1a56db;color:#fff;text-decoration:none;padding:12px 28px;border-radius:8px;font-weight:600;font-size:15px;display:inline-block;">${text}</a></p>`;
 }
@@ -62,7 +71,7 @@ function table(rows: string) {
   return `<table cellpadding="0" cellspacing="0" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:16px 20px;margin:16px 0;width:100%;box-sizing:border-box;">${rows}</table>`;
 }
 
-async function send(to: string, subject: string, html: string) {
+async function send(to: string, subject: string, html: string): Promise<boolean> {
   if (RESEND_FROM) {
     try {
       const connectors = new ReplitConnectors();
@@ -76,7 +85,7 @@ async function send(to: string, subject: string, html: string) {
         },
       });
 
-      if (response.ok) return;
+      if (response.ok) return true;
 
       const details = await response.text().catch(() => "");
       console.error(`[email] Resend failed (${response.status})${details ? `: ${details}` : ""}`);
@@ -87,7 +96,7 @@ async function send(to: string, subject: string, html: string) {
 
   if (!process.env.GMAIL_APP_PASSWORD) {
     console.error("[email] no working delivery transport is configured");
-    return;
+    return false;
   }
 
   try {
@@ -97,8 +106,10 @@ async function send(to: string, subject: string, html: string) {
       subject,
       html,
     });
+    return true;
   } catch (err: any) {
     console.error("[email] Gmail fallback failed:", err?.message);
+    return false;
   }
 }
 
@@ -230,7 +241,7 @@ export async function emailTradeCompleted(opts: {
 }
 
 export async function emailDisputeOpened(opts: {
-  adminEmail: string;
+  adminEmail?: string;
   buyerUsername: string; sellerUsername: string;
   gameName: string; reason: string; tradeId: number;
   openerEmail: string; openerUsername: string;
@@ -238,7 +249,7 @@ export async function emailDisputeOpened(opts: {
 }) {
   const url = `${APP_URL}/trades/${opts.tradeId}`;
   await Promise.all([
-    send(
+    ...(opts.adminEmail ? [send(
       opts.adminEmail,
       `⚠️ Dispute opened on Trade #${opts.tradeId}`,
       base(
@@ -251,7 +262,7 @@ export async function emailDisputeOpened(opts: {
         ) +
         btn("Review Trade", `${APP_URL}/admin`)
       )
-    ),
+    )] : []),
     send(
       opts.openerEmail,
       `Dispute filed — Trade #${opts.tradeId}`,
@@ -401,16 +412,16 @@ export async function emailOtp(opts: { email: string; username: string; otp: str
 export async function emailNotification(opts: {
   email: string; username: string; title: string; message: string; linkUrl?: string; linkText?: string;
 }) {
-  const linkTarget = opts.linkUrl ?? APP_URL;
+  const linkTarget = opts.linkUrl?.startsWith("/") ? `${APP_URL}${opts.linkUrl}` : (opts.linkUrl ?? APP_URL);
   const linkLabel = opts.linkText ?? "Open Realona Exchange";
-  await send(
+  return send(
     opts.email,
-    opts.title,
+    escapeHtml(opts.title),
     base(
-      opts.title,
-      p(`Hi <strong>${opts.username}</strong>,`) +
-      p(opts.message) +
-      btn(linkLabel, linkTarget)
+      escapeHtml(opts.title),
+      p(`Hi <strong>${escapeHtml(opts.username)}</strong>,`) +
+      p(escapeHtml(opts.message)) +
+      btn(escapeHtml(linkLabel), escapeHtml(linkTarget))
     )
   );
 }

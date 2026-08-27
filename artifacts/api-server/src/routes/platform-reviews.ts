@@ -3,6 +3,7 @@ import { db, platformReviewsTable, usersTable } from "@workspace/db";
 import { eq, sql } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
 import { createNotification } from "../lib/notifier";
+import { notifyAdmins } from "../lib/adminNotifier";
 const router: IRouter = Router();
 
 // Get all platform reviews (public)
@@ -59,6 +60,13 @@ router.post("/reviews", requireAuth, async (req, res): Promise<void> => {
     review: parsed.data.review,
   }).returning();
 
+  const [reviewer] = await db.select({ username: usersTable.username }).from(usersTable).where(eq(usersTable.id, req.userId!));
+  await notifyAdmins({
+    title: "New platform review",
+    message: `${reviewer?.username ?? "A user"} submitted a ${newReview.rating}-star platform review.`,
+    linkUrl: "/admin/reviews",
+    metadata: { reviewId: newReview.id, linkUrl: "/admin/reviews" },
+  });
   res.status(201).json(newReview);
 });
 
