@@ -179,9 +179,11 @@ export default function AdminReviews() {
                   placeholder="Write a helpful, professional response..."
                   value={response}
                   onChange={e => setResponse(e.target.value)}
+                  maxLength={1000}
                 />
-                <p className="text-xs text-muted-foreground mt-1">
-                  This will appear publicly under the review.
+                <p className="text-xs text-muted-foreground mt-1 flex justify-between gap-2">
+                  <span>This will appear publicly under the review.</span>
+                  <span>{response.length}/1000</span>
                 </p>
               </div>
             </div>

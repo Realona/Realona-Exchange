@@ -16,7 +16,8 @@ type NotificationType =
   | "giveaway_reward"
   | "wishlist_sold"
   | "wishlist_price_drop"
-  | "deposit_pending";
+  | "deposit_pending"
+  | "review_response";
 
 export async function createNotification(
   userId: number,
@@ -34,7 +35,8 @@ export async function createNotification(
         .from(usersTable)
         .where(eq(usersTable.id, userId));
       if (user?.email) {
-        emailNotification({ email: user.email, username: user.username, title, message }).catch(() => {});
+        const linkUrl = typeof metadata?.linkUrl === "string" ? metadata.linkUrl : undefined;
+        emailNotification({ email: user.email, username: user.username, title, message, linkUrl }).catch(() => {});
       }
     }
   } catch {

@@ -1,17 +1,7 @@
-import nodemailer from "nodemailer";
+import { ReplitConnectors } from "@replit/connectors-sdk";
 
-const FROM = process.env.EMAIL_FROM ?? "realonabusinessexchange@gmail.com";
+const FROM = process.env.RESEND_FROM_EMAIL ?? "Realona Exchange <onboarding@resend.dev>";
 const APP_URL = process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS.split(",")[0]}` : "http://localhost:80";
-
-function transporter() {
-  return nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: FROM,
-      pass: process.env.GMAIL_APP_PASSWORD,
-    },
-  });
-}
 
 function base(title: string, body: string): string {
   return `<!DOCTYPE html>
@@ -61,9 +51,22 @@ function table(rows: string) {
 }
 
 async function send(to: string, subject: string, html: string) {
-  if (!process.env.GMAIL_APP_PASSWORD) return;
   try {
-    await transporter().sendMail({ from: `"Realona Exchange" <${FROM}>`, to, subject, html });
+    const connectors = new ReplitConnectors();
+    const response = await connectors.proxy("resend", "/emails", {
+      method: "POST",
+      body: {
+        from: FROM,
+        to: [to],
+        subject,
+        html,
+      },
+    });
+
+    if (!response.ok) {
+      const details = await response.text().catch(() => "");
+      throw new Error(`Resend returned ${response.status}${details ? `: ${details}` : ""}`);
+    }
   } catch (err: any) {
     console.error("[email] failed to send:", err?.message);
   }

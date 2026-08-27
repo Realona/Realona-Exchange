@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import { db, platformReviewsTable, usersTable } from "@workspace/db";
 import { eq, sql } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
+import { createNotification } from "../lib/notifier";
 const router: IRouter = Router();
 
 // Get all platform reviews (public)
@@ -66,8 +67,11 @@ router.post("/reviews/:id/respond", requireAuth, async (req, res): Promise<void>
   const id = parseInt(req.params.id as string);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid ID" }); return; }
 
-  const { response } = req.body;
-  if (!response || typeof response !== "string" || response.length < 1) { res.status(400).json({ error: "Response required" }); return; }
+  const response = typeof req.body?.response === "string" ? req.body.response.trim() : "";
+  if (!response || response.length > 1000) {
+    res.status(400).json({ error: "Response must be between 1 and 1000 characters" });
+    return;
+  }
 
   const [updated] = await db.update(platformReviewsTable)
     .set({ adminResponse: response as string })
@@ -75,6 +79,13 @@ router.post("/reviews/:id/respond", requireAuth, async (req, res): Promise<void>
     .returning();
 
   if (!updated) { res.status(404).json({ error: "Review not found" }); return; }
+  createNotification(
+    updated.userId,
+    "review_response",
+    "Realona responded to your review",
+    "An admin has posted an official response to your platform review.",
+    { linkUrl: "/reviews" },
+  ).catch(() => {});
   res.json(updated);
 });
 
