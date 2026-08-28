@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db, notificationsTable } from "@workspace/db";
-import { eq, desc } from "drizzle-orm";
+import { and, eq, desc } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
 
 const router: IRouter = Router();
@@ -38,7 +38,10 @@ router.post("/notifications/:id/read", requireAuth, async (req, res): Promise<vo
   if (isNaN(id)) { res.status(400).json({ error: "Invalid notification ID" }); return; }
   await db.update(notificationsTable)
     .set({ isRead: true })
-    .where(eq(notificationsTable.id, id));
+    .where(and(
+      eq(notificationsTable.id, id),
+      eq(notificationsTable.userId, req.userId!),
+    ));
   res.json({ success: true });
 });
 

@@ -5,7 +5,14 @@ import { db, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { logger } from "./logger";
 
-const JWT_SECRET = process.env.SESSION_SECRET ?? "realona-secret-key-change-in-prod";
+function getSessionSecret(): string {
+  const secret = process.env.SESSION_SECRET;
+  if (!secret) {
+    throw new Error("SESSION_SECRET environment variable is required");
+  }
+  return secret;
+}
+const JWT_SECRET = getSessionSecret();
 const SALT_ROUNDS = 10;
 
 export function hashPassword(password: string): Promise<string> {

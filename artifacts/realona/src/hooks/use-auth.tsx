@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useGetMe, User } from "@workspace/api-client-react";
 import { useLocation } from "wouter";
+import { useQueryClient } from "@tanstack/react-query";
 
 type AuthContextType = {
   user: User | null;
@@ -20,6 +21,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isUnavailable, setIsUnavailable] = useState(false);
   const [, setLocation] = useLocation();
+  const queryClient = useQueryClient();
 
   const { data: fetchedUser, isLoading: isFetchingUser, isError, error, refetch } = useGetMe({
     query: {
@@ -37,6 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setIsUnavailable(false);
           setIsLoading(false);
         } else if ((error as any)?.response?.status === 401 || (error as any)?.response?.status === 403) {
+          queryClient.clear();
           localStorage.removeItem("realona_token");
           setToken(null);
           setUser(null);
@@ -49,15 +52,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } else {
       setIsLoading(false);
     }
-  }, [token, fetchedUser, isFetchingUser, isError, error]);
+  }, [token, fetchedUser, isFetchingUser, isError, error, queryClient]);
 
   const login = (newToken: string, newUser: User) => {
+    queryClient.clear();
     localStorage.setItem("realona_token", newToken);
     setToken(newToken);
     setUser(newUser);
   };
 
   const logout = () => {
+    queryClient.clear();
     localStorage.removeItem("realona_token");
     setToken(null);
     setUser(null);

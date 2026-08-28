@@ -2,17 +2,18 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { LogOut, Wallet, Settings, Bell, HandshakeIcon, Trophy, X, ShieldCheck, MessageCircle } from "lucide-react";
-import { useGetWalletBalance, useGetNotifications, useMarkAllNotificationsRead, useGetMyOffers } from "@workspace/api-client-react";
+import { useGetWalletBalance, useGetNotifications, useMarkAllNotificationsRead, useMarkNotificationRead, useGetMyOffers } from "@workspace/api-client-react";
 import { formatNaira } from "@/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState, useRef, useEffect } from "react";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const { user, logout, token } = useAuth();
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const [bellOpen, setBellOpen] = useState(false);
   const bellRef = useRef<HTMLDivElement>(null);
+  const bellButtonRef = useRef<HTMLButtonElement>(null);
   const [mobileBannerDismissed, setMobileBannerDismissed] = useState(
     () => localStorage.getItem("mobileBannerDismissed") === "1"
   );
@@ -38,6 +39,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   });
 
   const markRead = useMarkAllNotificationsRead();
+  const markNotificationRead = useMarkNotificationRead();
 
   const unreadCount = notifications?.filter((n: any) => !n.isRead).length ?? 0;
   const recentNotes = notifications?.slice(0, 10) ?? [];
@@ -61,12 +63,55 @@ export function Layout({ children }: { children: React.ReactNode }) {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
+  useEffect(() => {
+    if (!bellOpen) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setBellOpen(false);
+        bellButtonRef.current?.focus();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [bellOpen]);
+
   const handleBellOpen = () => setBellOpen(v => !v);
 
   const handleMarkRead = () => {
     markRead.mutate(undefined, {
       onSuccess: () => queryClient.invalidateQueries({ queryKey: ["getNotifications"] }),
     });
+  };
+
+  const getNotificationLink = (metadata: unknown): string | null => {
+    if (typeof metadata !== "object" || metadata === null) return null;
+    const value = metadata as Record<string, unknown>;
+    if (typeof value.linkUrl === "string") {
+      const path = value.linkUrl;
+      if (path.startsWith("/") && !path.startsWith("//") && !path.includes("\\")) return path;
+    }
+    if (typeof value.tradeId === "number" && Number.isInteger(value.tradeId) && value.tradeId > 0) {
+      return `/trades/${value.tradeId}`;
+    }
+    if (typeof value.offerId === "number" && Number.isInteger(value.offerId) && value.offerId > 0) {
+      return "/offers";
+    }
+    if (typeof value.listingId === "number" && Number.isInteger(value.listingId) && value.listingId > 0) {
+      return `/listings/${value.listingId}`;
+    }
+    return null;
+  };
+
+  const handleNotificationClick = (notification: { id: number; isRead: boolean; metadata?: unknown }) => {
+    if (!notification.isRead) {
+      markNotificationRead.mutate(
+        { id: notification.id },
+        { onSuccess: () => queryClient.invalidateQueries({ queryKey: ["getNotifications"] }) },
+      );
+    }
+    const linkUrl = getNotificationLink(notification.metadata);
+    setBellOpen(false);
+    if (linkUrl) setLocation(linkUrl);
   };
 
   const handleLogout = () => {
@@ -148,8 +193,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 {/* Notification bell */}
                 <div className="relative" ref={bellRef}>
                   <button
+                    ref={bellButtonRef}
                     className="relative w-8 h-8 flex items-center justify-center rounded-md text-white/80 hover:text-white hover:bg-white/10 transition-colors"
                     onClick={handleBellOpen}
+                    aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ""}`}
+                    aria-expanded={bellOpen}
+                    data-testid="button-notifications"
                   >
                     <Bell className="w-4 h-4" />
                     {unreadCount > 0 && (
@@ -160,7 +209,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   </button>
 
                   {bellOpen && (
-                    <div className="absolute right-0 top-full mt-2 w-80 bg-card border border-border rounded-xl shadow-xl overflow-hidden z-50">
+                    <div className="fixed right-2 sm:right-4 top-[4.5rem] w-[calc(100vw-1rem)] max-w-80 bg-card border border-border rounded-xl shadow-xl overflow-hidden z-[100]" role="menu" aria-label="Notifications">
                       <div className="flex items-center justify-between px-4 py-3 border-b border-border">
                         <span className="font-semibold text-sm text-foreground">Notifications</span>
                         <div className="flex items-center gap-1">
@@ -169,7 +218,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                               Mark all read
                             </Button>
                           )}
-                          <Button variant="ghost" size="icon" className="w-6 h-6" onClick={() => setBellOpen(false)}>
+                          <Button aria-label="Close notifications" variant="ghost" size="icon" className="w-6 h-6" onClick={() => setBellOpen(false)}>
                             <X className="w-3 h-3" />
                           </Button>
                         </div>
@@ -181,8 +230,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
                             No notifications yet
                           </div>
                         ) : (
-                          recentNotes.map((n: any) => (
-                            <div key={n.id} className={`px-4 py-3 text-sm ${!n.isRead ? "bg-primary/5" : ""}`}>
+                            recentNotes.map((n: any) => (
+                            <button
+                              type="button"
+                              key={n.id}
+                              onClick={() => handleNotificationClick(n)}
+                              className={`w-full text-left px-4 py-3 text-sm hover:bg-muted/60 transition-colors ${!n.isRead ? "bg-primary/5" : ""}`}
+                              data-testid={`notification-${n.id}`}
+                              role="menuitem"
+                            >
                               <div className="flex items-start gap-2">
                                 {!n.isRead && <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />}
                                 <div className="flex-1 min-w-0">
@@ -193,7 +249,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                                   </p>
                                 </div>
                               </div>
-                            </div>
+                            </button>
                           ))
                         )}
                       </div>
