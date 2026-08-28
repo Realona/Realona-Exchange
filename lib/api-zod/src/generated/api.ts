@@ -206,7 +206,7 @@ export const GetListingsResponseItem = zod.object({
   "accountAge": zod.string().nullish(),
   "engagementRate": zod.string().nullish(),
   "viewCount": zod.number().optional(),
-  "status": zod.enum(['active', 'sold', 'deleted']),
+  "status": zod.enum(['active', 'paused', 'sold', 'deleted']),
   "createdAt": zod.coerce.date()
 })
 export const GetListingsResponse = zod.array(GetListingsResponseItem)
@@ -215,6 +215,7 @@ export const GetListingsResponse = zod.array(GetListingsResponseItem)
 /**
  * @summary Create a new listing
  */
+
 export const createListingBodySquadRatingMin = 2000;
 export const createListingBodySquadRatingMax = 5000;
 
@@ -223,7 +224,7 @@ export const createListingBodySquadRatingMax = 5000;
 export const CreateListingBody = zod.object({
   "category": zod.enum(['efootball', 'social_media']).optional(),
   "gameName": zod.string(),
-  "price": zod.number(),
+  "price": zod.number().min(1),
   "description": zod.string(),
   "pictureUrl": zod.string().optional(),
   "accountEmail": zod.string().optional(),
@@ -264,7 +265,7 @@ export const CreateListingResponse = zod.object({
   "accountAge": zod.string().nullish(),
   "engagementRate": zod.string().nullish(),
   "viewCount": zod.number().optional(),
-  "status": zod.enum(['active', 'sold', 'deleted']),
+  "status": zod.enum(['active', 'paused', 'sold', 'deleted']),
   "createdAt": zod.coerce.date()
 })
 
@@ -326,7 +327,7 @@ export const CreateBulkListingsResponse = zod.object({
   "accountAge": zod.string().nullish(),
   "engagementRate": zod.string().nullish(),
   "viewCount": zod.number().optional(),
-  "status": zod.enum(['active', 'sold', 'deleted']),
+  "status": zod.enum(['active', 'paused', 'sold', 'deleted']),
   "createdAt": zod.coerce.date()
 })).optional(),
   "errorDetails": zod.array(zod.object({
@@ -389,7 +390,7 @@ export const GetMyListingsResponseItem = zod.object({
   "accountAge": zod.string().nullish(),
   "engagementRate": zod.string().nullish(),
   "viewCount": zod.number().optional(),
-  "status": zod.enum(['active', 'sold', 'deleted']),
+  "status": zod.enum(['active', 'paused', 'sold', 'deleted']),
   "createdAt": zod.coerce.date()
 })
 export const GetMyListingsResponse = zod.array(GetMyListingsResponseItem)
@@ -424,7 +425,7 @@ export const GetListingResponse = zod.object({
   "accountAge": zod.string().nullish(),
   "engagementRate": zod.string().nullish(),
   "viewCount": zod.number().optional(),
-  "status": zod.enum(['active', 'sold', 'deleted']),
+  "status": zod.enum(['active', 'paused', 'sold', 'deleted']),
   "createdAt": zod.coerce.date()
 })
 
@@ -466,7 +467,7 @@ export const UpdateListingResponse = zod.object({
   "accountAge": zod.string().nullish(),
   "engagementRate": zod.string().nullish(),
   "viewCount": zod.number().optional(),
-  "status": zod.enum(['active', 'sold', 'deleted']),
+  "status": zod.enum(['active', 'paused', 'sold', 'deleted']),
   "createdAt": zod.coerce.date()
 })
 
@@ -2084,7 +2085,7 @@ export const GetWishlistResponseItem = zod.object({
   "accountAge": zod.string().nullish(),
   "engagementRate": zod.string().nullish(),
   "viewCount": zod.number().optional(),
-  "status": zod.enum(['active', 'sold', 'deleted']),
+  "status": zod.enum(['active', 'paused', 'sold', 'deleted']),
   "createdAt": zod.coerce.date()
 })
 })
@@ -2125,7 +2126,7 @@ export const GetPublicWishlistResponse = zod.object({
   "accountAge": zod.string().nullish(),
   "engagementRate": zod.string().nullish(),
   "viewCount": zod.number().optional(),
-  "status": zod.enum(['active', 'sold', 'deleted']),
+  "status": zod.enum(['active', 'paused', 'sold', 'deleted']),
   "createdAt": zod.coerce.date()
 })
 }))

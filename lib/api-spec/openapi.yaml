@@ -2241,7 +2241,7 @@ components:
           type: integer
         status:
           type: string
-          enum: [active, sold, deleted]
+          enum: [active, paused, sold, deleted]
         createdAt:
           type: string
           format: date-time
@@ -2257,6 +2257,7 @@ components:
           type: string
         price:
           type: number
+          minimum: 1
         description:
           type: string
         pictureUrl:

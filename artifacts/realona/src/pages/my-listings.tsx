@@ -5,19 +5,33 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useGetMyListings, useUpdateListing } from "@workspace/api-client-react";
 import { formatNaira } from "@/lib/utils";
 import { Link } from "wouter";
-import { Plus, ShoppingBag } from "lucide-react";
+import { Pencil, Plus, ShoppingBag } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { getGetMyListingsQueryKey } from "@workspace/api-client-react";
 
 export default function MyListings() {
   const { data: listings, isLoading } = useGetMyListings();
   const updateListing = useUpdateListing();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [editingListing, setEditingListing] = useState<{ id: number; name: string; price: string } | null>(null);
 
   function statusBadge(status: string) {
     const map: Record<string, string> = {
       active: "bg-green-500/10 text-green-500 border-green-500/20",
+      paused: "bg-amber-500/10 text-amber-600 border-amber-500/20",
       sold: "bg-blue-500/10 text-blue-500 border-blue-500/20",
       deleted: "bg-red-500/10 text-red-500 border-red-500/20",
     };
@@ -30,12 +44,45 @@ export default function MyListings() {
       {
         onSuccess: () => {
           toast({ title: "Listing removed" });
-          queryClient.invalidateQueries({ queryKey: ["getListingsMy"] });
+          queryClient.invalidateQueries({ queryKey: getGetMyListingsQueryKey() });
         },
         onError: (err: any) => {
           toast({ title: "Failed", description: err?.data?.error ?? err?.message, variant: "destructive" });
         },
       }
+    );
+  };
+
+  const handlePriceSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!editingListing) return;
+
+    const nextPrice = Number(editingListing.price);
+    if (!Number.isFinite(nextPrice) || nextPrice <= 0) {
+      toast({
+        title: "Enter a valid price",
+        description: "The price must be greater than ₦0.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    updateListing.mutate(
+      { id: editingListing.id, data: { price: nextPrice } },
+      {
+        onSuccess: () => {
+          toast({ title: "Listing price updated" });
+          setEditingListing(null);
+          queryClient.invalidateQueries({ queryKey: getGetMyListingsQueryKey() });
+        },
+        onError: (err: any) => {
+          toast({
+            title: "Couldn't update price",
+            description: err?.data?.error ?? err?.message,
+            variant: "destructive",
+          });
+        },
+      },
     );
   };
 
@@ -86,6 +133,22 @@ export default function MyListings() {
                     <Button variant="outline" size="sm" asChild>
                       <Link href={`/listings/${listing.id}`}>View</Link>
                     </Button>
+                    {(listing.status === "active" || listing.status === "paused") && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setEditingListing({
+                          id: listing.id,
+                          name: listing.gameName,
+                          price: String(listing.price),
+                        })}
+                        disabled={updateListing.isPending}
+                        data-testid={`button-edit-price-${listing.id}`}
+                      >
+                        <Pencil className="w-4 h-4 mr-1.5" />
+                        Change price
+                      </Button>
+                    )}
                     {listing.status === "active" && (
                       <Button
                         variant="outline"
@@ -104,6 +167,44 @@ export default function MyListings() {
           </div>
         )}
       </div>
+
+      <Dialog open={!!editingListing} onOpenChange={(open) => !open && setEditingListing(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Change listing price</DialogTitle>
+            <DialogDescription>
+              Increase or reduce the price for “{editingListing?.name}”. Buyers will see the new price immediately.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handlePriceSubmit} className="space-y-5">
+            <div className="space-y-2">
+              <Label htmlFor="listing-price">New price (₦)</Label>
+              <Input
+                id="listing-price"
+                type="number"
+                min="1"
+                step="1"
+                inputMode="numeric"
+                value={editingListing?.price ?? ""}
+                onChange={(event) =>
+                  setEditingListing((current) => current ? { ...current, price: event.target.value } : current)
+                }
+                autoFocus
+                required
+                data-testid="input-listing-price"
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setEditingListing(null)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={updateListing.isPending} data-testid="button-save-listing-price">
+                {updateListing.isPending ? "Saving..." : "Save price"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 }

@@ -10,6 +10,7 @@ import type { ListingInputCategory } from './listingInputCategory';
 export interface ListingInput {
   category?: ListingInputCategory;
   gameName: string;
+  /** @minimum 1 */
   price: number;
   description: string;
   pictureUrl?: string;

@@ -11,6 +11,7 @@ export type ListingStatus = typeof ListingStatus[keyof typeof ListingStatus];
 
 export const ListingStatus = {
   active: 'active',
+  paused: 'paused',
   sold: 'sold',
   deleted: 'deleted',
 } as const;

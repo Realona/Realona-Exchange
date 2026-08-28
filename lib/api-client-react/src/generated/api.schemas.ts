@@ -107,6 +107,7 @@ export type ListingStatus = typeof ListingStatus[keyof typeof ListingStatus];
 
 export const ListingStatus = {
   active: 'active',
+  paused: 'paused',
   sold: 'sold',
   deleted: 'deleted',
 } as const;
@@ -161,6 +162,7 @@ export const ListingInputCategory = {
 export interface ListingInput {
   category?: ListingInputCategory;
   gameName: string;
+  /** @minimum 1 */
   price: number;
   description: string;
   pictureUrl?: string;

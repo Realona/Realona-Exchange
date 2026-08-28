@@ -278,6 +278,17 @@ router.patch("/listings/:id", requireAuth, async (req, res): Promise<void> => {
     return;
   }
 
+  if (parsed.data.price !== undefined) {
+    if (!Number.isFinite(parsed.data.price) || parsed.data.price <= 0) {
+      res.status(400).json({ error: "Listing price must be greater than zero" });
+      return;
+    }
+    if (!["active", "paused"].includes(existing.status)) {
+      res.status(409).json({ error: "The price of a sold or removed listing can no longer be changed" });
+      return;
+    }
+  }
+
   const updateData: Record<string, unknown> = {};
   if (parsed.data.gameName !== undefined) updateData.gameName = parsed.data.gameName;
   if (parsed.data.price !== undefined) updateData.price = String(parsed.data.price);
