@@ -72,6 +72,10 @@ function table(rows: string) {
 }
 
 async function send(to: string, subject: string, html: string): Promise<boolean> {
+  if (process.env.DISABLE_OUTBOUND_EMAIL === "true") {
+    return true;
+  }
+
   if (RESEND_FROM) {
     try {
       const connectors = new ReplitConnectors();
