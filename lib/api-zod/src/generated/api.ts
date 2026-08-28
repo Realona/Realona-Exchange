@@ -807,6 +807,137 @@ export const SendTradeMessageResponse = zod.object({
 
 
 /**
+ * @summary List users available for admin conversations
+ */
+export const GetAdminChatUsersQueryParams = zod.object({
+  "search": zod.coerce.string().optional()
+})
+
+export const GetAdminChatUsersResponseItem = zod.object({
+  "id": zod.number(),
+  "username": zod.string(),
+  "email": zod.string(),
+  "lastMessage": zod.string().nullish(),
+  "lastMessageAt": zod.coerce.date().nullish(),
+  "unreadCount": zod.number()
+})
+export const GetAdminChatUsersResponse = zod.array(GetAdminChatUsersResponseItem)
+
+
+/**
+ * @summary Get an admin conversation with a user
+ */
+export const GetAdminChatMessagesParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetAdminChatMessagesResponseItem = zod.object({
+  "id": zod.number(),
+  "userId": zod.number(),
+  "senderId": zod.number(),
+  "senderUsername": zod.string(),
+  "senderIsAdmin": zod.boolean(),
+  "listingId": zod.number().nullish(),
+  "listingName": zod.string().nullish(),
+  "message": zod.string(),
+  "isRead": zod.boolean(),
+  "createdAt": zod.coerce.date()
+})
+export const GetAdminChatMessagesResponse = zod.array(GetAdminChatMessagesResponseItem)
+
+
+/**
+ * @summary Send an admin message to a user
+ */
+export const SendAdminChatMessageParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+
+
+export const SendAdminChatMessageBody = zod.object({
+  "message": zod.string().min(1),
+  "listingId": zod.number().nullish()
+})
+
+export const SendAdminChatMessageResponse = zod.object({
+  "id": zod.number(),
+  "userId": zod.number(),
+  "senderId": zod.number(),
+  "senderUsername": zod.string(),
+  "senderIsAdmin": zod.boolean(),
+  "listingId": zod.number().nullish(),
+  "listingName": zod.string().nullish(),
+  "message": zod.string(),
+  "isRead": zod.boolean(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Mark a user's admin conversation as read
+ */
+export const MarkAdminChatReadParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const MarkAdminChatReadResponse = zod.object({
+  "success": zod.boolean()
+})
+
+
+/**
+ * @summary Get the current user's admin conversation
+ */
+export const GetMyAdminMessagesResponseItem = zod.object({
+  "id": zod.number(),
+  "userId": zod.number(),
+  "senderId": zod.number(),
+  "senderUsername": zod.string(),
+  "senderIsAdmin": zod.boolean(),
+  "listingId": zod.number().nullish(),
+  "listingName": zod.string().nullish(),
+  "message": zod.string(),
+  "isRead": zod.boolean(),
+  "createdAt": zod.coerce.date()
+})
+export const GetMyAdminMessagesResponse = zod.array(GetMyAdminMessagesResponseItem)
+
+
+/**
+ * @summary Reply to the admin conversation
+ */
+
+
+
+export const SendAdminReplyBody = zod.object({
+  "message": zod.string().min(1)
+})
+
+export const SendAdminReplyResponse = zod.object({
+  "id": zod.number(),
+  "userId": zod.number(),
+  "senderId": zod.number(),
+  "senderUsername": zod.string(),
+  "senderIsAdmin": zod.boolean(),
+  "listingId": zod.number().nullish(),
+  "listingName": zod.string().nullish(),
+  "message": zod.string(),
+  "isRead": zod.boolean(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Mark admin messages as read
+ */
+export const MarkMyAdminMessagesReadResponse = zod.object({
+  "success": zod.boolean()
+})
+
+
+/**
  * @summary Get deposit history for current user
  */
 export const GetDepositsResponseItem = zod.object({

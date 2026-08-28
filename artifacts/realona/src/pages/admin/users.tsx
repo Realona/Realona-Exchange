@@ -10,7 +10,7 @@ import { useGetAdminUsers, useSuspendUser, useAdjustUserBalance, useCreateDemoAc
 import { formatNaira } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { Search, UserX, UserCheck, Wallet, FlaskConical, Plus, Trash2, BadgeCheck } from "lucide-react";
+import { Search, UserX, UserCheck, Wallet, FlaskConical, Plus, Trash2, BadgeCheck, MessageCircle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { useAuth as useAuthCtx } from "@/hooks/use-auth";
@@ -29,6 +29,7 @@ function AdminNav() {
     { href: "/admin/giveaways", label: "Giveaways" },
     { href: "/admin/reports", label: "Reports" },
     { href: "/admin/reviews", label: "Reviews" },
+    { href: "/admin/chat", label: "Chat" },
   ];
   if (user?.isSuperAdmin) navLinks.push({ href: "/admin/settings", label: "Settings" });
   return (
@@ -205,6 +206,19 @@ export default function AdminUsers() {
                   <p className="text-sm text-primary font-medium">{formatNaira(u.walletBalance)}</p>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap justify-end">
+                  {!u.isAdmin && !u.isSuperAdmin && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      asChild
+                      title="Message User"
+                      data-testid={`button-message-user-${u.id}`}
+                    >
+                      <Link href={`/admin/chat?userId=${u.id}`}>
+                        <MessageCircle className="w-4 h-4" />
+                      </Link>
+                    </Button>
+                  )}
                   <Button
                     size="sm"
                     variant="outline"

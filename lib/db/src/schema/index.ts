@@ -4,6 +4,7 @@ export * from "./deposits";
 export * from "./listings";
 export * from "./trades";
 export * from "./trade-messages";
+export * from "./admin-messages";
 export * from "./withdrawals";
 export * from "./reports";
 export * from "./platform-config";

@@ -18,6 +18,7 @@ type NotificationType =
   | "wishlist_price_drop"
   | "deposit_pending"
   | "review_response"
+  | "admin_message"
   | "admin_activity";
 
 export async function createNotification(

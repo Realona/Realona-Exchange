@@ -679,6 +679,142 @@ paths:
               schema:
                 $ref: "#/components/schemas/TradeMessage"
 
+  /admin/chat/users:
+    get:
+      operationId: getAdminChatUsers
+      tags: [chat]
+      summary: List users available for admin conversations
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AdminChatUser"
+
+  /admin/chat/users/{id}:
+    get:
+      operationId: getAdminChatMessages
+      tags: [chat]
+      summary: Get an admin conversation with a user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AdminMessage"
+    post:
+      operationId: sendAdminChatMessage
+      tags: [chat]
+      summary: Send an admin message to a user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminMessageInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminMessage"
+
+  /admin/chat/users/{id}/read:
+    post:
+      operationId: markAdminChatRead
+      tags: [chat]
+      summary: Mark a user's admin conversation as read
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success]
+                properties:
+                  success:
+                    type: boolean
+
+  /messages:
+    get:
+      operationId: getMyAdminMessages
+      tags: [chat]
+      summary: Get the current user's admin conversation
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AdminMessage"
+    post:
+      operationId: sendAdminReply
+      tags: [chat]
+      summary: Reply to the admin conversation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserMessageInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminMessage"
+
+  /messages/read:
+    post:
+      operationId: markMyAdminMessagesRead
+      tags: [chat]
+      summary: Mark admin messages as read
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success]
+                properties:
+                  success:
+                    type: boolean
+
   # ─── DEPOSITS ──────────────────────────────────────────────────────────────
   /deposits:
     get:
@@ -2433,6 +2569,68 @@ components:
           format: date-time
 
     MessageInput:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+          minLength: 1
+
+    AdminChatUser:
+      type: object
+      required: [id, username, email, unreadCount]
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        email:
+          type: string
+        lastMessage:
+          type: ["string", "null"]
+        lastMessageAt:
+          type: ["string", "null"]
+          format: date-time
+        unreadCount:
+          type: integer
+
+    AdminMessage:
+      type: object
+      required: [id, userId, senderId, senderUsername, senderIsAdmin, message, isRead, createdAt]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        senderId:
+          type: integer
+        senderUsername:
+          type: string
+        senderIsAdmin:
+          type: boolean
+        listingId:
+          type: ["integer", "null"]
+        listingName:
+          type: ["string", "null"]
+        message:
+          type: string
+        isRead:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    AdminMessageInput:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+          minLength: 1
+        listingId:
+          type: ["integer", "null"]
+
+    UserMessageInput:
       type: object
       required: [message]
       properties:

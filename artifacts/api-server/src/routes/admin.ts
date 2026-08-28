@@ -8,6 +8,7 @@ import {
   reportsTable,
   listingsTable,
   tradeMessagesTable,
+  adminMessagesTable,
   platformConfigTable,
   kycSubmissionsTable,
   announcementsTable,
@@ -623,6 +624,9 @@ router.delete("/admin/demo-accounts/:id", requireAdmin, async (req, res): Promis
         await tx.delete(listingsTable).where(inArray(listingsTable.id, listingIds));
       }
 
+      await tx.delete(adminMessagesTable).where(
+        or(eq(adminMessagesTable.userId, id), eq(adminMessagesTable.senderId, id))!,
+      );
       await tx.update(usersTable).set({ referredBy: null }).where(eq(usersTable.referredBy, id));
       const [removedUser] = await tx
         .delete(usersTable)

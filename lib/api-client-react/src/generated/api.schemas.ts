@@ -368,6 +368,44 @@ export interface MessageInput {
   message: string;
 }
 
+export interface AdminChatUser {
+  id: number;
+  username: string;
+  email: string;
+  /** @nullable */
+  lastMessage?: string | null;
+  /** @nullable */
+  lastMessageAt?: string | null;
+  unreadCount: number;
+}
+
+export interface AdminMessage {
+  id: number;
+  userId: number;
+  senderId: number;
+  senderUsername: string;
+  senderIsAdmin: boolean;
+  /** @nullable */
+  listingId?: number | null;
+  /** @nullable */
+  listingName?: string | null;
+  message: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export interface AdminMessageInput {
+  /** @minLength 1 */
+  message: string;
+  /** @nullable */
+  listingId?: number | null;
+}
+
+export interface UserMessageInput {
+  /** @minLength 1 */
+  message: string;
+}
+
 export interface DepositRequest {
   /** @minimum 1050 */
   amount: number;
@@ -874,6 +912,18 @@ export type RequestEmailOtp200 = {
 
 export type MarkEmailOtpSent200 = {
   success?: boolean;
+};
+
+export type GetAdminChatUsersParams = {
+search?: string;
+};
+
+export type MarkAdminChatRead200 = {
+  success: boolean;
+};
+
+export type MarkMyAdminMessagesRead200 = {
+  success: boolean;
 };
 
 export type GetAdminUsersParams = {

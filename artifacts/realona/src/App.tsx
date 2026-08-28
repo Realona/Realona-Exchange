@@ -30,6 +30,8 @@ import AdminKycReview from "@/pages/admin/kyc-review";
 import AdminAnnouncements from "@/pages/admin/announcements";
 import AdminGiveaways from "@/pages/admin/giveaways";
 import AdminReviews from "@/pages/admin/reviews";
+import AdminChat from "@/pages/admin/chat";
+import Messages from "@/pages/messages";
 import PublicWishlistPage from "@/pages/public-wishlist";
 import FAQPage from "@/pages/faq";
 import ActivityLogsPage from "@/pages/activity-logs";
@@ -177,6 +179,9 @@ function Router() {
       <Route path="/admin/reviews">
         <AdminRoute component={AdminReviews} />
       </Route>
+      <Route path="/admin/chat">
+        <AdminRoute component={AdminChat} />
+      </Route>
       <Route path="/offers">
         <ProtectedRoute component={Offers} />
       </Route>
@@ -195,6 +200,9 @@ function Router() {
       <Route path="/reviews" component={ReviewsPage} />
       <Route path="/activity">
         <ProtectedRoute component={ActivityLogsPage} />
+      </Route>
+      <Route path="/messages">
+        <ProtectedRoute component={Messages} />
       </Route>
       <Route component={NotFound} />
     </Switch>
