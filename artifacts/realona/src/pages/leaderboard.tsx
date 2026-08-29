@@ -1,15 +1,8 @@
 import { Layout } from "@/components/layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useGetLeaderboard } from "@workspace/api-client-react";
-import { Trophy, Star, ShieldCheck, TrendingUp, Users } from "lucide-react";
-
-function VerifiedBadge() {
-  return (
-    <span title="Verified Seller">
-      <ShieldCheck className="w-3.5 h-3.5 text-primary inline-block" />
-    </span>
-  );
-}
+import { Trophy, Star, TrendingUp, Users } from "lucide-react";
+import { VerificationBadges } from "@/components/verification-badges";
 
 const RANK_MEDALS: Record<number, string> = { 1: "🥇", 2: "🥈", 3: "🥉" };
 
@@ -42,7 +35,7 @@ function LeaderboardList({ entries, showRating = false }: { entries: any[]; show
             {/* Username */}
             <p className={`flex-1 text-sm font-semibold flex items-center gap-1.5 min-w-0 truncate ${isTop3 ? "text-foreground" : ""}`}>
               {e.username}
-              {e.isVerified && <VerifiedBadge />}
+              <VerificationBadges isVerifiedTrader={e.isVerified} kycLevel={e.kycLevel} />
             </p>
 
             {/* Stats */}
@@ -141,9 +134,7 @@ export default function Leaderboard() {
 
         <div className="mt-6 rounded-xl bg-card border border-border p-4 text-center">
           <p className="text-xs text-muted-foreground">
-            <ShieldCheck className="w-4 h-4 inline mr-1 text-primary" />
-            Verified badge (<ShieldCheck className="w-3 h-3 inline text-primary" />) is awarded to
-            trusted sellers with a strong trade history.
+            Green ticks mark Verified Traders with trusted activity. Blue ticks confirm approved ID verification.
           </p>
         </div>
       </div>

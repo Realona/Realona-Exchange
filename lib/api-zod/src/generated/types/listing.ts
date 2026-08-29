@@ -13,7 +13,8 @@ export interface Listing {
   sellerId: number;
   /** @nullable */
   sellerUsername?: string | null;
-  sellerIsVerified?: boolean;
+  sellerIsVerified: boolean;
+  sellerKycLevel: number;
   /** @nullable */
   sellerRating?: number | null;
   category: ListingCategory;

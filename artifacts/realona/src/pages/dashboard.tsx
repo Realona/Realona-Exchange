@@ -16,6 +16,7 @@ import {
   Wallet, ShoppingBag, ArrowRightLeft, Plus, TrendingUp,
   Megaphone, Gift, X, HandshakeIcon, Trophy, ShieldCheck, AlertTriangle, Zap, Info, Heart, History, ChevronRight, BarChart3
 } from "lucide-react";
+import { VerificationBadges } from "@/components/verification-badges";
 
 function tradeStatusBadge(status: string) {
   const map: Record<string, string> = {
@@ -122,9 +123,35 @@ export default function Dashboard() {
         )}
 
         <div className="mb-10">
-          <h1 className="text-4xl font-bold mb-2">Welcome back, {user?.username}! 👋</h1>
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-4xl font-bold">Welcome back, {user?.username}! 👋</h1>
+            <VerificationBadges
+              isVerifiedTrader={user?.isVerified}
+              kycLevel={user?.kycLevel}
+              size="md"
+            />
+          </div>
           <p className="text-lg text-muted-foreground">Manage your trades, listings and wallet from here.</p>
         </div>
+
+        {user?.kycLevel === 0 && (
+          <Card className="mb-8 border-blue-500/30 bg-blue-500/5">
+            <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center">
+              <div className="flex flex-1 items-start gap-3">
+                <ShieldCheck className="mt-0.5 h-6 w-6 shrink-0 text-blue-700" />
+                <div>
+                  <p className="font-semibold">Verify your identity for safer, more reliable trading</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    An approved government ID adds a blue ID Verified tick to your profile and helps other traders trust who they are dealing with.
+                  </p>
+                </div>
+              </div>
+              <Button asChild className="shrink-0 bg-blue-700 hover:bg-blue-800">
+                <Link href="/kyc">Verify my ID</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">

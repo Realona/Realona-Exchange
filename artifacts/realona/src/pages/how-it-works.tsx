@@ -1,157 +1,233 @@
 import { Layout } from "@/components/layout";
 import { Badge } from "@/components/ui/badge";
-import { ShieldCheck, Wallet, ArrowRightLeft, CheckCircle, AlertCircle, Info } from "lucide-react";
-import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  ArrowRightLeft,
+  BadgeCheck,
+  Bell,
+  CircleDollarSign,
+  Heart,
+  HelpCircle,
+  KeyRound,
+  ListChecks,
+  MessageCircle,
+  Search,
+  ShieldCheck,
+  ShoppingBag,
+  Star,
+  UserCheck,
+  Wallet,
+} from "lucide-react";
+import { Link } from "wouter";
 
-function Step({ num, title, desc }: { num: number; title: string; desc: string }) {
+type GuideSectionProps = {
+  id: string;
+  title: string;
+  intro: string;
+  icon: React.ElementType;
+  steps: string[];
+};
+
+function GuideSection({ id, title, intro, icon: Icon, steps }: GuideSectionProps) {
   return (
-    <div className="flex gap-4">
-      <div className="shrink-0 w-9 h-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm">
-        {num}
-      </div>
-      <div className="pt-1">
-        <h3 className="font-semibold mb-1">{title}</h3>
-        <p className="text-muted-foreground text-sm leading-relaxed">{desc}</p>
-      </div>
-    </div>
+    <section id={id} className="scroll-mt-24">
+      <Card className="border-border bg-card">
+        <CardContent className="p-5 sm:p-7">
+          <div className="mb-5 flex items-start gap-3">
+            <div className="rounded-xl bg-primary/10 p-2.5 text-primary">
+              <Icon className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold">{title}</h2>
+              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{intro}</p>
+            </div>
+          </div>
+          <ol className="space-y-4">
+            {steps.map((step, index) => (
+              <li key={step} className="flex gap-3 text-sm leading-relaxed">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                  {index + 1}
+                </span>
+                <span className="pt-0.5 text-muted-foreground">{step}</span>
+              </li>
+            ))}
+          </ol>
+        </CardContent>
+      </Card>
+    </section>
   );
 }
 
-function FeeRow({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
-  return (
-    <div className={`flex justify-between items-center py-3 px-4 rounded-lg ${highlight ? "bg-primary/10 border border-primary/20" : "bg-card border border-border"}`}>
-      <span className="text-sm text-muted-foreground">{label}</span>
-      <span className={`font-bold text-sm ${highlight ? "text-primary" : ""}`}>{value}</span>
-    </div>
-  );
-}
+const quickLinks = [
+  ["Account & ID", "#account"],
+  ["Wallet", "#wallet"],
+  ["Browse & Save", "#browse"],
+  ["Buy", "#buy"],
+  ["Sell", "#sell"],
+  ["Trade & OTP", "#trade"],
+  ["Safety & Support", "#safety"],
+];
 
 export default function HowItWorks() {
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-12 max-w-3xl">
-        <div className="mb-10 text-center">
-          <Badge className="mb-4 bg-primary/10 text-primary border-primary/20">Platform Guide</Badge>
-          <h1 className="text-4xl font-extrabold mb-4">How Realona Works</h1>
-          <p className="text-muted-foreground text-lg">
-            Everything you need to know about buying, selling, and fees on Nigeria's trusted eFootball account marketplace.
+      <div className="container mx-auto max-w-4xl px-4 py-10 sm:py-12">
+        <header className="mb-8 text-center">
+          <Badge className="mb-4 border-primary/20 bg-primary/10 text-primary">Complete Platform Guide</Badge>
+          <h1 className="text-3xl font-extrabold sm:text-4xl">How Realona Exchange Works</h1>
+          <p className="mx-auto mt-3 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
+            Learn how to register, verify your ID, fund your wallet, buy or sell accounts, complete escrow transfers, and use every important website feature safely.
           </p>
+        </header>
+
+        <nav className="mb-8 flex flex-wrap justify-center gap-2" aria-label="Guide sections">
+          {quickLinks.map(([label, href]) => (
+            <a key={href} href={href} className="rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium hover:border-primary/40 hover:text-primary">
+              {label}
+            </a>
+          ))}
+        </nav>
+
+        <div className="mb-8 grid gap-3 sm:grid-cols-2">
+          <div className="rounded-xl border border-emerald-500/25 bg-emerald-500/5 p-4">
+            <p className="flex items-center gap-2 font-semibold text-emerald-800">
+              <BadgeCheck className="h-5 w-5 fill-emerald-700 text-white" /> Deep-green Verified Trader tick
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">Awarded by Realona for trusted trading activity.</p>
+          </div>
+          <div className="rounded-xl border border-blue-500/25 bg-blue-500/5 p-4">
+            <p className="flex items-center gap-2 font-semibold text-blue-800">
+              <BadgeCheck className="h-5 w-5 fill-blue-700 text-white" /> Blue ID Verified tick
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">Confirms approved government ID. Eligible users can show both ticks.</p>
+          </div>
         </div>
 
-        {/* Escrow Explained */}
-        <section className="mb-12">
-          <div className="flex items-center gap-3 mb-5">
-            <div className="bg-primary/10 p-2 rounded-lg text-primary"><ShieldCheck className="w-5 h-5" /></div>
-            <h2 className="text-xl font-bold">What is Escrow?</h2>
-          </div>
-          <p className="text-muted-foreground mb-4 leading-relaxed">
-            Realona uses an <strong>escrow system</strong> to protect both buyers and sellers. When a buyer initiates a trade,
-            the payment is held securely in our system — not given to the seller yet. Only after the buyer confirms they have
-            full access to the eFootball account are the funds released to the seller.
-          </p>
-          <p className="text-muted-foreground leading-relaxed">
-            This means: <strong>sellers can't run off with your money</strong>, and <strong>buyers can't claim they didn't receive the account after getting it</strong>.
-            Both sides are protected.
-          </p>
-        </section>
+        <div className="space-y-6">
+          <GuideSection
+            id="account"
+            title="Create Your Account & Verify Your Identity"
+            intro="Start with a secure account, then add the blue ID Verified tick to build trust."
+            icon={UserCheck}
+            steps={[
+              "Open Register, enter your email, username, and password, then submit the one-time code sent to your email.",
+              "Sign in and use the dashboard as the central place for your wallet, listings, trades, offers, wishlist, purchases, analytics, and verification.",
+              "Open KYC Verification, choose your ID type, upload a clear government ID, and optionally add a selfie for Level 2.",
+              "Wait for admin review. Approval adds the blue ID Verified tick; trusted trading activity may separately earn the deep-green Verified Trader tick.",
+            ]}
+          />
 
-        {/* For Buyers */}
-        <section className="mb-12">
-          <div className="flex items-center gap-3 mb-5">
-            <div className="bg-blue-500/10 p-2 rounded-lg text-blue-500"><ArrowRightLeft className="w-5 h-5" /></div>
-            <h2 className="text-xl font-bold">For Buyers — Step by Step</h2>
-          </div>
-          <div className="space-y-5">
-            <Step num={1} title="Deposit Funds" desc="Fund your Realona wallet by transferring to our Moniepoint escrow account (9160385331 — Olukoya Kolade). Send your payment proof to admin and your wallet is credited within 5 minutes. A ₦50 service charge applies. Minimum deposit is ₦1,000." />
-            <Step num={2} title="Browse & Choose a Listing" desc="Browse eFootball accounts filtered by Division Rank and Squad Rating. View full account details before committing." />
-            <Step num={3} title="Initiate a Trade" desc="Click 'Buy This Account' on a listing. This creates a secure trade between you and the seller." />
-            <Step num={4} title="Confirm Payment" desc="Click 'Confirm Payment' to lock funds from your wallet into escrow. The seller is then notified to transfer the account." />
-            <Step num={5} title="Receive & Verify" desc="The seller transfers the eFootball account credentials to you. Log in and verify everything is as described." />
-            <Step num={6} title="Confirm Receipt" desc="Once satisfied, click 'Confirm Receipt'. Funds are immediately released to the seller. The account is yours!" />
-          </div>
-        </section>
+          <GuideSection
+            id="wallet"
+            title="Fund & Manage Your Wallet"
+            intro="Buyers need enough available wallet balance before starting a trade."
+            icon={Wallet}
+            steps={[
+              "Open Wallet and choose Deposit.",
+              "Enter your amount and follow the current payment instructions shown on the wallet page. Submit proof when requested.",
+              "Wait for confirmation, then check that your available balance has updated before buying.",
+              "To cash out, choose Withdraw, enter your Nigerian bank details and amount, and monitor the request status. Funds reserved in active trades cannot be withdrawn.",
+            ]}
+          />
 
-        {/* For Sellers */}
-        <section className="mb-12">
-          <div className="flex items-center gap-3 mb-5">
-            <div className="bg-green-500/10 p-2 rounded-lg text-green-500"><CheckCircle className="w-5 h-5" /></div>
-            <h2 className="text-xl font-bold">For Sellers — Step by Step</h2>
-          </div>
-          <div className="space-y-5">
-            <Step num={1} title="Create a Listing" desc="Click 'Sell eFootball Account'. Fill in your Division Rank, Squad Rating, price, description, and an account screenshot URL." />
-            <Step num={2} title="Wait for a Buyer" desc="Your listing goes live immediately. Interested buyers can contact you through the trade chat." />
-            <Step num={3} title="Buyer Confirms Payment" desc="When a buyer locks funds into escrow, you'll receive an email notification. Funds are safely held — not yet released." />
-            <Step num={4} title="Transfer the Account" desc="Transfer your eFootball account login credentials to the buyer via the secure trade chat. Then click 'Mark as Transferred'." />
-            <Step num={5} title="Get Paid" desc="Once the buyer confirms receipt, funds (minus the platform fee) are instantly credited to your Realona Exchange wallet." />
-            <Step num={6} title="Withdraw" desc="Withdraw your wallet balance to any Nigerian bank account at any time." />
-          </div>
-        </section>
+          <GuideSection
+            id="browse"
+            title="Browse, Search, Save & Make Offers"
+            intro="Compare accounts carefully before committing your wallet funds."
+            icon={Search}
+            steps={[
+              "Browse active eFootball and social-media listings, then use search and filters to narrow the results.",
+              "Open View Details to inspect the description, screenshots, price, seller rating, and green or blue verification ticks.",
+              "Tap the heart to save a listing. Open My Wishlist later to review saved accounts or share your public wishlist link.",
+              "Where available, choose Make an Offer and enter your proposed price. Track accepted, rejected, or countered offers from My Offers.",
+            ]}
+          />
 
-        {/* Fees */}
-        <section className="mb-12">
-          <div className="flex items-center gap-3 mb-5">
-            <div className="bg-yellow-500/10 p-2 rounded-lg text-yellow-500"><Wallet className="w-5 h-5" /></div>
-            <h2 className="text-xl font-bold">Fees & Charges</h2>
-          </div>
-          <div className="space-y-3 mb-6">
-            <FeeRow label="Deposit service charge" value="₦50 flat (deducted from every deposit)" highlight />
-            <FeeRow label="Minimum deposit" value="₦1,000 per deposit" />
-            <FeeRow label="Platform fee on completed trades" value="4% of sale price (deducted from seller payout)" highlight />
-            <FeeRow label="Withdrawal fee" value="Free — no charge" />
-            <FeeRow label="Listing fee" value="Free — no charge to list" />
-          </div>
+          <GuideSection
+            id="buy"
+            title="Buy an Account Through Escrow"
+            intro="Realona reserves the listing and holds the exact current price through the protected checkout flow."
+            icon={ShoppingBag}
+            steps={[
+              "Confirm your wallet has enough available balance and open the listing you want.",
+              "Select Buy Now. A successful purchase reserves the listing, deducts the wallet once, and creates the trade at the current listing price.",
+              "Open the trade page and communicate only through its private chat. Do not send extra money or move the deal outside Realona.",
+              "Follow the account-transfer stages. Confirm receipt only after the account matches the listing, you can access it, and ownership has been secured.",
+            ]}
+          />
 
-          {/* Important deposit notice */}
-          <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 mb-4">
-            <div className="flex gap-3">
-              <AlertCircle className="w-5 h-5 text-yellow-500 shrink-0 mt-0.5" />
-              <div>
-                <p className="font-semibold text-sm mb-1">Important — Deposit Extra to Cover the Charge</p>
-                <p className="text-sm text-muted-foreground">
-                  Because ₦50 is deducted from every deposit, always send <strong>₦50 more than you need</strong>.
-                  For example, if you want ₦5,000 in your wallet, deposit ₦5,050. If you want to buy a ₦15,000 account, deposit ₦15,050.
-                </p>
+          <GuideSection
+            id="sell"
+            title="List, Manage & Sell Accounts"
+            intro="Accurate listings reduce disputes and help buyers decide confidently."
+            icon={ListChecks}
+            steps={[
+              "Choose New Listing, select the category, enter accurate account details and price, and upload a clear screenshot from your own account.",
+              "Never put login credentials in the public description. Stored credentials remain restricted to the protected trade flow.",
+              "Use My Listings to view, change the price of, pause, reactivate, or remove an active or paused listing. Reserved, sold, and removed listings are protected from unsafe changes.",
+              "If bulk listing is enabled, use the bulk page to prepare several listings and review each item before submitting.",
+              "After a funded buyer starts a trade, transfer the account only through the trade steps. Your payout is credited when the trade completes, minus the displayed fee.",
+            ]}
+          />
+
+          <GuideSection
+            id="trade"
+            title="Complete Trades, Chat & OTP Transfer"
+            intro="The trade page records the evidence and guides both parties through each stage."
+            icon={KeyRound}
+            steps={[
+              "Use trade chat for questions, credentials, and transfer evidence. Keep sensitive details out of public pages and external chats.",
+              "For eFootball, follow the displayed login and email-change OTP steps. Sellers should share only the requested current code; buyers should act before it expires.",
+              "The seller marks the account as transferred after completing the required handover.",
+              "The buyer checks the account and confirms receipt only when satisfied. That confirmation completes escrow and releases the seller payout.",
+              "If credentials, OTP, ownership, or listing details are wrong, stop the process and open a dispute before confirming receipt.",
+            ]}
+          />
+
+          <GuideSection
+            id="safety"
+            title="Disputes, Notifications, Reviews & Support"
+            intro="Use the platform records and support tools whenever something needs attention."
+            icon={ShieldCheck}
+            steps={[
+              "Open a dispute from the affected trade, describe the issue clearly, and preserve screenshots and messages for admin review.",
+              "Use Chat Admin for a private support conversation that is separate from buyer-seller trade chat.",
+              "Check the notification bell for wallet, offer, trade, review, wishlist, and platform updates.",
+              "Use Purchase History for completed buying activity, Seller Analytics for listing performance, and Leaderboard to compare community activity.",
+              "Leave honest ratings and platform reviews after eligible activity so other users can make safer decisions.",
+            ]}
+          />
+        </div>
+
+        <div className="mt-8 grid gap-3 sm:grid-cols-3">
+          {[
+            [Heart, "Wishlist", "Save and revisit accounts you are considering."],
+            [Bell, "Notifications", "Follow important account and trade updates."],
+            [Star, "Reviews", "Share honest feedback and check community trust."],
+            [MessageCircle, "Admin Chat", "Ask the admin team for private support."],
+            [CircleDollarSign, "Seller Analytics", "Track listing views, earnings, and conversion."],
+            [ArrowRightLeft, "Trades & Offers", "Manage negotiations and escrow stages."],
+          ].map(([Icon, title, description]) => {
+            const FeatureIcon = Icon as React.ElementType;
+            return (
+              <div key={title as string} className="rounded-xl border border-border bg-card p-4">
+                <FeatureIcon className="mb-2 h-5 w-5 text-primary" />
+                <p className="text-sm font-semibold">{title as string}</p>
+                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{description as string}</p>
               </div>
-            </div>
-          </div>
+            );
+          })}
+        </div>
 
-          {/* Trade fee notice */}
-          <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
-            <div className="flex gap-3">
-              <Info className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
-              <div>
-                <p className="font-semibold text-sm mb-1">Seller Payout Example</p>
-                <p className="text-sm text-muted-foreground">
-                  If your eFootball account sells for <strong>₦50,000</strong>, the 4% platform fee is ₦2,000.
-                  You receive <strong>₦48,000</strong> in your Realona wallet.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Disputes */}
-        <section className="mb-12">
-          <div className="flex items-center gap-3 mb-5">
-            <div className="bg-red-500/10 p-2 rounded-lg text-red-500"><AlertCircle className="w-5 h-5" /></div>
-            <h2 className="text-xl font-bold">Disputes & Protection</h2>
-          </div>
-          <p className="text-muted-foreground mb-3 leading-relaxed">
-            If there is a problem with a trade — the account wasn't as described, login details don't work, or either party is unresponsive — either side can open a <strong>Dispute</strong> on the trade.
-          </p>
-          <p className="text-muted-foreground leading-relaxed">
-            Our admin team will review the case and reach a fair resolution. Funds are held in escrow until the dispute is resolved — nobody loses money without a proper review.
-          </p>
-        </section>
-
-        {/* CTA */}
-        <div className="text-center border-t border-border pt-10">
-          <h2 className="text-2xl font-bold mb-3">Ready to get started?</h2>
-          <p className="text-muted-foreground mb-6">Join hundreds of eFootball traders on Nigeria's most trusted platform.</p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Button size="lg" asChild><Link href="/register">Create Free Account</Link></Button>
-            <Button size="lg" variant="outline" asChild><Link href="/">Browse Listings</Link></Button>
+        <div className="mt-10 rounded-2xl border border-border bg-card p-6 text-center">
+          <HelpCircle className="mx-auto mb-3 h-8 w-8 text-primary" />
+          <h2 className="text-xl font-bold">Need a specific answer?</h2>
+          <p className="mt-1 text-sm text-muted-foreground">Search the FAQ or contact admin from your account.</p>
+          <div className="mt-5 flex flex-col justify-center gap-3 sm:flex-row">
+            <Button asChild><Link href="/">Browse Listings</Link></Button>
+            <Button variant="outline" asChild><Link href="/faq">Open Help & FAQ</Link></Button>
+            <Button variant="outline" asChild><Link href="/kyc">Verify My ID</Link></Button>
           </div>
         </div>
       </div>

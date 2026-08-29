@@ -11,6 +11,7 @@ export interface LeaderboardEntry {
   userId: number;
   username: string;
   isVerified?: boolean;
+  kycLevel?: number;
   count: number;
   /** @nullable */
   rating?: number | null;

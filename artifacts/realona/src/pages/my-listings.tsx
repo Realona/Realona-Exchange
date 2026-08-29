@@ -2,7 +2,7 @@ import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { useGetMyListings, useUpdateListing } from "@workspace/api-client-react";
+import { useDeleteListing, useGetMyListings, useUpdateListing } from "@workspace/api-client-react";
 import { formatNaira } from "@/lib/utils";
 import { Link } from "wouter";
 import { Pencil, Plus, ShoppingBag } from "lucide-react";
@@ -24,6 +24,7 @@ import { getGetMyListingsQueryKey } from "@workspace/api-client-react";
 export default function MyListings() {
   const { data: listings, isLoading } = useGetMyListings();
   const updateListing = useUpdateListing();
+  const deleteListing = useDeleteListing();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [editingListing, setEditingListing] = useState<{ id: number; name: string; price: string } | null>(null);
@@ -39,8 +40,8 @@ export default function MyListings() {
   }
 
   const handleDelete = (id: number) => {
-    updateListing.mutate(
-      { id, data: { status: "deleted" } },
+    deleteListing.mutate(
+      { id },
       {
         onSuccess: () => {
           toast({ title: "Listing removed" });
@@ -142,7 +143,7 @@ export default function MyListings() {
                           name: listing.gameName,
                           price: String(listing.price),
                         })}
-                        disabled={updateListing.isPending}
+                        disabled={deleteListing.isPending}
                         data-testid={`button-edit-price-${listing.id}`}
                       >
                         <Pencil className="w-4 h-4 mr-1.5" />

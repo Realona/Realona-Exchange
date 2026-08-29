@@ -17,13 +17,14 @@ function parseHighlightedPlayers(raw: string | null | undefined): string[] | nul
 function formatListing(
   listing: typeof listingsTable.$inferSelect & { highlighted_players?: string | null },
   sellerUsername?: string | null,
-  extras?: { sellerIsVerified?: boolean; sellerRating?: number | null; includeCredentials?: boolean },
+  extras?: { sellerIsVerified?: boolean; sellerKycLevel?: number; sellerRating?: number | null; includeCredentials?: boolean },
 ) {
   return {
     id: listing.id,
     sellerId: listing.sellerId,
     sellerUsername: sellerUsername ?? null,
     sellerIsVerified: extras?.sellerIsVerified ?? false,
+    sellerKycLevel: extras?.sellerKycLevel ?? 0,
     sellerRating: extras?.sellerRating ?? null,
     category: listing.category ?? "efootball",
     gameName: listing.gameName,
@@ -56,6 +57,7 @@ router.get("/listings", async (req, res): Promise<void> => {
       listing: listingsTable,
       sellerUsername: usersTable.username,
       sellerIsVerified: usersTable.isVerified,
+      sellerKycLevel: usersTable.kycLevel,
     })
     .from(listingsTable)
     .leftJoin(usersTable, eq(listingsTable.sellerId, usersTable.id))
@@ -72,7 +74,10 @@ router.get("/listings", async (req, res): Promise<void> => {
 
   const rows = await query.where(and(...conditions)).orderBy(sql`${listingsTable.createdAt} DESC`);
 
-  res.json(rows.map(r => formatListing(r.listing, r.sellerUsername, { sellerIsVerified: r.sellerIsVerified ?? false })));
+  res.json(rows.map(r => formatListing(r.listing, r.sellerUsername, {
+    sellerIsVerified: r.sellerIsVerified ?? false,
+    sellerKycLevel: r.sellerKycLevel ?? 0,
+  })));
 });
 
 router.post("/listings", requireAuth, async (req, res): Promise<void> => {
@@ -221,7 +226,12 @@ router.post("/listings/bulk", requireAuth, async (req, res): Promise<void> => {
 
 router.get("/listings/my", requireAuth, async (req, res): Promise<void> => {
   const rows = await db
-    .select({ listing: listingsTable, sellerUsername: usersTable.username, sellerIsVerified: usersTable.isVerified })
+    .select({
+      listing: listingsTable,
+      sellerUsername: usersTable.username,
+      sellerIsVerified: usersTable.isVerified,
+      sellerKycLevel: usersTable.kycLevel,
+    })
     .from(listingsTable)
     .leftJoin(usersTable, eq(listingsTable.sellerId, usersTable.id))
     .where(eq(listingsTable.sellerId, req.userId!))
@@ -229,6 +239,7 @@ router.get("/listings/my", requireAuth, async (req, res): Promise<void> => {
 
   res.json(rows.map(r => formatListing(r.listing, r.sellerUsername, {
     sellerIsVerified: r.sellerIsVerified ?? false,
+    sellerKycLevel: r.sellerKycLevel ?? 0,
     includeCredentials: true,
   })));
 });
@@ -241,7 +252,12 @@ router.get("/listings/:id", async (req, res): Promise<void> => {
   }
 
   const [row] = await db
-    .select({ listing: listingsTable, sellerUsername: usersTable.username, sellerIsVerified: usersTable.isVerified })
+    .select({
+      listing: listingsTable,
+      sellerUsername: usersTable.username,
+      sellerIsVerified: usersTable.isVerified,
+      sellerKycLevel: usersTable.kycLevel,
+    })
     .from(listingsTable)
     .leftJoin(usersTable, eq(listingsTable.sellerId, usersTable.id))
     .where(eq(listingsTable.id, params.data.id));
@@ -251,7 +267,10 @@ router.get("/listings/:id", async (req, res): Promise<void> => {
     return;
   }
 
-  res.json(formatListing(row.listing, row.sellerUsername, { sellerIsVerified: row.sellerIsVerified ?? false }));
+  res.json(formatListing(row.listing, row.sellerUsername, {
+    sellerIsVerified: row.sellerIsVerified ?? false,
+    sellerKycLevel: row.sellerKycLevel ?? 0,
+  }));
 });
 
 router.patch("/listings/:id", requireAuth, async (req, res): Promise<void> => {

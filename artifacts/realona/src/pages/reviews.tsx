@@ -7,9 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { useGetPlatformReviews, useCreatePlatformReview } from "@workspace/api-client-react";
-import { Star, ShieldCheck, MessageSquare, TrendingUp } from "lucide-react";
+import { Star, MessageSquare, TrendingUp } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { QueryErrorState } from "@/components/query-error-state";
+import { VerificationBadges } from "@/components/verification-badges";
 
 function StarRating({ value, onChange, readonly = false }: { value: number; onChange?: (v: number) => void; readonly?: boolean }) {
   const [hover, setHover] = useState(0);
@@ -171,7 +172,7 @@ export default function ReviewsPage() {
                       <div>
                         <p className="text-sm font-medium flex items-center gap-1">
                           {r.username ?? "Anonymous"}
-                          {r.isVerified && <ShieldCheck className="w-3.5 h-3.5 text-primary" />}
+                          <VerificationBadges isVerifiedTrader={r.isVerified} kycLevel={r.kycLevel} />
                         </p>
                         <p className="text-xs text-muted-foreground">{formatDate(r.createdAt)}</p>
                       </div>

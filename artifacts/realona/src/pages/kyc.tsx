@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useGetKycStatus, useSubmitKyc } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { ShieldCheck, Upload, CheckCircle, Clock, XCircle, Loader2, FileText } from "lucide-react";
+import { ShieldCheck, Upload, CheckCircle, Clock, XCircle, Loader2, FileText, BadgeCheck } from "lucide-react";
 import { useUpload } from "@workspace/object-storage-web";
 import { useState } from "react";
 
@@ -19,8 +19,12 @@ const DOCUMENT_TYPES = [
 
 function KycLevelBadge({ level }: { level: number }) {
   if (level === 0) return <Badge variant="outline" className="border-gray-500/30 text-muted-foreground">Unverified</Badge>;
-  if (level === 1) return <Badge variant="outline" className="bg-blue-500/10 text-blue-500 border-blue-500/20">Level 1 — Verified</Badge>;
-  return <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20">Level 2 — Fully Verified</Badge>;
+  return (
+    <Badge variant="outline" className="bg-blue-500/10 text-blue-700 border-blue-500/20">
+      <BadgeCheck className="mr-1 h-3.5 w-3.5 fill-blue-700 text-white" />
+      ID Verified · Level {level}
+    </Badge>
+  );
 }
 
 export default function KYCPage() {
@@ -145,8 +149,8 @@ export default function KYCPage() {
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             {[
-              { level: "Level 1 (ID only)", perks: "Verified badge · Higher withdrawal limits · Trusted seller tag" },
-              { level: "Level 2 (ID + Selfie)", perks: "Full verification badge · Priority support · Max trading limits" },
+              { level: "Level 1 (ID only)", perks: "Blue ID Verified tick · stronger buyer and seller trust" },
+              { level: "Level 2 (ID + Selfie)", perks: "Blue ID Verified tick · stronger identity review · priority support" },
             ].map((item) => (
               <div key={item.level} className="flex gap-2">
                 <CheckCircle className="w-4 h-4 text-primary shrink-0 mt-0.5" />

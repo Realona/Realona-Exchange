@@ -18,6 +18,7 @@ router.get("/reviews", async (_req, res): Promise<void> => {
       createdAt: platformReviewsTable.createdAt,
       username: usersTable.username,
       isVerified: usersTable.isVerified,
+      kycLevel: usersTable.kycLevel,
     })
     .from(platformReviewsTable)
     .leftJoin(usersTable, eq(platformReviewsTable.userId, usersTable.id))

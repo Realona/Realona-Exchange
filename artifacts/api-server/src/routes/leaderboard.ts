@@ -11,13 +11,14 @@ router.get("/leaderboard", async (req, res): Promise<void> => {
       u.id AS "userId",
       u.username,
       u.is_verified AS "isVerified",
+      u.kyc_level AS "kycLevel",
       COUNT(t.id)::int AS count,
       ROUND(AVG(r.rating), 1) AS rating
     FROM trades t
     JOIN users u ON u.id = t.seller_id
     LEFT JOIN trade_ratings r ON r.ratee_id = t.seller_id
     WHERE t.status = 'completed' AND (u.is_demo IS NULL OR u.is_demo = false)
-    GROUP BY u.id, u.username, u.is_verified
+    GROUP BY u.id, u.username, u.is_verified, u.kyc_level
     ORDER BY count DESC
     LIMIT 10
   `);
@@ -28,13 +29,14 @@ router.get("/leaderboard", async (req, res): Promise<void> => {
       u.id AS "userId",
       u.username,
       u.is_verified AS "isVerified",
+      u.kyc_level AS "kycLevel",
       COUNT(t.id)::int AS count,
       ROUND(AVG(r.rating), 1) AS rating
     FROM trades t
     JOIN users u ON u.id = t.buyer_id
     LEFT JOIN trade_ratings r ON r.ratee_id = t.buyer_id
     WHERE t.status = 'completed' AND (u.is_demo IS NULL OR u.is_demo = false)
-    GROUP BY u.id, u.username, u.is_verified
+    GROUP BY u.id, u.username, u.is_verified, u.kyc_level
     ORDER BY count DESC
     LIMIT 10
   `);
@@ -45,12 +47,13 @@ router.get("/leaderboard", async (req, res): Promise<void> => {
       u.id AS "userId",
       u.username,
       u.is_verified AS "isVerified",
+      u.kyc_level AS "kycLevel",
       COUNT(r.id)::int AS count,
       ROUND(AVG(r.rating), 1) AS rating
     FROM trade_ratings r
     JOIN users u ON u.id = r.ratee_id
     WHERE (u.is_demo IS NULL OR u.is_demo = false)
-    GROUP BY u.id, u.username, u.is_verified
+    GROUP BY u.id, u.username, u.is_verified, u.kyc_level
     HAVING COUNT(r.id) >= 1
     ORDER BY rating DESC, count DESC
     LIMIT 10
@@ -62,13 +65,14 @@ router.get("/leaderboard", async (req, res): Promise<void> => {
       u.id AS "userId",
       u.username,
       u.is_verified AS "isVerified",
+      u.kyc_level AS "kycLevel",
       COUNT(t.id)::int AS count,
       ROUND(AVG(r.rating), 1) AS rating
     FROM users u
     LEFT JOIN trades t ON (t.buyer_id = u.id OR t.seller_id = u.id) AND t.status = 'completed'
     LEFT JOIN trade_ratings r ON r.ratee_id = u.id
     WHERE u.created_at >= NOW() - INTERVAL '30 days' AND (u.is_demo IS NULL OR u.is_demo = false)
-    GROUP BY u.id, u.username, u.is_verified
+    GROUP BY u.id, u.username, u.is_verified, u.kyc_level
     ORDER BY count DESC, u.created_at DESC
     LIMIT 10
   `);

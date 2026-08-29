@@ -14,6 +14,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { EFOOTBALL_DIVISIONS } from "./new-listing";
 import { QueryErrorState } from "@/components/query-error-state";
+import { VerificationBadges } from "@/components/verification-badges";
 
 export default function Home() {
   const [search, setSearch] = useState("");
@@ -331,9 +332,10 @@ export default function Home() {
                         {listing.sellerUsername?.[0]?.toUpperCase()}
                       </div>
                       <span className="truncate">{listing.sellerUsername}</span>
-                      {(listing as any).sellerIsVerified && (
-                        <span title="Verified" className="text-primary"><ShieldCheck className="w-3.5 h-3.5" /></span>
-                      )}
+                      <VerificationBadges
+                        isVerifiedTrader={listing.sellerIsVerified}
+                        kycLevel={listing.sellerKycLevel}
+                      />
                     </div>
                   </CardContent>
                   <CardFooter className="p-4 pt-0">

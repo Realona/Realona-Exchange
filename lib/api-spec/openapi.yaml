@@ -2193,7 +2193,7 @@ components:
     # ── Listing ──
     Listing:
       type: object
-      required: [id, sellerId, gameName, price, description, status, category, createdAt]
+      required: [id, sellerId, sellerIsVerified, sellerKycLevel, gameName, price, description, status, category, createdAt]
       properties:
         id:
           type: integer
@@ -2203,6 +2203,8 @@ components:
           type: ["string", "null"]
         sellerIsVerified:
           type: boolean
+        sellerKycLevel:
+          type: integer
         sellerRating:
           type: ["number", "null"]
         category:
@@ -3155,6 +3157,8 @@ components:
           type: string
         isVerified:
           type: boolean
+        kycLevel:
+          type: integer
         count:
           type: integer
         rating:
@@ -3198,6 +3202,7 @@ components:
         createdAt: { type: string, format: date-time }
         username: { type: ["string", "null"] }
         isVerified: { type: ["boolean", "null"] }
+        kycLevel: { type: ["integer", "null"] }
 
     PlatformReviewInput:
       type: object

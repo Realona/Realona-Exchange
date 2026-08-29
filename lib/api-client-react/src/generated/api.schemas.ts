@@ -117,7 +117,8 @@ export interface Listing {
   sellerId: number;
   /** @nullable */
   sellerUsername?: string | null;
-  sellerIsVerified?: boolean;
+  sellerIsVerified: boolean;
+  sellerKycLevel: number;
   /** @nullable */
   sellerRating?: number | null;
   category: ListingCategory;
@@ -781,6 +782,7 @@ export interface LeaderboardEntry {
   userId: number;
   username: string;
   isVerified?: boolean;
+  kycLevel?: number;
   count: number;
   /** @nullable */
   rating?: number | null;
@@ -816,6 +818,8 @@ export interface PlatformReview {
   username?: string | null;
   /** @nullable */
   isVerified?: boolean | null;
+  /** @nullable */
+  kycLevel?: number | null;
 }
 
 export interface PlatformReviewInput {

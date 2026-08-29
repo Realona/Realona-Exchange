@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ShieldCheck, User, ArrowRightLeft, AlertTriangle, HandshakeIcon, Users, Star, Gamepad2, Share2, Copy, Heart, X as XIcon, ZoomIn } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { QueryErrorState } from "@/components/query-error-state";
+import { VerificationBadges } from "@/components/verification-badges";
 
 const SOCIAL_PLATFORM_ICONS: Record<string, string> = {
   instagram: "IG",
@@ -276,11 +277,11 @@ export default function ListingDetail() {
               <div className="flex min-w-0 items-center gap-2 text-sm text-muted-foreground">
                 <User className="w-4 h-4" />
                 <span>Sold by <strong>{listing.sellerUsername}</strong></span>
-                {(listing as any).sellerIsVerified && (
-                  <span title="Verified Seller" className="inline-flex items-center text-primary">
-                    <ShieldCheck className="w-4 h-4" />
-                  </span>
-                )}
+                <VerificationBadges
+                  isVerifiedTrader={listing.sellerIsVerified}
+                  kycLevel={listing.sellerKycLevel}
+                  size="md"
+                />
               </div>
             </div>
 

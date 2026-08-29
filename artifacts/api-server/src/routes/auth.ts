@@ -18,6 +18,8 @@ function formatUser(user: typeof usersTable.$inferSelect) {
     isAdmin: user.isAdmin,
     isSuperAdmin: user.isSuperAdmin,
     isSuspended: user.isSuspended,
+    isVerified: user.isVerified,
+    kycLevel: user.kycLevel,
     createdAt: user.createdAt,
   };
 }

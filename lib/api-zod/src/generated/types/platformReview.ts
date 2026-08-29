@@ -18,4 +18,6 @@ export interface PlatformReview {
   username?: string | null;
   /** @nullable */
   isVerified?: boolean | null;
+  /** @nullable */
+  kycLevel?: number | null;
 }

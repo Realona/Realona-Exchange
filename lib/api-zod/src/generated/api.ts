@@ -188,7 +188,8 @@ export const GetListingsResponseItem = zod.object({
   "id": zod.number(),
   "sellerId": zod.number(),
   "sellerUsername": zod.string().nullish(),
-  "sellerIsVerified": zod.boolean().optional(),
+  "sellerIsVerified": zod.boolean(),
+  "sellerKycLevel": zod.number(),
   "sellerRating": zod.number().nullish(),
   "category": zod.enum(['efootball', 'social_media']),
   "gameName": zod.string(),
@@ -247,7 +248,8 @@ export const CreateListingResponse = zod.object({
   "id": zod.number(),
   "sellerId": zod.number(),
   "sellerUsername": zod.string().nullish(),
-  "sellerIsVerified": zod.boolean().optional(),
+  "sellerIsVerified": zod.boolean(),
+  "sellerKycLevel": zod.number(),
   "sellerRating": zod.number().nullish(),
   "category": zod.enum(['efootball', 'social_media']),
   "gameName": zod.string(),
@@ -309,7 +311,8 @@ export const CreateBulkListingsResponse = zod.object({
   "id": zod.number(),
   "sellerId": zod.number(),
   "sellerUsername": zod.string().nullish(),
-  "sellerIsVerified": zod.boolean().optional(),
+  "sellerIsVerified": zod.boolean(),
+  "sellerKycLevel": zod.number(),
   "sellerRating": zod.number().nullish(),
   "category": zod.enum(['efootball', 'social_media']),
   "gameName": zod.string(),
@@ -372,7 +375,8 @@ export const GetMyListingsResponseItem = zod.object({
   "id": zod.number(),
   "sellerId": zod.number(),
   "sellerUsername": zod.string().nullish(),
-  "sellerIsVerified": zod.boolean().optional(),
+  "sellerIsVerified": zod.boolean(),
+  "sellerKycLevel": zod.number(),
   "sellerRating": zod.number().nullish(),
   "category": zod.enum(['efootball', 'social_media']),
   "gameName": zod.string(),
@@ -407,7 +411,8 @@ export const GetListingResponse = zod.object({
   "id": zod.number(),
   "sellerId": zod.number(),
   "sellerUsername": zod.string().nullish(),
-  "sellerIsVerified": zod.boolean().optional(),
+  "sellerIsVerified": zod.boolean(),
+  "sellerKycLevel": zod.number(),
   "sellerRating": zod.number().nullish(),
   "category": zod.enum(['efootball', 'social_media']),
   "gameName": zod.string(),
@@ -449,7 +454,8 @@ export const UpdateListingResponse = zod.object({
   "id": zod.number(),
   "sellerId": zod.number(),
   "sellerUsername": zod.string().nullish(),
-  "sellerIsVerified": zod.boolean().optional(),
+  "sellerIsVerified": zod.boolean(),
+  "sellerKycLevel": zod.number(),
   "sellerRating": zod.number().nullish(),
   "category": zod.enum(['efootball', 'social_media']),
   "gameName": zod.string(),
@@ -1777,6 +1783,7 @@ export const GetLeaderboardResponse = zod.object({
   "userId": zod.number(),
   "username": zod.string(),
   "isVerified": zod.boolean().optional(),
+  "kycLevel": zod.number().optional(),
   "count": zod.number(),
   "rating": zod.number().nullish()
 })),
@@ -1785,6 +1792,7 @@ export const GetLeaderboardResponse = zod.object({
   "userId": zod.number(),
   "username": zod.string(),
   "isVerified": zod.boolean().optional(),
+  "kycLevel": zod.number().optional(),
   "count": zod.number(),
   "rating": zod.number().nullish()
 })),
@@ -1793,6 +1801,7 @@ export const GetLeaderboardResponse = zod.object({
   "userId": zod.number(),
   "username": zod.string(),
   "isVerified": zod.boolean().optional(),
+  "kycLevel": zod.number().optional(),
   "count": zod.number(),
   "rating": zod.number().nullish()
 }))
@@ -2067,7 +2076,8 @@ export const GetWishlistResponseItem = zod.object({
   "id": zod.number(),
   "sellerId": zod.number(),
   "sellerUsername": zod.string().nullish(),
-  "sellerIsVerified": zod.boolean().optional(),
+  "sellerIsVerified": zod.boolean(),
+  "sellerKycLevel": zod.number(),
   "sellerRating": zod.number().nullish(),
   "category": zod.enum(['efootball', 'social_media']),
   "gameName": zod.string(),
@@ -2108,7 +2118,8 @@ export const GetPublicWishlistResponse = zod.object({
   "id": zod.number(),
   "sellerId": zod.number(),
   "sellerUsername": zod.string().nullish(),
-  "sellerIsVerified": zod.boolean().optional(),
+  "sellerIsVerified": zod.boolean(),
+  "sellerKycLevel": zod.number(),
   "sellerRating": zod.number().nullish(),
   "category": zod.enum(['efootball', 'social_media']),
   "gameName": zod.string(),
@@ -2222,7 +2233,8 @@ export const GetPlatformReviewsResponse = zod.object({
   "adminResponse": zod.string().nullish(),
   "createdAt": zod.coerce.date(),
   "username": zod.string().nullish(),
-  "isVerified": zod.boolean().nullish()
+  "isVerified": zod.boolean().nullish(),
+  "kycLevel": zod.number().nullish()
 })),
   "averageRating": zod.number(),
   "totalCount": zod.number()
@@ -2252,7 +2264,8 @@ export const CreatePlatformReviewResponse = zod.object({
   "adminResponse": zod.string().nullish(),
   "createdAt": zod.coerce.date(),
   "username": zod.string().nullish(),
-  "isVerified": zod.boolean().nullish()
+  "isVerified": zod.boolean().nullish(),
+  "kycLevel": zod.number().nullish()
 })
 
 
@@ -2275,7 +2288,8 @@ export const AdminRespondToReviewResponse = zod.object({
   "adminResponse": zod.string().nullish(),
   "createdAt": zod.coerce.date(),
   "username": zod.string().nullish(),
-  "isVerified": zod.boolean().nullish()
+  "isVerified": zod.boolean().nullish(),
+  "kycLevel": zod.number().nullish()
 })
 
 
